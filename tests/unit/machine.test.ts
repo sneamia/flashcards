@@ -28,6 +28,7 @@ const fakeDeck: Deck = {
   id: 'fake',
   title: 'fake',
   kind: 'phonics',
+  category: 'digraphs',
   order: 1,
   cards: [
     { type: 'word', text: 'aaa' },
@@ -461,5 +462,39 @@ describe('defensive guards', () => {
   it('ADVANCE on card with a null ctx.deck is a same-reference no-op', () => {
     const s = stateAt({ screen: 'card', deckId: 'gone', cardIndex: 0, beat: 'word', lockUntil: 0 });
     expect(reduce(s, 'ADVANCE', makeCtx(5000, {}, null))).toBe(s);
+  });
+});
+
+describe('synthetic shuffle deck is walked by index identically (pure boundary held)', () => {
+  // A "shuffle all" run reaches the reducer as a {start:'shuffle:...'} action
+  // and an ordinary Ctx.deck. The reducer neither knows nor cares that the deck
+  // is synthetic — proving no randomness/id-awareness leaked into machine.ts.
+  const shuffled: Deck = {
+    id: 'shuffle:digraphs',
+    title: 'Digraphs',
+    kind: 'phonics',
+    category: 'digraphs',
+    order: 0,
+    cards: [
+      { type: 'word', text: 'one' },
+      { type: 'word', text: 'two' },
+    ],
+  };
+
+  it('start -> card 0, ADVANCE walks to the end, BACK steps back — all by index', () => {
+    const started = reduce(initialState(), { start: shuffled.id }, makeCtx(0, {}, shuffled));
+    expect(started).toMatchObject({ screen: 'card', deckId: 'shuffle:digraphs', cardIndex: 0, beat: 'word' });
+
+    // card 0 is image-free here -> ADVANCE goes straight to card 1.
+    const atOne = reduce(started, 'ADVANCE', makeCtx(started.lockUntil, { 0: false }, shuffled));
+    expect(atOne).toMatchObject({ screen: 'card', cardIndex: 1, beat: 'word' });
+
+    // BACK from card 1 -> card 0 (prev is image-free -> word beat).
+    const back = reduce(atOne, 'BACK', makeCtx(atOne.lockUntil, { 0: false }, shuffled));
+    expect(back).toMatchObject({ screen: 'card', cardIndex: 0, beat: 'word' });
+
+    // ADVANCE off the last card -> end, carrying the synthetic deckId.
+    const atEnd = reduce(atOne, 'ADVANCE', makeCtx(atOne.lockUntil, { 1: false }, shuffled));
+    expect(atEnd).toMatchObject({ screen: 'end', deckId: 'shuffle:digraphs' });
   });
 });

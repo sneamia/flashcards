@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- A mop: handle + collar + fanned strands. -->
+  <path d="M34 66 Q30 84 26 93 M42 68 Q40 87 38 95 M50 68 L50 96 M58 68 Q60 87 62 95 M66 66 Q70 84 74 93"
+        fill="none" stroke="#c9b48f" stroke-width="6" stroke-linecap="round"/>
+  <rect x="46" y="10" width="8" height="52" rx="4" fill="#a6785a" stroke="#3d3833" stroke-width="2"/>
+  <path d="M33 60 Q50 54 67 60 L63 70 Q50 65 37 70 Z" fill="#cbb287" stroke="#3d3833" stroke-width="2.5" stroke-linejoin="round"/>
+</svg>

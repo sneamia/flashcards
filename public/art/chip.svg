@@ -1,1 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><path fill="#cbb287" d="M27 48.842V9.523h-1V7h-4v4.523h-1V48m22-2V9.523h-1V5h-4v3.577l-1-.054V47m-2-5V8.523l-1-.526V5h-4v4.523h-1V41m22-1V11.523h-1V7h-4v2.523h-1V40"/><path fill="#cbb287" d="M23 41.42v-7.79h-1V15.106h-4V33.63h-1v3.475m30 7.42v-10h-1V13h-4v21.58l-1-.056v12.001m-2-1v-10h-1V12h-4v23.58l-1-.056v12.001m-2-1v-12l-1-.526V13h-4v21.524h-1v10M55 37v-4.371h-1V15.106h-4V33.63h-1v9"/><path fill="#a6785a" d="M19 59.197c10 7.737 23 7.737 34 0L55 37l-19 3-19-3z"/><path fill="none" stroke="#3d3833" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M42 10V5h-4v4m-4 0V5h-4v5m20 2V7h-4v3m-20 0V7h-4v5m-3 47.264C29 67 42 67 53 59.264L55 37l-19 3-19-3zm35-25.79V15.106h-4v18.999m-20 1.263V13h-4v21.736m-4-.631v-19h-4v18.369m28 1.262V13h-4v22.368M38 36V12h-4v24"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Potato chip (American English: a single potato chip, NOT french fries). -->
+  <path d="M22 64 Q12 34 42 24 Q74 13 86 40 Q94 60 72 76 Q42 92 22 64 Z"
+        fill="#e0cba8" stroke="#3d3833" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M31 58 Q27 40 47 33" fill="none" stroke="#cbb287" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="55" cy="45" r="2.4" fill="#8a6a4a"/>
+  <circle cx="67" cy="57" r="2.4" fill="#8a6a4a"/>
+  <circle cx="45" cy="63" r="2.4" fill="#8a6a4a"/>
+</svg>

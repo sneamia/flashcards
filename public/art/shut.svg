@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- A closed (shut) door in its frame. -->
+  <rect x="24" y="12" width="52" height="80" rx="3" fill="#8a6a4a" stroke="#3d3833" stroke-width="3"/>
+  <rect x="30" y="18" width="40" height="74" rx="2" fill="#a6785a" stroke="#3d3833" stroke-width="2.5"/>
+  <rect x="36" y="24" width="28" height="27" rx="2" fill="none" stroke="#3d3833" stroke-width="2" opacity="0.5"/>
+  <rect x="36" y="58" width="28" height="27" rx="2" fill="none" stroke="#3d3833" stroke-width="2" opacity="0.5"/>
+  <circle cx="63" cy="56" r="3.2" fill="#3d3833"/>
+</svg>

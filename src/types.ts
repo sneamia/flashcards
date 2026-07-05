@@ -30,10 +30,26 @@ export interface Deck {
   /** "phonics" in v1. Future kinds (math, patterns) add values without touching v1 code. */
   kind: string;
   /**
-   * Pedagogical sort key. import.meta.glob returns paths ALPHABETICALLY
-   * (ch, sh, th, wh) which is NOT the intended order (sh, ch, th, wh), so
-   * order is explicit in data. decks.ts sorts by it.
+   * The category this deck belongs to, e.g. "cvc" | "digraphs" | "blends".
+   * Must match an id in src/categories.ts CATEGORIES. The picker groups decks
+   * under their category header and offers a per-category "shuffle all".
+   */
+  category: string;
+  /**
+   * Pedagogical sort key WITHIN its category. import.meta.glob returns paths
+   * ALPHABETICALLY (ch, sh, th, wh) which is NOT the intended order
+   * (sh, ch, th, wh), so order is explicit in data. Unique per category
+   * (validated at build); groupByCategory() sorts by it.
    */
   order: number;
   cards: Card[];
+}
+
+/** One category's decks, in intra-category order — the grouped picker unit. */
+export interface CategoryGroup {
+  /** Category id, e.g. "digraphs". */
+  id: string;
+  /** Display title, e.g. "Digraphs". */
+  title: string;
+  decks: Deck[];
 }

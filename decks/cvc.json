@@ -1,0 +1,29 @@
+{
+  "id": "cvc",
+  "title": "CVC",
+  "kind": "phonics",
+  "category": "cvc",
+  "order": 1,
+  "cards": [
+    { "type": "word", "text": "cat", "graphemes": ["c", "a", "t"], "img": "art/cat.svg" },
+    { "type": "word", "text": "hat", "graphemes": ["h", "a", "t"], "img": "art/hat.svg" },
+    { "type": "word", "text": "bag", "graphemes": ["b", "a", "g"], "img": "art/bag.svg" },
+    { "type": "word", "text": "van", "graphemes": ["v", "a", "n"], "img": "art/van.svg" },
+    { "type": "word", "text": "bed", "graphemes": ["b", "e", "d"], "img": "art/bed.svg" },
+    { "type": "word", "text": "hen", "graphemes": ["h", "e", "n"], "img": "art/hen.svg" },
+    { "type": "word", "text": "web", "graphemes": ["w", "e", "b"], "img": "art/web.svg" },
+    { "type": "word", "text": "jet", "graphemes": ["j", "e", "t"], "img": "art/jet.svg" },
+    { "type": "word", "text": "pig", "graphemes": ["p", "i", "g"], "img": "art/pig.svg" },
+    { "type": "word", "text": "pin", "graphemes": ["p", "i", "n"], "img": "art/pin.svg" },
+    { "type": "word", "text": "lip", "graphemes": ["l", "i", "p"], "img": "art/lip.svg" },
+    { "type": "word", "text": "six", "graphemes": ["s", "i", "x"], "img": "art/six.svg" },
+    { "type": "word", "text": "dog", "graphemes": ["d", "o", "g"], "img": "art/dog.svg" },
+    { "type": "word", "text": "box", "graphemes": ["b", "o", "x"], "img": "art/box.svg" },
+    { "type": "word", "text": "fox", "graphemes": ["f", "o", "x"], "img": "art/fox.svg" },
+    { "type": "word", "text": "mop", "graphemes": ["m", "o", "p"], "img": "art/mop.svg" },
+    { "type": "word", "text": "sun", "graphemes": ["s", "u", "n"], "img": "art/sun.svg" },
+    { "type": "word", "text": "bug", "graphemes": ["b", "u", "g"], "img": "art/bug.svg" },
+    { "type": "word", "text": "cup", "graphemes": ["c", "u", "p"], "img": "art/cup.svg" },
+    { "type": "word", "text": "bus", "graphemes": ["b", "u", "s"], "img": "art/bus.svg" }
+  ]
+}

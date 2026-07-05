@@ -7,7 +7,7 @@
 
 import './styles.css';
 
-import type { Deck } from './types';
+import type { CategoryGroup, Deck } from './types';
 import {
   type Action,
   type AppState,
@@ -26,7 +26,7 @@ import {
   createRecognizer,
 } from './gestures';
 import { isLocked } from './lockout';
-import { loadDecks } from './decks';
+import { SHUFFLE_PREFIX, buildShuffledDeck, groupByCategory, loadDecks } from './decks';
 import { isPrecacheComplete } from './integrity';
 import { registerSW } from 'virtual:pwa-register';
 
@@ -41,7 +41,15 @@ const stage: HTMLElement = stageEl;
 /* --- Module state ------------------------------------------------------ */
 
 const decks: Deck[] = loadDecks();
+const groups: CategoryGroup[] = groupByCategory(decks);
 let state: AppState = initialState();
+
+// The synthetic deck for the current "shuffle all" run. Rebuilt (reshuffled)
+// on every shuffle-row selection and resolved by findDeck() while its id is
+// active, so the reducer walks it by index exactly like a real deck. Never
+// persisted — a reshuffle-on-reload would show different cards at the saved
+// index (see persist()).
+let activeShuffleDeck: Deck | null = null;
 
 // Runtime image-decode-failure set, keyed by the card's `img` path. Ctx.hasImage
 // treats any path in here as "no image" for the rest of this launch (Design D2)
@@ -113,6 +121,13 @@ function artUrl(path: string): string {
 
 function findDeck(deckId: string | null): Deck | null {
   if (!deckId) return null;
+  // Synthetic per-category shuffle run: resolve to the live session deck (built
+  // fresh in dispatch() on the shuffle-row tap), never the loaded set. Only the
+  // currently-active shuffle id resolves; a stale one (e.g. a persisted value at
+  // boot) returns null and recovers to the picker.
+  if (deckId.startsWith(SHUFFLE_PREFIX)) {
+    return activeShuffleDeck && activeShuffleDeck.id === deckId ? activeShuffleDeck : null;
+  }
   return decks.find((d) => d.id === deckId) ?? null;
 }
 
@@ -233,25 +248,47 @@ function applyWordSize(deck: Deck): void {
    Zero motion: every call below is a full, instant DOM swap. No screen ever
    partially updates and no CSS transition exists to animate the swap. */
 
+// Shared guard: a pointer-derived click (detail > 0) must belong to a tap that
+// STARTED on the picker. The click synthesized from the tap that dismissed the
+// about overlay fires AFTER the picker re-renders, lands on a fresh row, and
+// would silently start that deck. Keyboard/AT activation has detail === 0 and
+// passes through.
+function startFromRow(e: MouseEvent, startId: string): void {
+  if (state.screen !== 'deck_pick') return;
+  if (e.detail > 0 && screenAtPointerDown !== 'deck_pick') return;
+  void dispatch({ start: startId });
+}
+
 function rowEl(deck: Deck): HTMLButtonElement {
   const btn = el('button', 'row');
   btn.type = 'button';
+  btn.dataset.deckId = deck.id; // stable hook for e2e; picker order now varies by category
   btn.setAttribute('aria-label', `${deck.title}, ${deck.cards.length} words`);
   const dg = el('span', 'dg');
   dg.textContent = deck.title;
   const ct = el('span', 'ct');
   ct.textContent = `${deck.cards.length} words`;
   btn.append(dg, ct);
-  btn.addEventListener('click', (e) => {
-    if (state.screen !== 'deck_pick') return;
-    // A pointer-derived click (detail > 0) must belong to a tap that STARTED
-    // on the picker: the click synthesized from the tap that dismissed the
-    // about overlay fires AFTER the picker re-renders, lands on a fresh row,
-    // and would silently start that deck. Keyboard/AT activation has
-    // detail === 0 and passes through.
-    if (e.detail > 0 && screenAtPointerDown !== 'deck_pick') return;
-    void dispatch({ start: deck.id });
-  });
+  btn.addEventListener('click', (e) => startFromRow(e, deck.id));
+  return btn;
+}
+
+// The per-category "shuffle all" entry: same row surface as a deck, but starts
+// a synthetic shuffle-run over every card in the category (dispatch() rebuilds
+// the shuffled deck on the tap).
+function shuffleRowEl(group: CategoryGroup): HTMLButtonElement {
+  const total = group.decks.reduce((n, d) => n + d.cards.length, 0);
+  const startId = `${SHUFFLE_PREFIX}${group.id}`;
+  const btn = el('button', 'row shuffle');
+  btn.type = 'button';
+  btn.dataset.shuffle = group.id;
+  btn.setAttribute('aria-label', `Shuffle all ${group.title}, ${total} words`);
+  const dg = el('span', 'dg');
+  dg.textContent = 'shuffle all';
+  const ct = el('span', 'ct');
+  ct.textContent = `${total} words`;
+  btn.append(dg, ct);
+  btn.addEventListener('click', (e) => startFromRow(e, startId));
   return btn;
 }
 
@@ -261,7 +298,13 @@ function renderPicker(): DocumentFragment {
 
   const picker = el('div', 'picker');
   const decksEl = el('div', 'decks');
-  for (const deck of decks) decksEl.append(rowEl(deck));
+  for (const group of groups) {
+    const header = el('h2', 'cat');
+    header.textContent = group.title;
+    decksEl.append(header);
+    for (const deck of group.decks) decksEl.append(rowEl(deck));
+    decksEl.append(shuffleRowEl(group));
+  }
 
   const pfoot = el('div', 'pfoot');
   const gest = el('div', 'gest');
@@ -435,11 +478,14 @@ interface PersistedPosition {
 
 function persist(): void {
   try {
-    if (state.screen !== 'card') {
-      // Only an in-progress card position is worth resuming. The end card
-      // means the session CLOSED — a relaunch must land on the picker, not
-      // back inside the finished deck — and the picker/about have nothing
-      // to restore.
+    // A "shuffle all" run is never resumable: on the next launch the deck would
+    // be reshuffled, so the saved cardIndex would point at a DIFFERENT card.
+    // Treat it like a closed session — clear any stored position and skip.
+    if (state.screen !== 'card' || state.deckId?.startsWith(SHUFFLE_PREFIX)) {
+      // Only an in-progress card position (in a real, stable deck) is worth
+      // resuming. The end card means the session CLOSED — a relaunch must land
+      // on the picker, not back inside the finished deck — and the
+      // picker/about have nothing to restore.
       localStorage.removeItem(STORAGE_KEY);
       return;
     }
@@ -491,6 +537,16 @@ async function dispatch(action: Action): Promise<void> {
   // Cheap early-exit: skip the async pre-resolve work entirely for an
   // ADVANCE that the reducer would no-op anyway.
   if (action === 'ADVANCE' && isLocked(state.lockUntil, now)) return;
+
+  // A "shuffle all" selection rebuilds the synthetic session deck FRESH (a new
+  // permutation every tap) before reduce/render runs — this is what makes the
+  // order differ on each re-entry. Must happen before render()/applyWordSize()
+  // below, which resolve the active deck via findDeck().
+  if (typeof action === 'object' && action.start.startsWith(SHUFFLE_PREFIX)) {
+    const categoryId = action.start.slice(SHUFFLE_PREFIX.length);
+    const group = groups.find((g) => g.id === categoryId);
+    activeShuffleDeck = group ? buildShuffledDeck(group, Math.random) : null;
+  }
 
   const generation = dispatchGeneration;
   await preResolveForAction(action);

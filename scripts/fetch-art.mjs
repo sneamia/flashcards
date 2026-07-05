@@ -23,13 +23,13 @@ const PALETTE = ['#a6785a', '#c9b48f', '#e0cba8', '#cbb287', '#8a6a4a', '#3d3833
 // Hexcodes verified against the OpenMoji index where confident; the rest are
 // the closest available glyph and marked (~). Adjust as coverage is audited.
 const MAP = {
+  // --- Digraphs ---
   ship: '1F6A2',      // ship
   shop: '1F3EA',      // convenience store (~ shop)
   shed: '1F6D6',      // hut (~ shed)
   shell: '1F41A',     // spiral shell
   fish: '1F41F',      // fish
   dish: '1F37D',      // fork and knife with plate (~ dish)
-  chip: '1F35F',      // french fries (~ chip)
   chop: '1FA93',      // axe (~ chop)
   chick: '1F425',     // front-facing baby chick
   chest: '1F9F0',     // toolbox (~ chest)
@@ -39,14 +39,58 @@ const MAP = {
   wish: '1F320',      // shooting star (~ wish; wish-upon-a-star)
   wham: '1F4A5',      // collision (comic impact burst)
   math: '1F522',      // input numbers (~ math; numerals)
+
+  // --- CVC ---
+  cat: '1F408',       // cat
+  hat: '1F3A9',       // top hat
+  bag: '1F45C',       // handbag (~ bag)
+  van: '1F690',       // minibus (~ van)
+  bed: '1F6CF',       // bed
+  hen: '1F414',       // chicken (~ hen)
+  web: '1F578',       // spider web
+  jet: '2708',        // airplane (~ jet)
+  pig: '1F416',       // pig
+  pin: '1F4CC',       // pushpin (~ pin)
+  lip: '1F444',       // mouth (~ lip)
+  six: '0036-FE0F-20E3', // keycap 6 (numeral reads as "six")
+  dog: '1F415',       // dog
+  box: '1F4E6',       // package (~ box)
+  fox: '1F98A',       // fox
+  sun: '2600',        // sun
+  bug: '1F41B',       // bug
+  cup: '1F964',       // cup with straw (~ cup)
+  bus: '1F68C',       // bus
+
+  // --- Blends ---
+  flag: '1F6A9',      // triangular flag
+  sled: '1F6F7',      // sled
+  plug: '1F50C',      // electric plug
+  clock: '23F0',      // alarm clock (~ clock)
+  glass: '1F943',     // tumbler glass (~ glass)
+  frog: '1F438',      // frog
+  drum: '1F941',      // drum
+  crab: '1F980',      // crab
+  truck: '1F69A',     // delivery truck (~ truck)
+  brick: '1F9F1',     // brick
+  tree: '1F333',      // deciduous tree (~ tree)
+  star: '2B50',       // star
+  spoon: '1F944',     // spoon
+  snail: '1F40C',     // snail
+  skunk: '1F9A8',     // skunk
+  nest: '1FABA',      // nest with eggs (~ nest)
+  tent: '26FA',       // tent
+
+  // --- Hand-drawn placeholders (leave UNMAPPED so fetch-art never overwrites) ---
+  // whip, chip, chin, shin, shut, mop, block: no OpenMoji glyph plausibly
+  // reads as these for a preschooler (chin/shin need a figurative arrow to a
+  // body part; chip must be a potato chip, not french fries 1F35F, for
+  // American English). See public/art/*.svg — hand-authored in the warm
+  // palette. Leaving them out of MAP keeps `npm run fetch-art` from clobbering
+  // them.
   // whiz: tried 1F4A8 "dashing away" (speed-lines cloud) — dropped on
   // render-check. Alone (no running figure) it reads as smoke/wind, and
   // it's colloquially read as a fart-cloud emoji — not a reliable "whiz"
-  // for a preschooler. Left unmapped.
-  // whip: intentionally omitted. No OpenMoji/Unicode glyph plausibly reads as
-  // "whip" — 1FA83 boomerang was tried and is unrecognizable as a whip on
-  // render-check. Keeping the hand-drawn placeholder (public/art/whip.svg)
-  // instead; leave unmapped so `npm run fetch-art` never overwrites it.
+  // for a preschooler. Left unmapped (stays image-free).
 };
 
 // Pinned to a release tag, NOT `master`: this script writes remote content

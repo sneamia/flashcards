@@ -36,6 +36,14 @@ Muted flat-art palette (illustrations, palette-remapped from OpenMoji at build):
 low-saturation warm tones only. Examples in use: clay `#a6785a`, sand `#c9b48f`,
 sail `#e0cba8` / `#cbb287`, mast `#8a6a4a`. No blues, ever.
 
+**Figurative art is allowed** where a single object won't read: a drawing may
+annotate with an ink (`#3d3833`) arrow pointing at the part the word names —
+e.g. `chin` is a face with an arrow to the chin, `shin` a leg with an arrow to
+the shin. The arrow is the exception to "single-object" art; it stays inside the
+warm palette, and the printed WORD is still the canonical readable content (the
+SVG remains `aria-hidden`). This is a confirmation aid, not decoration — do not
+add arrows, labels, or annotations that aren't naming a part of the word.
+
 ## Typography
 
 - **Andika** (SIL OFL, bundled), all reading text. Chosen for early literacy:

@@ -2,6 +2,7 @@
   "id": "wh",
   "title": "wh",
   "kind": "phonics",
+  "category": "digraphs",
   "order": 4,
   "cards": [
     { "type": "word", "text": "whip", "graphemes": ["wh", "i", "p"], "img": "art/whip.svg" },
