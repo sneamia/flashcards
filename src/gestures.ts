@@ -64,8 +64,20 @@ export function createRecognizer(): Recognizer {
     }
   }
 
+  // Evict any pointer whose terminating event was lost (see STALE_POINTER_MS).
+  // Runs on poll() AND at the start of the next 'down' so recovery no longer
+  // depends on a periodic timer: the very next interaction heals a stuck
+  // session before a phantom pointer can misread it as multi-touch.
+  function sweepStale(now: number): void {
+    for (const [id, t] of down) {
+      if (now - t >= STALE_POINTER_MS) down.delete(id);
+    }
+    resetIfIdle();
+  }
+
   function handle(e: GestureEvent): GestureAction {
     if (e.kind === 'down') {
+      sweepStale(e.t);
       down.set(e.pointerId, e.t);
       if (down.size >= 2) multi = true;
       if (down.size >= 3) palm = true;
@@ -104,10 +116,7 @@ export function createRecognizer(): Recognizer {
     // Expire pointers whose terminating event was lost — see STALE_POINTER_MS.
     // (A legitimately held pointer has long since fired EXIT at 800ms; its
     // entry is inert by now, so dropping it changes nothing for real holds.)
-    for (const [id, t] of down) {
-      if (now - t >= STALE_POINTER_MS) down.delete(id);
-    }
-    resetIfIdle();
+    sweepStale(now);
 
     // EXIT only applies to a single held pointer that never got a second
     // pointer joining it — a two-finger session is resolving as BACK, not EXIT.

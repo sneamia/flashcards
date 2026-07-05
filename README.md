@@ -36,8 +36,8 @@ npm run dev
 ## Test
 
 ```
-npm test          # vitest — pure logic (state machine, lockout, gestures, deck loader)
-npm run test:e2e  # playwright — browser behavior (rapid-tap defense, rotate, resume-after-reload)
+npm test          # vitest — pure logic (state machine, lockout, gestures, deck loader, precache integrity)
+npm run test:e2e  # playwright — browser behavior (rapid-tap defense, rotate, resume-after-reload, offline restore)
 ```
 
 ## Build

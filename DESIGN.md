@@ -61,6 +61,7 @@ sail `#e0cba8` / `#cbb287`, mast `#8a6a4a`. No blues, ever.
 | **About overlay** | Long-press the deck picker → calm overlay (`.syscard`) with full gesture list + CC BY-SA attribution; tap to dismiss. Keeps legal text off the home screen. |
 | **End card** | Centered "the end", `.syscard`, no counter, no celebration. Tap → picker (after lockout). |
 | **Rotate card** | Text-only "turn the phone sideways", `.syscard`. Shown in portrait (iOS can't lock PWA orientation). No glyph. |
+| **Restore card** | Text-only "reconnect once to restore" + a calm one-line explanation, `.syscard`. Shown at boot only when the offline precache is found incomplete (see Interaction/offline below). No glyph, no spinner, no button. Takes precedence over the rotate card — broken art is still broken once the phone turns landscape. |
 
 ## Interaction
 
@@ -71,6 +72,14 @@ sail `#e0cba8` / `#cbb287`, mast `#8a6a4a`. No blues, ever.
   picker; long-press on the picker = about overlay.
 - **Image-failure fallback:** if a card's art fails to load/decode, render it as
   the image-free one-beat card for that render — never a broken-image frame.
+- **Offline guarantee is strong, not absolute.** The service worker precaches
+  everything for a fully offline launch, but iOS can evict that Cache API
+  storage under memory pressure or long non-use. At boot, main.ts probes a
+  small set of assets the app cannot render without (built JS/CSS, both
+  Andika weights, a couple of representative art files); if any are missing
+  AND the device is offline, it shows the restore card instead of broken
+  images. Online, nothing special happens — the next launch's fetches
+  silently re-precache.
 
 ## Accessibility
 

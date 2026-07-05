@@ -35,6 +35,14 @@ const MAP = {
   chest: '1F9F0',     // toolbox (~ chest)
   bath: '1F6C1',      // bathtub (~ bath)
   moth: '1F98B',      // butterfly (~ moth; no dedicated moth glyph)
+  hush: '1F92B',      // shushing face (finger to lips)
+  wish: '1F320',      // shooting star (~ wish; wish-upon-a-star)
+  wham: '1F4A5',      // collision (comic impact burst)
+  math: '1F522',      // input numbers (~ math; numerals)
+  // whiz: tried 1F4A8 "dashing away" (speed-lines cloud) — dropped on
+  // render-check. Alone (no running figure) it reads as smoke/wind, and
+  // it's colloquially read as a fart-cloud emoji — not a reliable "whiz"
+  // for a preschooler. Left unmapped.
   // whip: intentionally omitted. No OpenMoji/Unicode glyph plausibly reads as
   // "whip" — 1FA83 boomerang was tried and is unrecognizable as a whip on
   // render-check. Keeping the hand-drawn placeholder (public/art/whip.svg)

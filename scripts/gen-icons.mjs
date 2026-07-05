@@ -7,16 +7,31 @@
 // single-story "a" is the same detail DESIGN.md cites as the literacy reason
 // the font was chosen, so the icon quietly previews the product.
 //
+// Rendering mechanism: sharp's SVG rasterizer (librsvg) ignores embedded
+// woff2 @font-face fonts and silently falls back to a system font — which
+// has a generic double-story "a", exactly the detail this icon exists to
+// avoid. So instead of asking librsvg to *shape text*, we outline the glyph
+// ourselves: decompress the bundled Andika-Bold.woff2 to TTF in memory (via
+// wawoff2 — nothing new is committed to the repo), load it with opentype.js,
+// pull the "a" glyph (its glyph name is "a.SngStory" — confirms it's the
+// single-story variant Andika ships as the *default* glyph for U+0061, no
+// stylistic-alternate lookup needed), and convert it to an SVG <path> at the
+// right size/position. sharp then just rasterizes a flat vector path — no
+// font shaping involved, so no fallback-font risk.
+//
 // Not part of the app build — run manually if icons ever need regenerating:
 //   node scripts/gen-icons.mjs
 //
-// Requires `sharp` (has bundled libvips/librsvg, so no system deps). Install
-// with `npm install --no-save sharp` if it isn't already present.
+// Requires `sharp`, `opentype.js`, and `wawoff2` (has bundled libvips/
+// librsvg, so no system deps). Install with:
+//   npm install --no-save sharp opentype.js wawoff2
 
 import { readFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
+import opentype from 'opentype.js';
+import wawoff2 from 'wawoff2';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -28,10 +43,23 @@ const INK = '#3d3833';
 
 mkdirSync(ICONS_DIR, { recursive: true });
 
-const fontB64 = readFileSync(FONT_PATH).toString('base64');
+// Decompress the already-bundled woff2 to TTF (in memory only) so
+// opentype.js — which can't parse woff2 — can outline the exact glyph the
+// app ships, not some other copy of Andika.
+const woff2Buf = readFileSync(FONT_PATH);
+const ttfBuf = await wawoff2.decompress(woff2Buf);
+const ttfArrayBuffer = ttfBuf.buffer.slice(ttfBuf.byteOffset, ttfBuf.byteOffset + ttfBuf.byteLength);
+const font = opentype.parse(ttfArrayBuffer);
+
+const glyph = font.charToGlyph('a');
+if (!glyph || glyph.unicode !== 97) {
+  throw new Error(`expected an "a" glyph, got name=${glyph && glyph.name} unicode=${glyph && glyph.unicode}`);
+}
+console.log(`using glyph "${glyph.name}" (unitsPerEm=${font.unitsPerEm})`);
 
 /**
- * Build a square SVG: cream background, a single ink "a" in Andika Bold.
+ * Build a square SVG: cream background, a single ink "a" outlined as a path
+ * (not shaped text — see header comment for why).
  * @param {number} size - output pixel size (square)
  * @param {number} fontSize - glyph font-size in px, at the reference 512 scale
  * @param {number} yFrac - baseline y position as a fraction of size (visual centering)
@@ -39,19 +67,16 @@ const fontB64 = readFileSync(FONT_PATH).toString('base64');
 function markSvg(size, fontSize, yFrac) {
   const scaledFont = (fontSize / 512) * size;
   const y = size * yFrac;
+  // Mirror what text-anchor="middle" would do for a single glyph: center on
+  // the glyph's advance width, not its (asymmetric) ink bounding box.
+  const scale = scaledFont / font.unitsPerEm;
+  const advanceWidth = glyph.advanceWidth * scale;
+  const x = size / 2 - advanceWidth / 2;
+  const path = glyph.getPath(x, y, scaledFont);
+  const d = path.toPathData(2);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <defs>
-    <style>
-      @font-face {
-        font-family: 'AndikaIcon';
-        font-weight: 700;
-        src: url(data:font/woff2;base64,${fontB64}) format('woff2');
-      }
-    </style>
-  </defs>
   <rect width="${size}" height="${size}" fill="${CREAM}"/>
-  <text x="${size / 2}" y="${y}" font-family="AndikaIcon" font-weight="700"
-        font-size="${scaledFont}" fill="${INK}" text-anchor="middle">a</text>
+  <path d="${d}" fill="${INK}"/>
 </svg>`;
 }
 

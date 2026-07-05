@@ -17,6 +17,7 @@ src/
   machine.ts     # PURE state reducer (no DOM, no timers) — Core-logic agent
   gestures.ts    # PURE pointer-event → Action recognizer — Core-logic agent
   lockout.ts     # PURE timestamp lockout guard — Core-logic agent
+  integrity.ts   # PURE precache-completeness check (offline eviction) — Core-logic agent
   decks.ts       # deck loader (import.meta.glob, sort, skip sentence) — Core-logic agent
   main.ts        # DOM wiring: renders screens, owns timers/wakelock/persistence — Core-logic agent
 decks/
@@ -29,7 +30,7 @@ scripts/
   fetch-art.mjs        # OpenMoji fetch + palette-remap + SVGO — Build-scripts agent
   validate-decks.mjs   # build-time deck validation — Build-scripts agent
   check-contrast.mjs   # --label-readable >=4.5:1 on cream — Build-scripts agent
-  gen-icons.mjs        # one-off PWA icon generator (manual; needs `npm i --no-save sharp`)
+  gen-icons.mjs        # one-off PWA icon generator (manual; needs `npm i --no-save sharp opentype.js wawoff2` — outlines the Andika "a" glyph to a path so librsvg can't fall back to a double-story system font)
 tests/
   unit/*.test.ts # vitest, pure logic — Tests agent
   e2e/*.spec.ts  # playwright — Tests agent
@@ -113,6 +114,7 @@ export type GestureEvent =
 export type GestureAction = 'ADVANCE' | 'BACK' | 'EXIT' | null;
 
 export const LONG_PRESS_MS = 800;
+export const STALE_POINTER_MS = 10_000; // a pointer whose up/cancel was lost is swept at this age (main.ts mirrors this bookkeeping)
 
 export interface Recognizer {
   handle(e: GestureEvent): GestureAction;   // returns an action when a gesture completes, else null
@@ -133,6 +135,17 @@ export function isLocked(lockUntil: number, now: number): boolean; // now < lock
 ```
 One timestamp-based guard, DRY — never per-state duplication.
 
+## integrity.ts — PURE precache check
+
+```ts
+// True only if every required URL is present. Vacuously true for an empty list.
+export function isPrecacheComplete(requiredUrls: string[], presentUrls: Set<string>): boolean;
+```
+The whole decision, nothing else: given the assets a render can't happen
+without and the assets actually found in the Cache API, is the offline
+precache whole? No DOM, caches, or `navigator` — main.ts gathers both inputs
+(iOS can evict Cache API storage) and renders the restore card off the boolean.
+
 ## decks.ts — loader
 
 ```ts
@@ -146,7 +159,10 @@ export function loadDecks(): Deck[];
 ## main.ts — the only impure module
 
 Owns: DOM rendering of every screen (into `#stage`, setting `data-state`),
-`Date.now()`, the gesture poll timer, `navigator.wakeLock` (+ NoSleep fallback +
+`Date.now()`, the long-press EXIT timer (a `setTimeout` armed per held pointer,
+not a periodic poll; self-heals lost pointers by sweeping on the next
+interaction), the boot-time precache integrity check (integrity.ts) →
+restore card, `navigator.wakeLock` (+ NoSleep fallback +
 Auto-Lock note on the about overlay), `document.fonts.ready`-gated first render, `img.decode()`
 pre-warm (forward AND reverse) with catch → treat-as-image-free, JS word
 measurement → `--word-size`, localStorage persistence `{deckId,cardIndex,beat}`
@@ -154,9 +170,11 @@ measurement → `--word-size`, localStorage persistence `{deckId,cardIndex,beat}
 corrupt data), orientation → rotate overlay, and the a11y baseline (labelled
 deck rows, word-as-text, `aria-hidden` art, accessible tap-stage name).
 
-`data-state` values on `#stage`: `deck_pick | word | image | end | rotate | about`
+`data-state` values on `#stage`: `deck_pick | word | image | end | rotate | restore | about`
 (plus `boot`, the pre-first-render shell value in index.html, replaced once
-fonts settle — e2e tests key off its disappearance).
+fonts settle — e2e tests key off its disappearance). Like `rotate`, `restore`
+is a live boot overlay owned by main.ts, not a machine.ts state; it takes
+precedence over `rotate` (evicted art is still broken in landscape).
 
 ## Deck JSON shape (Deck-data + Build-scripts + Tests all rely on this)
 

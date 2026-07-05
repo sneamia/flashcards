@@ -155,7 +155,13 @@ body {
 /* --- Full-screen system cards (rotate / end / about) reuse one calm surface --- */
 .syscard {
   position: absolute; inset: 0;
-  display: grid; place-items: center;
+  /* Flex column (not grid place-items:center): with >1 child a grid stretches
+     its implicit rows to fill the height, centering each child in its own
+     ~half and defeating the per-card `gap`. Flex keeps children packed at the
+     real gap and centers the whole group — so a title and its sub-line read as
+     one message, not two fragments at opposite ends. */
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
   text-align: center; padding: 8vh 8vw;
   font-size: clamp(1.4rem, 5vw, 2.4rem);
   color: var(--ink);
@@ -167,6 +173,14 @@ body {
 /* Rotate card: text-only (D3 — no phone glyph; a glyph would be the app's only
    decoration, violating zero-decoration). */
 .rotate .t { font-weight: 700; font-size: clamp(1.5rem, 7vw, 2.2rem); line-height: 1.15; color: var(--ink); }
+
+/* Restore card: boot-time integrity check (src/integrity.ts) found the
+   offline precache incomplete (iOS can evict Cache API storage). Text-only,
+   same calm surface as rotate/end/about — no glyph, no button chrome, no
+   spinner. Recovers on its own via the `online` event (see main.ts). */
+.restore { gap: 0.6em; }
+.restore .t { font-weight: 700; font-size: clamp(1.5rem, 7vw, 2.2rem); line-height: 1.15; color: var(--ink); }
+.restore .sub { font-size: clamp(1rem, 3.2vw, 1.1rem); color: var(--label-readable); line-height: 1.5; }
 
 /* About overlay: long-press the deck picker. Full gesture list + attribution.
    Keeps legal text off the home screen. */

@@ -140,6 +140,19 @@ describe('lost-pointerup recovery (deadlock prevention)', () => {
     expect(r.handle({ kind: 'up', pointerId: 2, t: STALE_POINTER_MS + 150 })).toBe('ADVANCE');
   });
 
+  it('a later down sweeps a stale entry even when poll() never runs at expiry', () => {
+    // The one-shot EXIT timer calls poll() once at ~LONG_PRESS_MS and never
+    // again — there is no periodic poll. So recovery from a lost up/cancel must
+    // come from handle('down') itself, not a timer that fires at STALE_POINTER_MS.
+    const r = createRecognizer();
+    r.handle({ kind: 'down', pointerId: 1, t: 0 }); // its 'up' is never delivered
+    expect(r.poll(LONG_PRESS_MS)).toBe('EXIT'); // the sole poll the timer schedules
+    // No poll() at STALE_POINTER_MS. A fresh tap long after must still be a
+    // clean single-pointer ADVANCE — the down sweeps the phantom pointer first.
+    r.handle({ kind: 'down', pointerId: 2, t: STALE_POINTER_MS + 100 });
+    expect(r.handle({ kind: 'up', pointerId: 2, t: STALE_POINTER_MS + 150 })).toBe('ADVANCE');
+  });
+
   it('reset() hard-clears mid-gesture state (app backgrounded)', () => {
     const r = createRecognizer();
     r.handle({ kind: 'down', pointerId: 1, t: 0 });
