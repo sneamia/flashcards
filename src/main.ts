@@ -22,6 +22,7 @@ import {
   type GestureAction,
   type Recognizer,
   LONG_PRESS_MS,
+  STALE_POINTER_MS,
   createRecognizer,
 } from './gestures';
 import { isLocked } from './lockout';
@@ -542,10 +543,12 @@ let screenAtPointerDown: Screen = 'deck_pick';
 // Two-finger BACK and plain taps never need this: both resolve synchronously
 // from recognizer.handle() on 'up', per gestures.ts.
 
-// Pointers currently held down, mirroring the recognizer's own bookkeeping
-// closely enough to know when a gesture session starts/ends. Needed (rather
-// than a plain counter) only to correctly key each up/cancel's removal.
-const downPointerIds = new Set<number>();
+// Pointers currently held down (pointerId -> down timestamp), mirroring the
+// recognizer's own bookkeeping closely enough to know when a gesture session
+// starts/ends. A Map (not a Set) so a pointer whose up/cancel was lost can be
+// swept by age on the next interaction — otherwise it would latch
+// `sessionBlocked` and deadlock EXIT re-arming until the app is backgrounded.
+const downPointerIds = new Map<number, number>();
 // True once this gesture session has ever had 2+ pointers down at once — an
 // EXIT can never fire for the rest of that session (gestures.ts's `multi`
 // latches for the whole gesture), so no timer needs to be (re-)armed for it.
@@ -579,6 +582,17 @@ function resetPointerTracking(): void {
   clearExitTimer();
 }
 
+// Drop pointers held longer than STALE_POINTER_MS — their terminating event was
+// lost. If that empties the session, clear the latched block so EXIT can arm
+// again. Ages against the caller's clock (PointerEvent.timeStamp), matching how
+// the timestamps were recorded.
+function sweepStalePointers(now: number): void {
+  for (const [id, t] of downPointerIds) {
+    if (now - t >= STALE_POINTER_MS) downPointerIds.delete(id);
+  }
+  if (downPointerIds.size === 0) sessionBlocked = false;
+}
+
 function onPointerDown(e: PointerEvent): void {
   screenAtPointerDown = state.screen;
   // A user gesture is the one context where a previously-denied wake lock or
@@ -592,7 +606,12 @@ function onPointerDown(e: PointerEvent): void {
   }
   handleRecognized(recognizer.handle({ kind: 'down', pointerId: e.pointerId, t: e.timeStamp }));
 
-  downPointerIds.add(e.pointerId);
+  // Evict any pointer whose up/cancel was lost before it can misread this fresh
+  // gesture as multi-touch. Matches the recognizer's own stale sweep, so main's
+  // bookkeeping self-heals on the next interaction instead of only on
+  // backgrounding — the periodic poll that used to do this is gone.
+  sweepStalePointers(e.timeStamp);
+  downPointerIds.set(e.pointerId, e.timeStamp);
   if (downPointerIds.size >= 2) {
     // A second pointer joined this gesture — it's resolving as BACK (or a
     // palm), never EXIT. Drop any pending timer from the first pointer.
