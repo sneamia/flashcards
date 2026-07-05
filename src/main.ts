@@ -603,9 +603,8 @@ function onPointerDown(e: PointerEvent): void {
     armExitTimer();
   }
 }
-function onPointerUp(e: PointerEvent): void {
-  handleRecognized(recognizer.handle({ kind: 'up', pointerId: e.pointerId, t: e.timeStamp }));
-  downPointerIds.delete(e.pointerId);
+function releasePointer(pointerId: number): void {
+  downPointerIds.delete(pointerId);
   if (downPointerIds.size === 0) {
     // Gesture fully resolved (or abandoned) — no pointer left down means no
     // future EXIT is possible until a new pointerdown starts one.
@@ -613,13 +612,13 @@ function onPointerUp(e: PointerEvent): void {
     sessionBlocked = false;
   }
 }
+function onPointerUp(e: PointerEvent): void {
+  handleRecognized(recognizer.handle({ kind: 'up', pointerId: e.pointerId, t: e.timeStamp }));
+  releasePointer(e.pointerId);
+}
 function onPointerCancel(e: PointerEvent): void {
   handleRecognized(recognizer.handle({ kind: 'cancel', pointerId: e.pointerId }));
-  downPointerIds.delete(e.pointerId);
-  if (downPointerIds.size === 0) {
-    clearExitTimer();
-    sessionBlocked = false;
-  }
+  releasePointer(e.pointerId);
 }
 
 function attachPointerListeners(): void {
@@ -830,6 +829,11 @@ async function boot(): Promise<void> {
   // on its own), so there's nothing special to do here.
   if (!navigator.onLine && !(await checkPrecacheIntegrity())) {
     restoreNeeded = true;
+    // Pre-warm the font like every other screen so the calm restore card
+    // never paints in fallback and then swaps to Andika (a visible motion the
+    // zero-swap principle rules out). If the font itself was evicted, load()
+    // rejects and this resolves immediately — no added delay.
+    await fontsReadyOrTimeout(FONT_TIMEOUT_MS);
     render();
     window.addEventListener('online', recoverFromRestore, { once: true });
     return;
