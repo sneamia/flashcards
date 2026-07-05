@@ -31,6 +31,19 @@
 - **Why deferred:** Visual output is already coherent and this is a 173-line hand-tuned file; adding a type-scale system risks indirection with zero user-visible gain. Low priority — may not be worth doing.
 - **Impact:** Polish. **Category:** typography/consistency.
 
+### Cross-digraph variety mode (from user request 2026-07-04)
+- **What:** A way to see words spanning more than one digraph in a session, for variety once a child already knows the individual digraphs.
+- **Design constraint:** Random shuffle across all digraphs is explicitly rejected in the design doc — it removes the one-digraph-at-a-time scaffolding a beginning reader needs, turning every card into a cold decode. The sanctioned shape is the curated cross-digraph **review deck** already tracked below (`chip → ship → shop → chop`): a 5th deck, ordered by design, added alongside the per-digraph decks, never replacing them or randomizing them.
+- **Why deferred:** Needs the word ladders authored; only earns its place after a child has the individual digraphs down. Decide after a real session.
+- **Impact:** Feature. **Category:** content/pedagogy. (Consolidate with the "Mixed 'review' deck" line below when built.)
+
+### Figurative image coverage (from user request + /design-review 2026-07-04)
+- **What:** Raise reveal-image coverage past today's 13/32 cards (41%) by sourcing *figurative* illustrations for concrete-but-not-literal words: `hush` (finger to lips), `wish` (shooting star), `whiz` (speed lines), `wham` (impact burst), `chin`, `shin`, `thud`, `math` (numbers). Realistic ceiling ~60%.
+- **Rule:** Add art only where the image reliably evokes the word for a 3–5yo. Leave the pure function words image-free — `much, such, that, this, them, with, when, rich` — the image-free one-beat is the honest, correct card for those, not a gap to fill.
+- **Constraints:** OpenMoji source, palette-remapped to muted warm (no blues), CC BY-SA, run through the existing `fetch-art` + `validate` pipeline.
+- **Why deferred:** Additive polish; the image-free fallback already renders cleanly. Incremental — no single card blocks a ship.
+- **Impact:** Feature/polish. **Category:** content/art.
+
 ## v1.1 (already in design doc, tracked here for visibility)
 - Sentence-finale cards + composed scene illustrations (`sentence` type already schema-valid, warned-and-skipped in v1).
 - Mixed "review" deck with cross-digraph word ladders (chip → ship → shop → chop).
