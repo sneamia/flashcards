@@ -6,7 +6,7 @@
   "cards": [
     { "type": "word", "text": "whip", "graphemes": ["wh", "i", "p"], "img": "art/whip.svg" },
     { "type": "word", "text": "whiz", "graphemes": ["wh", "i", "z"] },
-    { "type": "word", "text": "wham", "graphemes": ["wh", "a", "m"] },
+    { "type": "word", "text": "wham", "graphemes": ["wh", "a", "m"], "img": "art/wham.svg" },
     { "type": "word", "text": "when", "graphemes": ["wh", "e", "n"] }
   ]
 }

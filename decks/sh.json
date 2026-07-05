@@ -12,7 +12,7 @@
     { "type": "word", "text": "shut", "graphemes": ["sh", "u", "t"] },
     { "type": "word", "text": "fish", "graphemes": ["f", "i", "sh"], "img": "art/fish.svg" },
     { "type": "word", "text": "dish", "graphemes": ["d", "i", "sh"], "img": "art/dish.svg" },
-    { "type": "word", "text": "wish", "graphemes": ["w", "i", "sh"] },
-    { "type": "word", "text": "hush", "graphemes": ["h", "u", "sh"] }
+    { "type": "word", "text": "wish", "graphemes": ["w", "i", "sh"], "img": "art/wish.svg" },
+    { "type": "word", "text": "hush", "graphemes": ["h", "u", "sh"], "img": "art/hush.svg" }
   ]
 }

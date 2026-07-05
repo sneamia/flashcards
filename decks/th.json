@@ -7,7 +7,7 @@
     { "type": "word", "text": "thin", "graphemes": ["th", "i", "n"] },
     { "type": "word", "text": "thud", "graphemes": ["th", "u", "d"] },
     { "type": "word", "text": "bath", "graphemes": ["b", "a", "th"], "img": "art/bath.svg" },
-    { "type": "word", "text": "math", "graphemes": ["m", "a", "th"] },
+    { "type": "word", "text": "math", "graphemes": ["m", "a", "th"], "img": "art/math.svg" },
     { "type": "word", "text": "moth", "graphemes": ["m", "o", "th"], "img": "art/moth.svg" },
     { "type": "word", "text": "that", "graphemes": ["th", "a", "t"] },
     { "type": "word", "text": "this", "graphemes": ["th", "i", "s"] },
