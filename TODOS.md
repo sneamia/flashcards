@@ -26,6 +26,11 @@
 - **What:** Replace the always-on 100ms poll setInterval with a setTimeout scoped to pointerdown (EXIT at exactly 800ms, zero idle wakeups).
 - **Why deferred:** Battery delta is negligible (wake lock holds the screen on anyway) and the change touches the most delicate input path.
 
+### Type-scale token (from /design-review 2026-07-04, Polish)
+- **What:** Font sizes are untokenized — `0.72rem` appears on both `.corner` and `.pfoot .gest`, `.ct` is `0.8rem`, and each card size is its own `clamp()`. A `--step-*` scale would make "same size" relationships enforced rather than coincidental.
+- **Why deferred:** Visual output is already coherent and this is a 173-line hand-tuned file; adding a type-scale system risks indirection with zero user-visible gain. Low priority — may not be worth doing.
+- **Impact:** Polish. **Category:** typography/consistency.
+
 ## v1.1 (already in design doc, tracked here for visibility)
 - Sentence-finale cards + composed scene illustrations (`sentence` type already schema-valid, warned-and-skipped in v1).
 - Mixed "review" deck with cross-digraph word ladders (chip → ship → shop → chop).
