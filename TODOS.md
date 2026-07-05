@@ -1,6 +1,6 @@
 # TODOS
 
-## Shipped (unreleased — CVC + Blends + category shuffle, 2026-07-05)
+## Shipped in v1.2.0 (2026-07-05) — CVC + Blends + category shuffle
 
 - **CVC + Blends decks** — a 20-word CVC deck (short-a…u) and an 18-word Blends
   deck (L/R/S initial + `-nk`/`-st`/`-nt` finals), both authored for ~100% image
@@ -20,6 +20,40 @@
   `shut` (closed door) added; `chip` redrawn as a potato chip (American English,
   was french fries). Overall coverage ~53% → ~83%. DESIGN.md now permits ink-arrow
   annotation art.
+
+## Deferred from v1.2.0 ship review (2026-07-05)
+
+### render() null-deck recovery is incomplete defense-in-depth (adversarial review, INVESTIGATE)
+- **What:** `render()` in `main.ts` (~:468), on `screen==='card'` with `findDeck()===null`,
+  repaints the picker but leaves `state.screen==='card'`. Since `startFromRow` guards on
+  `screen==='deck_pick'`, every picker row is then dead — only an EXIT long-press recovers.
+- **Reachability:** provably unreachable today (rehydrate maps null decks to `initialState`;
+  the `buildShuffledDeck` null branch can't fire because `startId` always names a real group;
+  start actions don't span a macrotask so dispatches can't interleave). This is latent, not a
+  live bug — but the defense-in-depth is itself incomplete if any future change reaches it.
+- **Fix:** in that branch also reset `state = initialState()` (or dispatch EXIT) rather than
+  only re-painting. One line. **Impact:** Robustness. **Category:** state machine.
+
+### dispatch() unknown-category shuffle null path untested (testing specialist, conf 5)
+- **What:** `activeShuffleDeck = group ? buildShuffledDeck(...) : null` (main.ts ~:557) — the
+  null branch (a `shuffle:<id>` whose category is absent → findDeck→null→picker) has no test.
+- **Fix:** extract the category-resolution into a tiny pure helper and unit-test the null
+  branch, or add an e2e that routes a synthetic unknown shuffle id and asserts picker fallback.
+  Not unit-testable as-is. **Impact:** Coverage. **Category:** testing.
+
+### Picker heading outline starts at h2 (design specialist, conf 6) — a11y
+- **What:** `.cat` category headers are `<h2>` but the app has no `<h1>` anywhere (corner label
+  and card words are `<div>`s), so the screen-reader heading outline skips level 1.
+- **Why deferred:** ties into the already-Held on-device VoiceOver work below — partial a11y
+  (one h1) without the full VoiceOver pass would be inconsistent. Do it with that pass.
+- **Fix:** add a visually-hidden `<h1>` for the picker (or promote the corner label), keeping
+  the `.cat` small-caps styling. **Impact:** a11y. **Category:** accessibility.
+
+### rowEl() / shuffleRowEl() duplication (maintainability specialist, conf 5) — optional
+- **What:** the two picker-row builders share an ~8-line button-construction + click-wiring
+  skeleton. Kept separate for now (clarity in user-visible rendering code).
+- **Fix (if touched again):** extract `makeRow({cls,label,count,aria,startId})`. **Impact:**
+  minor DRY. **Category:** maintainability.
 
 ## Shipped in v1.1.0 (2026-07-05)
 

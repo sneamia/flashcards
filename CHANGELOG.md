@@ -6,6 +6,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-05
+
 ### Added
 - Two new decks: a **CVC** deck (20 short-vowel words) and a **Blends** deck (18
   initial/final consonant blends), joining the digraphs into three categories.
