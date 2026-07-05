@@ -12,16 +12,18 @@ file is only the *code seams*.
 
 ```
 src/
-  types.ts       # Deck, Card (DONE — do not edit the exported shapes)
+  types.ts       # Deck, Card, CategoryGroup (DONE — do not edit the exported shapes)
+  categories.ts  # PURE category manifest (id/title/order); validate-decks derives ids from it — Core-logic agent
   styles.css     # design tokens + all screen CSS (DONE — extend, don't rewrite)
   machine.ts     # PURE state reducer (no DOM, no timers) — Core-logic agent
   gestures.ts    # PURE pointer-event → Action recognizer — Core-logic agent
   lockout.ts     # PURE timestamp lockout guard — Core-logic agent
   integrity.ts   # PURE precache-completeness check (offline eviction) — Core-logic agent
-  decks.ts       # deck loader (import.meta.glob, sort, skip sentence) — Core-logic agent
+  shuffle.ts     # PURE Fisher–Yates (injected rng) — Core-logic agent
+  decks.ts       # deck loader + category grouping + shuffle-pool builder (skip sentence) — Core-logic agent
   main.ts        # DOM wiring: renders screens, owns timers/wakelock/persistence — Core-logic agent
 decks/
-  sh.json ch.json th.json wh.json   # Deck-data agent
+  cvc.json sh.json ch.json th.json wh.json blends.json   # Deck-data agent
 public/
   art/*.svg      # placeholder + pipeline art — Build-scripts agent
   fonts/*.woff2  # Andika — PWA/fonts agent

@@ -80,8 +80,9 @@ auto-discovered, grouped under their category, and sorted by `order` — **no
 app-logic changes required.** (Per Eng Decision #11: this is *not* "zero code
 changes" in general — a new deck still needs an art-pipeline run and passes
 through build-time validation — but it never touches `src/`.) To add a *new
-category*, add it to `src/categories.ts` and the `CATEGORY_IDS` set in
-`scripts/validate-decks.mjs`.
+category*, add it to `src/categories.ts` only — `scripts/validate-decks.mjs`
+derives the valid category id set from that file at build time, so the two can't
+drift.
 
 ## Deploy
 
