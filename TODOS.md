@@ -104,10 +104,9 @@
 - **Rule (updated):** add art only where the image reliably evokes the word for a 3–5yo — a plain OpenMoji glyph OR, where none reads, a hand-drawn figurative drawing (an ink arrow may point at the named part; see DESIGN.md). Palette-remapped muted warm (no blues), CC BY-SA where OpenMoji-derived, via the `fetch-art` + `validate` pipeline. Figurative annotation lifts the old ~60% ceiling.
 - **Impact:** Feature/polish. **Category:** content/art.
 
-### Picker footer gesture-hint mismatch (from /design-review 2026-07-05, deferred by user)
-- **What:** The deck-picker footer shows `two-finger tap: back · hold: exit` (`GESTURE_LINES.slice(1)`), but the picker is the root screen: there's no beat to go "back" to, and a long-press there opens the About overlay, not an "exit".
-- **Why deferred:** User call (2026-07-05) — it's a defensible persistent gesture legend, and the "hold" hint does point the parent at the long-press that reveals the full About legend. Leaving as-is.
-- **If revisited:** either show the picker's own gesture (`hold: about`, via a new constant so the in-deck legend stays intact) or drop the footer on the picker entirely.
+### Picker footer gesture-hint mismatch — FIXED by /design-review on v1.2/cvc-blends-category-shuffle, 2026-07-05
+- **What:** The deck-picker footer showed `two-finger tap: back · hold: exit` (`GESTURE_LINES.slice(1)`), but the picker is the root screen: there's no beat to go "back" to, and a long-press there opens the About overlay, not an "exit".
+- **Resolution:** Footer now reads `hold for about` (commit 87f7a8a) — the picker's one non-obvious gesture. The in-deck legend (`GESTURE_LINES`) still renders in full on the about overlay; the footer no longer derives from it. DESIGN.md updated to match.
 - **Impact:** Polish. **Category:** content/microcopy.
 
 ## v1.1 (already in design doc, tracked here for visibility)
