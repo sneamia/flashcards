@@ -279,12 +279,19 @@ function rowEl(deck: Deck): HTMLButtonElement {
 function shuffleRowEl(group: CategoryGroup): HTMLButtonElement {
   const total = group.decks.reduce((n, d) => n + d.cards.length, 0);
   const startId = `${SHUFFLE_PREFIX}${group.id}`;
+  // "all" only reads true when the run spans more than one deck (e.g. DIGRAPHS
+  // = sh+ch+th+wh). A single-deck category (CVC, Blends) just shuffles its one
+  // deck, so drop "all" there — nothing is being combined.
+  const label = group.decks.length > 1 ? 'shuffle all' : 'shuffle';
   const btn = el('button', 'row shuffle');
   btn.type = 'button';
   btn.dataset.shuffle = group.id;
-  btn.setAttribute('aria-label', `Shuffle all ${group.title}, ${total} words`);
+  btn.setAttribute(
+    'aria-label',
+    `${group.decks.length > 1 ? 'Shuffle all' : 'Shuffle'} ${group.title}, ${total} words`,
+  );
   const dg = el('span', 'dg');
-  dg.textContent = 'shuffle all';
+  dg.textContent = label;
   const ct = el('span', 'ct');
   ct.textContent = `${total} words`;
   btn.append(dg, ct);
