@@ -11,9 +11,15 @@ const ROOT = resolve(__dirname, '..');
 const DECKS_DIR = join(ROOT, 'decks');
 const ART_DIR = join(ROOT, 'public', 'art');
 
-// Category ids the picker knows how to group under. Hardcoded here (this .mjs
-// can't import the TS manifest) — keep in sync with src/categories.ts CATEGORIES.
-const CATEGORY_IDS = new Set(['cvc', 'digraphs', 'blends']);
+// Category ids the picker knows how to group under. Derived from the TS
+// manifest (src/categories.ts) rather than hand-copied, so the two can't drift:
+// a category that exists in one place but not the other would let the validator
+// pass while groupByCategory() silently drops the deck from the picker. This
+// .mjs can't import TS, so parse the `id:` string literals out of CATEGORIES.
+const CATEGORIES_SRC = readFileSync(join(ROOT, 'src', 'categories.ts'), 'utf8');
+const CATEGORY_IDS = new Set(
+  [...CATEGORIES_SRC.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1]),
+);
 // Reserved id namespace for synthetic per-category "shuffle all" decks
 // (src/decks.ts SHUFFLE_PREFIX). A real deck must never claim it.
 const SHUFFLE_PREFIX = 'shuffle:';
@@ -22,6 +28,10 @@ const errors = [];
 const warnings = [];
 const orders = new Map(); // `${category}:${order}` -> deckFile (order is unique WITHIN a category)
 const ids = new Map(); // id -> deckFile (duplicate id = second deck silently unreachable)
+
+if (CATEGORY_IDS.size === 0) {
+  errors.push('src/categories.ts: parsed zero category ids (manifest moved or regex drift?)');
+}
 
 const files = readdirSync(DECKS_DIR).filter((f) => f.endsWith('.json'));
 if (files.length === 0) errors.push('decks/: no .json deck files found');
