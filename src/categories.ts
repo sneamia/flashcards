@@ -11,8 +11,9 @@
    (CVC first, then Digraphs, then Blends) — distinct from a deck's `order`,
    which sorts decks WITHIN a category.
 
-   validate-decks.mjs hardcodes the same id set (it can't import this .ts) —
-   keep the two in sync.
+   validate-decks.mjs can't import this .ts, so it derives the id set by
+   regex-parsing the `id:` literals out of this file at runtime — the two
+   stay in sync automatically, no manual step.
    ========================================================================= */
 
 export interface CategoryMeta {

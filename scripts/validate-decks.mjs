@@ -20,9 +20,13 @@ const CATEGORIES_SRC = readFileSync(join(ROOT, 'src', 'categories.ts'), 'utf8');
 const CATEGORY_IDS = new Set(
   [...CATEGORIES_SRC.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1]),
 );
-// Reserved id namespace for synthetic per-category "shuffle all" decks
-// (src/decks.ts SHUFFLE_PREFIX). A real deck must never claim it.
-const SHUFFLE_PREFIX = 'shuffle:';
+// Reserved id namespace for synthetic per-category "shuffle all" decks.
+// A real deck must never claim it. Derived from src/decks.ts (same anti-drift
+// reason as CATEGORY_IDS above) rather than hand-copied.
+const DECKS_SRC = readFileSync(join(ROOT, 'src', 'decks.ts'), 'utf8');
+const SHUFFLE_PREFIX = DECKS_SRC.match(
+  /SHUFFLE_PREFIX\s*=\s*'([^']+)'/,
+)?.[1] ?? 'shuffle:';
 
 const errors = [];
 const warnings = [];
