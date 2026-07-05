@@ -106,7 +106,6 @@ body {
   max-height: var(--art-max-h);
   max-width: var(--art-max-w);
   width: auto; height: auto;
-  image-rendering: auto;
 }
 
 .reveal .word {
