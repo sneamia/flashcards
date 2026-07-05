@@ -386,6 +386,14 @@ test.describe('rehydrate validation', () => {
     await seedAndReload(page, JSON.stringify({ deckId: 'gone', cardIndex: 0, beat: 'word' }));
     await expect(page.locator('#stage')).toHaveAttribute('data-state', 'deck_pick');
   });
+
+  // findDeck()'s SHUFFLE_PREFIX branch: a shuffle run is never persisted, so any
+  // persisted shuffle: id is stale by definition and must resolve to null at boot
+  // rather than a broken card. Distinct code path from the plain decks.find() guard.
+  test('a persisted shuffle deckId falls back to the picker at boot', async ({ page }) => {
+    await seedAndReload(page, JSON.stringify({ deckId: 'shuffle:digraphs', cardIndex: 0, beat: 'word' }));
+    await expect(page.locator('#stage')).toHaveAttribute('data-state', 'deck_pick');
+  });
 });
 
 test.describe('word sizing', () => {
