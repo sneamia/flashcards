@@ -1,6 +1,6 @@
 # TODOS
 
-## Shipped 2026-07-05 (this pass — uncommitted in working tree, pending review)
+## Shipped in v1.1.0 (2026-07-05)
 
 - **Offline cache-eviction recovery** — boot integrity check probes critical precached
   assets (built JS/CSS, both Andika woff2, representative art) via the Cache API; if
@@ -11,11 +11,48 @@
   opentype.js (decompressing the bundled woff2 at gen time), fixing the double-story "a"
   librsvg was substituting. 4 PNGs regenerated; single-story confirmed.
 - **Gesture-scoped long-press timer** — replaced the always-on 100ms `setInterval` poll
-  with a `pointerdown`-scoped `setTimeout` (fires EXIT at ~820ms, zero idle wakeups);
-  `gestures.ts` untouched.
+  with a `pointerdown`-scoped `setTimeout` (fires EXIT at ~820ms, zero idle wakeups).
+  Ship review caught that the removed poll also ran the `STALE_POINTER_MS` lost-pointer
+  self-heal; the sweep now runs on the next `handle('down')` / `onPointerDown` instead
+  (`gestures.ts` + `main.ts`, regression-tested), keeping the zero-idle-timer win.
 - **Figurative image coverage** — reveal-image coverage raised 41% → **53% (17/32)**:
   added `hush` (shushing face), `wish` (shooting star), `wham` (collision burst),
   `math` (input numbers), all palette-remapped warm via the fetch-art pipeline.
+- **Ship-review polish** — restore card pre-warms the font (no fallback→Andika flash) and
+  its explanation clamps ≥16px in portrait; `releasePointer()` extracted (DRY).
+
+## Deferred from v1.1.0 ship review (2026-07-05)
+
+### Offline restore recovery hardening (adversarial review)
+- **Restore may not recover on a backgrounded reconnect** (conf 8): recovery relies on a
+  single one-shot `online` event. The natural fix action (background the PWA to toggle
+  Wi-Fi) can coalesce/drop that event on a thawed page, stranding the child on the
+  restore card until force-quit. **Fix:** also re-check on `visibilitychange`→visible +
+  `navigator.onLine`, not just the one-shot `online`.
+- **`navigator.onLine` over-trust** (conf 7): a captive-portal / connected-but-no-internet
+  reconnect fires `online` → reload → boot sees online → skips the integrity check →
+  renders degraded cards with no guidance (worse than the restore card). **Fix:** on
+  reload still run `checkPrecacheIntegrity()` even when online, or verify reachability
+  before dismissing restore.
+- **Reload may not actually re-precache** (INVESTIGATE): Workbox only fills the precache on
+  SW *install*; a bare `location.reload()` with the same activated SW serves evicted
+  entries from network without repopulating, so the next offline launch shows restore
+  again. **Fix:** force `registration.update()` / reinstall on recovery, confirm vs real
+  iOS eviction behavior.
+- **Restore over-blocks on art-only eviction** (INVESTIGATE): art has a graceful
+  image-free fallback (D2), yet a single missing art SVG in the required set blocks the
+  whole app offline. **Consider:** drop art from the *required* set so restore fires only
+  for assets without a runtime fallback (built JS/CSS + fonts).
+
+### Test-coverage gaps (all in changed code, coverage 83% — above 80% target)
+- `gatherPresentUrls` untested branches: `!('caches' in window)` and the `caches.match`
+  throw/catch.
+- `onPointerCancel` release path (iOS pointer-steal) has no e2e test.
+- `resetPointerTracking()` on `visibilitychange`→hidden has no e2e test.
+
+### Minor
+- `criticalAssetUrls` `urls.size >= 6` magic number: derive from a named
+  `ART_SAMPLE_COUNT` so the art-sample cap is independent of the built/font asset count.
 
 ## v1.1
 
