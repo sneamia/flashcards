@@ -308,9 +308,13 @@ function renderPicker(): DocumentFragment {
 
   const pfoot = el('div', 'pfoot');
   const gest = el('div', 'gest');
-  // Derived from the same constant the about overlay renders, so the footer
-  // hint and the full gesture list can never drift apart.
-  gest.textContent = GESTURE_LINES.slice(1).join(' · ');
+  // The picker footer surfaces the one picker gesture that isn't self-evident:
+  // a long-press opens the about overlay (mapGesture maps EXIT→ABOUT on the
+  // picker). It deliberately does NOT reuse GESTURE_LINES — those describe the
+  // in-deck gestures ("back", "exit"), which mean nothing at the picker root
+  // (BACK is a no-op there and hold opens about, not exit). The full in-deck
+  // list still lives on the about overlay itself (renderAbout).
+  gest.textContent = 'hold for about';
   pfoot.append(gest);
 
   picker.append(decksEl, pfoot);
