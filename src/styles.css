@@ -1,0 +1,172 @@
+/* =========================================================================
+   Potty Flashcards — production styles
+   Canonical design system: /DESIGN.md. This file IMPLEMENTS that doc; when
+   they disagree, DESIGN.md is the intent and this file is fixed to match.
+
+   Direction C "Big Ink". Single warm world (NOT themed light/dark). Zero
+   motion: no transitions, no animations, no cursor. State changes are instant
+   swaps driven by [data-state] on #stage.
+   ========================================================================= */
+
+/* --- Andika (SIL OFL, bundled). Precached by the service worker. --- */
+@font-face {
+  font-family: 'Andika';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block; /* block, not swap — a swap would be visible movement (FOUT) */
+  src: url('/flashcards/fonts/Andika-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Andika';
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url('/flashcards/fonts/Andika-Bold.woff2') format('woff2');
+}
+
+:root {
+  /* --- PRODUCT design tokens (approved spec — never themed) --- */
+  --cream: #f7f1e3;          /* warm cream background, everywhere */
+  --ink: #3d3833;            /* warm near-black, all letters, single ink (~10.3:1) */
+  --label-readable: #756b58; /* MUST-READ chrome: gesture hint, "N words" (verify >=4.5:1 at build) */
+  --label: #a89f8d;          /* IGNORABLE chrome only: barely-there corner label (~1.9:1, intentional) */
+  --hairline: rgba(61, 56, 51, 0.14);
+
+  /* Word size is MEASURED by main.ts on deck load (largest size the deck's
+     longest word fits) and written to --word-size, so cards never jump size
+     within a deck. The clamp() below is only the pre-JS fallback: big, but
+     guaranteed not to clip. */
+  --word-size: clamp(4rem, 26vw, 20rem);
+
+  /* Reveal word (confirmation beat) — deliberately much smaller than the word. */
+  --reveal-word-size: clamp(1.5rem, 7vw, 3.2rem);
+
+  /* Illustration cap — large, but never taller than the safe area. */
+  --art-max-h: 64vh;
+  --art-max-w: 82vw;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; margin: 0; background: var(--cream); }
+
+body {
+  font-family: 'Andika', system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  /* Kill every browser affordance that fights a parent-held, no-chrome card. */
+  touch-action: none;            /* suppress double-tap zoom AND pinch (two-finger back-tap starts as a pinch) */
+  overscroll-behavior: none;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+  cursor: none;                  /* no cursor, ever */
+}
+
+/* The whole screen is one invisible tap target. No buttons, no chrome. */
+#stage {
+  position: fixed; inset: 0;
+  display: grid; place-items: center;
+  overflow: hidden;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* Parent-only corner label ("sh · 3 of 10"). Barely-there by design.
+   pointer-events:none so it never intercepts a tap. */
+.corner {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 10px);
+  left: calc(env(safe-area-inset-left) + 14px);
+  font-size: 0.72rem; letter-spacing: 0.02em;
+  color: var(--label); opacity: 0.85;
+  pointer-events: none;
+}
+
+/* --- WORD beat (also the image-free one-beat card) --- */
+.word {
+  font-weight: 700;
+  font-size: var(--word-size);
+  line-height: 0.9;
+  letter-spacing: 0;             /* Andika's own generous spacing — never squeeze */
+  text-align: center;
+  max-width: 100vw;
+}
+
+/* --- IMAGE beat: illustration large up top, word small bottom-right --- */
+#stage[data-state="image"] { place-items: stretch; }  /* let the reveal fill */
+
+.reveal { position: absolute; inset: 0; }
+
+.reveal .art {
+  position: absolute;
+  top: 6vh; left: 50%; transform: translateX(-50%);
+  max-height: var(--art-max-h);
+  max-width: var(--art-max-w);
+  width: auto; height: auto;
+  image-rendering: auto;
+}
+
+.reveal .word {
+  position: absolute;
+  /* abspos layers sit on #stage's PADDING box, so the safe-area padding on
+     #stage does not protect them — re-apply the insets here or the reveal
+     word lands under the home indicator / side inset on notched iPhones. */
+  right: calc(5vw + env(safe-area-inset-right));
+  bottom: calc(5vh + env(safe-area-inset-bottom));
+  font-size: var(--reveal-word-size);
+  line-height: 1;
+}
+
+/* --- Deck picker (the only screen the parent navigates) --- */
+.picker { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 30px 0 0; }
+.decks {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  /* max() with the safe-area insets: .picker is an abspos layer, so it
+     bypasses #stage's env() padding (see .reveal .word). */
+  padding: 0 max(clamp(28px, 9%, 64px), env(safe-area-inset-right))
+           0 max(clamp(28px, 9%, 64px), env(safe-area-inset-left));
+}
+.row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 13px 2px;
+  min-height: 44px;              /* >=44px tap target */
+  border-bottom: 1px solid var(--hairline);
+  /* it's a real control: strip default button chrome */
+  background: none; border-left: 0; border-right: 0; border-top: 0;
+  width: 100%; text-align: left; font-family: inherit; color: inherit;
+  cursor: none;
+}
+.row:last-child { border-bottom: 0; }
+.row .dg { font-weight: 700; font-size: clamp(28px, 8vw, 34px); line-height: 1; color: var(--ink); }
+.row .ct { font-size: 0.8rem; color: var(--label-readable); }  /* must-read: readable token */
+
+.pfoot {
+  /* The must-read gesture hint must clear the home-indicator zone. */
+  padding: 8px clamp(28px, 9%, 64px) calc(11px + env(safe-area-inset-bottom));
+  text-align: center;
+}
+.pfoot .gest {
+  font-size: 0.72rem; color: var(--label-readable);   /* must-read: parent's only gesture reference */
+  border-top: 1px solid var(--hairline); padding-top: 8px;
+}
+
+/* --- Full-screen system cards (rotate / end / about) reuse one calm surface --- */
+.syscard {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  text-align: center; padding: 8vh 8vw;
+  font-size: clamp(1.4rem, 5vw, 2.4rem);
+  color: var(--ink);
+}
+
+/* End card: "the end", smaller than a flashcard word so it reads as a close. */
+.endcard .t { font-weight: 700; font-size: clamp(2.5rem, 12vw, 4rem); line-height: 1; color: var(--ink); }
+
+/* Rotate card: text-only (D3 — no phone glyph; a glyph would be the app's only
+   decoration, violating zero-decoration). */
+.rotate .t { font-weight: 700; font-size: clamp(1.5rem, 7vw, 2.2rem); line-height: 1.15; color: var(--ink); }
+
+/* About overlay: long-press the deck picker. Full gesture list + attribution.
+   Keeps legal text off the home screen. */
+.about { gap: 1.2em; }
+.about .lines { font-size: clamp(1rem, 4vw, 1.5rem); line-height: 1.6; color: var(--ink); }
+.about .attr { font-size: clamp(0.72rem, 3vw, 0.95rem); color: var(--label-readable); line-height: 1.5; }

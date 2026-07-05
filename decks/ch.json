@@ -1,0 +1,17 @@
+{
+  "id": "ch",
+  "title": "ch",
+  "kind": "phonics",
+  "order": 2,
+  "cards": [
+    { "type": "word", "text": "chip", "graphemes": ["ch", "i", "p"], "img": "art/chip.svg" },
+    { "type": "word", "text": "chin", "graphemes": ["ch", "i", "n"] },
+    { "type": "word", "text": "chop", "graphemes": ["ch", "o", "p"], "img": "art/chop.svg" },
+    { "type": "word", "text": "chat", "graphemes": ["ch", "a", "t"] },
+    { "type": "word", "text": "chick", "graphemes": ["ch", "i", "ck"], "img": "art/chick.svg" },
+    { "type": "word", "text": "rich", "graphemes": ["r", "i", "ch"] },
+    { "type": "word", "text": "much", "graphemes": ["m", "u", "ch"] },
+    { "type": "word", "text": "such", "graphemes": ["s", "u", "ch"] },
+    { "type": "word", "text": "chest", "graphemes": ["ch", "e", "st"], "img": "art/chest.svg" }
+  ]
+}

@@ -1,0 +1,17 @@
+Illustrations in this directory are derived from OpenMoji.
+
+Source: OpenMoji — the open-source emoji and icon project (https://openmoji.org)
+Original license: Creative Commons Attribution-ShareAlike 4.0 International
+  (CC BY-SA 4.0) — https://creativecommons.org/licenses/by-sa/4.0/
+
+These files are ADAPTATIONS: the OpenMoji source SVGs have been recolored
+(palette-remapped to a muted warm set) and optimized. Because CC BY-SA 4.0
+includes a ShareAlike term, these adaptations are distributed under the same
+license, CC BY-SA 4.0.
+
+Attribution (as surfaced in the app's About overlay):
+  "Illustrations: OpenMoji — CC BY-SA 4.0, colors modified"
+
+Placeholder note: some SVGs here are hand-drawn placeholders in the OpenMoji
+flat style pending an art audit (see scripts/fetch-art.mjs). Once replaced by
+recolored OpenMoji sources, the attribution above applies to them in full.

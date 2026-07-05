@@ -1,0 +1,12 @@
+{
+  "id": "wh",
+  "title": "wh",
+  "kind": "phonics",
+  "order": 4,
+  "cards": [
+    { "type": "word", "text": "whip", "graphemes": ["wh", "i", "p"], "img": "art/whip.svg" },
+    { "type": "word", "text": "whiz", "graphemes": ["wh", "i", "z"] },
+    { "type": "word", "text": "wham", "graphemes": ["wh", "a", "m"] },
+    { "type": "word", "text": "when", "graphemes": ["wh", "e", "n"] }
+  ]
+}

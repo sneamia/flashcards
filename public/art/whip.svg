@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <!-- tapering lash -->
+  <path d="M47 74 Q90 60 120 85 Q145 100 165 75 Q160 68 150 72 Q135 95 110 88 Q80 80 47 86 Z" fill="#8a6a4a"/>
+  <!-- handle -->
+  <rect x="15" y="70" width="32" height="16" rx="6" fill="#a6785a"/>
+  <!-- grip band -->
+  <rect x="22" y="70" width="6" height="16" fill="#cbb287"/>
+</svg>

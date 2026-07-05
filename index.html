@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <!-- viewport-fit=cover so the cream fills the notch/safe areas; no user zoom. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <!-- theme-color matches the cream so the iOS status bar/chrome stays in one warm world. -->
+  <meta name="theme-color" content="#f7f1e3" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Flashcards" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="apple-touch-icon" href="/flashcards/icons/apple-touch-icon.png" />
+  <title>Flashcards</title>
+  <!--
+    Fonts are bundled and precached (see src/styles.css @font-face). First card
+    render blocks on document.fonts.ready (with a timeout) so a beginning reader
+    never sees a font swap (FOUT) — that would be visible movement.
+  -->
+</head>
+<body>
+  <!--
+    The whole screen is one invisible tap target. No buttons, no chrome.
+    #stage is driven by [data-state] set from the state machine in src/main.ts.
+    All screens (deck picker, card word/image, end, rotate, about) are rendered
+    into #stage. Markup is created by main.ts; this shell is intentionally bare.
+  -->
+  <main id="stage" data-state="boot" aria-label="Flashcards"></main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

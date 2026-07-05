@@ -1,0 +1,29 @@
+{
+  "name": "potty-flashcards",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A calm, parent-operated phonics teleprompter PWA. Not a kids' app.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "prebuild": "npm run validate && npm run check-contrast",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "validate": "node scripts/validate-decks.mjs",
+    "check-contrast": "node scripts/check-contrast.mjs",
+    "fetch-art": "node scripts/fetch-art.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "jsdom": "^29.1.1",
+    "svgo": "^3.3.2",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0",
+    "vite-plugin-pwa": "^0.20.5",
+    "vitest": "^2.1.0"
+  }
+}
