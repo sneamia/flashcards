@@ -18,9 +18,15 @@ import {
   initialState,
   reduce,
 } from './machine';
-import { type GestureAction, type Recognizer, createRecognizer } from './gestures';
+import {
+  type GestureAction,
+  type Recognizer,
+  LONG_PRESS_MS,
+  createRecognizer,
+} from './gestures';
 import { isLocked } from './lockout';
 import { loadDecks } from './decks';
+import { isPrecacheComplete } from './integrity';
 import { registerSW } from 'virtual:pwa-register';
 
 /* --- DOM root -------------------------------------------------------- */
@@ -56,12 +62,21 @@ function isPortraitNow(): boolean {
 let wakeLockSentinel: WakeLockSentinel | null = null;
 let noSleepVideo: HTMLVideoElement | null = null;
 
+// Set once at boot by the precache integrity check (see that section below).
+// Never flips back mid-session: the only way out of the restore card is the
+// `online` recovery reload, which re-evaluates everything from scratch.
+let restoreNeeded = false;
+
 /* --- Constants ----------------------------------------------------------- */
 
 const STORAGE_KEY = 'potty-flashcards:position';
 const FONT_TIMEOUT_MS = 1500;
 const DECODE_TIMEOUT_MS = 2000;
-const POLL_MS = 100;
+// setTimeout is only guaranteed to fire AT OR AFTER its delay, never before —
+// but a hair of slack absorbs any sub-ms scheduling jitter so the armed timer
+// never wakes a tick early and misses poll()'s `now >= down.time + LONG_PRESS_MS`
+// boundary (which would silently swallow a legitimate long-press EXIT).
+const LONG_PRESS_TIMER_PAD_MS = 20;
 const MIN_WORD_PX = 48;
 const MAX_WORD_PX = 420;
 const WORD_MARGIN = 0.88; // fraction of viewport width available to the word
@@ -344,17 +359,41 @@ function renderRotate(): DocumentFragment {
   return frag;
 }
 
-function computeDataState(s: AppState, portrait: boolean): string {
+// Boot-time-only "assets are broken" card — see the Precache integrity
+// section below. Not a machine.ts state (same pattern as the rotate card):
+// a live boot condition rendered entirely in this impure shell.
+function renderRestore(): DocumentFragment {
+  const frag = document.createDocumentFragment();
+  const card = el('div', 'syscard restore');
+  const t = el('div', 't');
+  t.textContent = 'reconnect once to restore';
+  const sub = el('div', 'sub');
+  sub.textContent = 'some parts of the app did not finish saving for offline use.';
+  card.append(t, sub);
+  frag.append(card);
+  return frag;
+}
+
+// `restore` and `rotate` are both live boot/runtime overlays, not machine.ts
+// states — restore wins: a phone rotated back to landscape with an evicted
+// precache would still show broken art, so "assets are broken" must take
+// precedence over "wrong orientation".
+function computeDataState(s: AppState, portrait: boolean, restore: boolean): string {
+  if (restore) return 'restore';
   if (portrait) return 'rotate';
   if (s.screen === 'card') return s.beat;
   return s.screen;
 }
 
 function render(): void {
-  const dataState = computeDataState(state, isPortraitNow());
+  const dataState = computeDataState(state, isPortraitNow(), restoreNeeded);
   stage.setAttribute('data-state', dataState);
   stage.replaceChildren();
 
+  if (dataState === 'restore') {
+    stage.append(renderRestore());
+    return;
+  }
   if (dataState === 'rotate') {
     stage.append(renderRotate());
     return;
@@ -495,6 +534,51 @@ function handleRecognized(g: GestureAction): void {
 // click guard to reject clicks synthesized from taps that began elsewhere.
 let screenAtPointerDown: Screen = 'deck_pick';
 
+// --- Long-press EXIT timer ------------------------------------------------
+// Replaces an always-on poll interval with a setTimeout scoped to the
+// lifetime of a held pointer: armed on the down that starts a single-pointer
+// gesture, fired once at (just past) LONG_PRESS_MS, cleared on that gesture's
+// up/cancel. When nothing is down, no timer is scheduled — zero idle wakeups.
+// Two-finger BACK and plain taps never need this: both resolve synchronously
+// from recognizer.handle() on 'up', per gestures.ts.
+
+// Pointers currently held down, mirroring the recognizer's own bookkeeping
+// closely enough to know when a gesture session starts/ends. Needed (rather
+// than a plain counter) only to correctly key each up/cancel's removal.
+const downPointerIds = new Set<number>();
+// True once this gesture session has ever had 2+ pointers down at once — an
+// EXIT can never fire for the rest of that session (gestures.ts's `multi`
+// latches for the whole gesture), so no timer needs to be (re-)armed for it.
+let sessionBlocked = false;
+let exitTimer: ReturnType<typeof setTimeout> | undefined;
+
+function clearExitTimer(): void {
+  if (exitTimer !== undefined) {
+    clearTimeout(exitTimer);
+    exitTimer = undefined;
+  }
+}
+
+function armExitTimer(): void {
+  clearExitTimer();
+  // Uses performance.now() to match PointerEvent.timeStamp's clock,
+  // independent of the Date.now()-based lockUntil epoch used by the machine.
+  exitTimer = setTimeout(() => {
+    exitTimer = undefined;
+    handleRecognized(recognizer.poll(performance.now()));
+  }, LONG_PRESS_MS + LONG_PRESS_TIMER_PAD_MS);
+}
+
+// Hard-clears the local pointer/timer bookkeeping above — kept in lockstep
+// with recognizer.reset() (app backgrounded mid-gesture) so a pointer whose
+// up/cancel never arrives can't leave this module thinking a session is
+// still open (which would permanently block re-arming for later holds).
+function resetPointerTracking(): void {
+  downPointerIds.clear();
+  sessionBlocked = false;
+  clearExitTimer();
+}
+
 function onPointerDown(e: PointerEvent): void {
   screenAtPointerDown = state.screen;
   // A user gesture is the one context where a previously-denied wake lock or
@@ -507,12 +591,35 @@ function onPointerDown(e: PointerEvent): void {
     void requestWakeLock();
   }
   handleRecognized(recognizer.handle({ kind: 'down', pointerId: e.pointerId, t: e.timeStamp }));
+
+  downPointerIds.add(e.pointerId);
+  if (downPointerIds.size >= 2) {
+    // A second pointer joined this gesture — it's resolving as BACK (or a
+    // palm), never EXIT. Drop any pending timer from the first pointer.
+    sessionBlocked = true;
+    clearExitTimer();
+  } else if (!sessionBlocked) {
+    // The sole pointer of a fresh gesture — arm the one-shot EXIT check.
+    armExitTimer();
+  }
 }
 function onPointerUp(e: PointerEvent): void {
   handleRecognized(recognizer.handle({ kind: 'up', pointerId: e.pointerId, t: e.timeStamp }));
+  downPointerIds.delete(e.pointerId);
+  if (downPointerIds.size === 0) {
+    // Gesture fully resolved (or abandoned) — no pointer left down means no
+    // future EXIT is possible until a new pointerdown starts one.
+    clearExitTimer();
+    sessionBlocked = false;
+  }
 }
 function onPointerCancel(e: PointerEvent): void {
   handleRecognized(recognizer.handle({ kind: 'cancel', pointerId: e.pointerId }));
+  downPointerIds.delete(e.pointerId);
+  if (downPointerIds.size === 0) {
+    clearExitTimer();
+    sessionBlocked = false;
+  }
 }
 
 function attachPointerListeners(): void {
@@ -523,15 +630,6 @@ function attachPointerListeners(): void {
   // BACK. (An 'up' the recognizer never saw go down resolves to null.)
   window.addEventListener('pointerup', onPointerUp);
   window.addEventListener('pointercancel', onPointerCancel);
-}
-
-function startPollTimer(): void {
-  // Drives long-press EXIT detection (no 'up' event fires it) — uses
-  // performance.now() to match PointerEvent.timeStamp's clock, independent
-  // of the Date.now()-based lockUntil epoch used by the machine.
-  setInterval(() => {
-    handleRecognized(recognizer.poll(performance.now()));
-  }, POLL_MS);
 }
 
 /* --- Wake lock (Eng #9) ----------------------------------------------------
@@ -565,6 +663,7 @@ function setupWakeLockReacquire(): void {
       // Backgrounded mid-gesture: iOS may never deliver the terminating
       // pointer event, and a stale entry would deadlock later input.
       recognizer.reset();
+      resetPointerTracking();
     }
   });
 }
@@ -626,6 +725,76 @@ function fontsReadyOrTimeout(timeoutMs: number): Promise<void> {
   ]);
 }
 
+/* --- Precache integrity (boot-time) ----------------------------------------
+   iOS Safari can evict a PWA's Cache API storage under memory pressure or
+   long non-use. If that happened, an offline relaunch hits broken images
+   with no explanation — a silent failure DESIGN.md's "calm, actionable"
+   ethos rules out. The offline guarantee here is strong, not absolute: it
+   catches an evicted/partial precache at boot rather than proving every
+   byte is present (that's the Workbox precache manifest's job, and it
+   isn't cleanly exposed to app/window context) — probing a critical subset
+   via the Cache API is the pragmatic, robust equivalent. isPrecacheComplete
+   itself (src/integrity.ts) is pure and unit-tested; everything here is
+   just gathering its two inputs from the real Cache API. */
+
+// The assets a render literally cannot happen without: this page's own
+// built JS/CSS (read off the live DOM so a build-hash change never goes
+// stale here), both Andika weights (every screen is text), and a couple of
+// representative art SVGs (enough to catch a partially-evicted precache
+// without hardcoding the full per-deck asset list this module has no
+// business knowing).
+function criticalAssetUrls(): string[] {
+  const urls = new Set<string>();
+  document
+    .querySelectorAll<HTMLScriptElement>('script[src]')
+    .forEach((s) => urls.add(s.src));
+  document
+    .querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href]')
+    .forEach((l) => urls.add(l.href));
+  urls.add(artUrl('fonts/Andika-Regular.woff2'));
+  urls.add(artUrl('fonts/Andika-Bold.woff2'));
+  for (const deck of decks) {
+    const withArt = deck.cards.find((c) => c.img);
+    if (withArt?.img) urls.add(artUrl(withArt.img));
+    if (urls.size >= 6) break; // 2 built assets + 2 fonts + up to 2 art samples
+  }
+  return [...urls];
+}
+
+// caches.match() checks every open cache for a match, which is exactly
+// "is this URL present anywhere in the precache" — no need to enumerate
+// cache names ourselves.
+async function gatherPresentUrls(urls: string[]): Promise<Set<string>> {
+  const present = new Set<string>();
+  if (!('caches' in window)) return present; // no Cache API — treat as nothing present
+  await Promise.all(
+    urls.map(async (url) => {
+      try {
+        if (await caches.match(url)) present.add(url);
+      } catch {
+        // Threw (e.g. private-mode quirk) — leave unmarked; the pure check
+        // below then correctly reports the precache incomplete.
+      }
+    }),
+  );
+  return present;
+}
+
+async function checkPrecacheIntegrity(): Promise<boolean> {
+  const required = criticalAssetUrls();
+  const present = await gatherPresentUrls(required);
+  return isPrecacheComplete(required, present);
+}
+
+// While the restore card is showing, the only way out is connectivity
+// returning. Reload (not a live re-check) so the SW's normal install/fetch
+// flow re-precaches everything under its own logic — no bespoke recovery
+// path to keep in sync with Workbox. No spinner: this is a boot condition,
+// not a mid-session change, so an instant full-page swap stays zero-motion.
+function recoverFromRestore(): void {
+  location.reload();
+}
+
 /* --- Boot ------------------------------------------------------------------- */
 
 function registerServiceWorker(): void {
@@ -647,6 +816,19 @@ function registerServiceWorker(): void {
 }
 
 async function boot(): Promise<void> {
+  // Takes precedence over the whole normal boot sequence — including the
+  // rotate overlay, wake lock, and gesture wiring — because a broken
+  // precache means there's nothing renderable to resume into. Only
+  // actionable while offline: online, the existing "relaunch with
+  // connectivity restores it" path already recovers (the SW re-precaches
+  // on its own), so there's nothing special to do here.
+  if (!navigator.onLine && !(await checkPrecacheIntegrity())) {
+    restoreNeeded = true;
+    render();
+    window.addEventListener('online', recoverFromRestore, { once: true });
+    return;
+  }
+
   await fontsReadyOrTimeout(FONT_TIMEOUT_MS);
 
   state = rehydrate();
@@ -657,7 +839,6 @@ async function boot(): Promise<void> {
   persist();
 
   attachPointerListeners();
-  startPollTimer();
   setupWakeLockReacquire();
   void requestWakeLock();
   registerServiceWorker();

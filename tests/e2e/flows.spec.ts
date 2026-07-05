@@ -201,6 +201,76 @@ test.describe('gesture-on-touch', () => {
   });
 });
 
+test.describe('long-press timer scoping (battery)', () => {
+  test('no always-on poll interval, and the long-press timer is cleared once a quick tap releases', async ({
+    page,
+  }) => {
+    // Instrument the timer globals BEFORE main.ts loads (page.addInitScript
+    // runs ahead of any page script) so we can observe its actual timer
+    // usage rather than just its externally-visible behavior:
+    //   (a) it must never fall back to setInterval — the old always-on
+    //       100ms poll this change removes — and
+    //   (b) the ~800ms setTimeout it arms on pointerdown for long-press EXIT
+    //       must be cleared once the pointer releases, not merely left
+    //       pending until it naturally expires (that leftover wakeup is
+    //       exactly what "zero idle wakeups" rules out).
+    await page.addInitScript(() => {
+      const w = window as unknown as {
+        __intervalCalls: number;
+        __pendingLongPressTimers: Set<number>;
+      };
+      w.__intervalCalls = 0;
+      const realSetInterval = window.setInterval.bind(window);
+      window.setInterval = ((...args: Parameters<typeof window.setInterval>) => {
+        w.__intervalCalls++;
+        return realSetInterval(...args);
+      }) as typeof window.setInterval;
+
+      // Only the long-press EXIT timer's delay falls in this narrow band —
+      // the app's other timeouts (font-ready ~1500ms, image-decode ~2000ms)
+      // sit well outside it, so this isolates the timer under test without
+      // hardcoding its exact internal pad.
+      w.__pendingLongPressTimers = new Set<number>();
+      const realSetTimeout = window.setTimeout.bind(window);
+      const realClearTimeout = window.clearTimeout.bind(window);
+      window.setTimeout = ((handler: TimerHandler, timeout?: number, ...rest: unknown[]) => {
+        const id = realSetTimeout(handler, timeout, ...rest) as unknown as number;
+        if (typeof timeout === 'number' && timeout >= 800 && timeout <= 900) {
+          w.__pendingLongPressTimers.add(id);
+        }
+        return id;
+      }) as typeof window.setTimeout;
+      window.clearTimeout = ((id?: number) => {
+        if (id !== undefined) w.__pendingLongPressTimers.delete(id);
+        return realClearTimeout(id);
+      }) as typeof window.clearTimeout;
+    });
+
+    await page.goto('/');
+    await waitForBoot(page);
+    await openFirstDeck(page);
+    await page.waitForTimeout(SAFE_WAIT_MS);
+
+    const stage = page.locator('#stage');
+    // An ordinary quick tap — a single pointer straight down then back up.
+    await stage.dispatchEvent('pointerdown', { pointerId: 91, isPrimary: true });
+    await stage.dispatchEvent('pointerup', { pointerId: 91 });
+    await expect(stage).toHaveAttribute('data-state', 'image');
+
+    const pendingAfterRelease = await page.evaluate(
+      () =>
+        (window as unknown as { __pendingLongPressTimers: Set<number> }).__pendingLongPressTimers
+          .size,
+    );
+    expect(pendingAfterRelease).toBe(0); // the released pointer left no dangling timer
+
+    const intervalCalls = await page.evaluate(
+      () => (window as unknown as { __intervalCalls: number }).__intervalCalls,
+    );
+    expect(intervalCalls).toBe(0); // no always-on poll interval anywhere
+  });
+});
+
 test.describe('image-failure fallback', () => {
   test('a card whose art fails to load degrades to a one-beat word card', async ({ page }) => {
     // Abort the first card's art request — decode() rejects, and the card

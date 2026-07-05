@@ -168,6 +168,14 @@ body {
    decoration, violating zero-decoration). */
 .rotate .t { font-weight: 700; font-size: clamp(1.5rem, 7vw, 2.2rem); line-height: 1.15; color: var(--ink); }
 
+/* Restore card: boot-time integrity check (src/integrity.ts) found the
+   offline precache incomplete (iOS can evict Cache API storage). Text-only,
+   same calm surface as rotate/end/about — no glyph, no button chrome, no
+   spinner. Recovers on its own via the `online` event (see main.ts). */
+.restore { gap: 0.6em; }
+.restore .t { font-weight: 700; font-size: clamp(1.5rem, 7vw, 2.2rem); line-height: 1.15; color: var(--ink); }
+.restore .sub { font-size: clamp(0.85rem, 3.2vw, 1.1rem); color: var(--label-readable); line-height: 1.5; }
+
 /* About overlay: long-press the deck picker. Full gesture list + attribution.
    Keeps legal text off the home screen. */
 .about { gap: 1.2em; }
