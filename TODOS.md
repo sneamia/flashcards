@@ -1,5 +1,60 @@
 # TODOS
 
+## Shipped in v1.2.0 (2026-07-05) — CVC + Blends + category shuffle
+
+- **CVC + Blends decks** — a 20-word CVC deck (short-a…u) and an 18-word Blends
+  deck (L/R/S initial + `-nk`/`-st`/`-nt` finals), both authored for ~100% image
+  coverage. Words selected for a clean OpenMoji glyph or a hand-drawn fallback.
+- **Categories** — decks now group under CVC / Digraphs / Blends headers in the
+  picker. `category` field on each deck JSON + `src/categories.ts` manifest
+  (title + display order); `groupByCategory()` in `src/decks.ts` (pure, tested).
+  validate-decks.mjs enforces the category and per-category `order` uniqueness.
+- **Per-category "shuffle all"** — reverses the earlier blanket no-shuffle stance
+  (see the now-updated "Cross-digraph variety mode" note below) but keeps its
+  pedagogy: shuffle is an **opt-in** extra row per category, the authored ordered
+  decks stay the default, and the digraphs shuffle pools sh/ch/th/wh. Pure
+  `shuffle(items, rng)` (`src/shuffle.ts`) + synthetic `shuffle:<cat>` deck built
+  in `main.ts` with `Math.random`; machine.ts untouched; runs are non-resumable.
+- **Figurative coverage** — `chin` (face + arrow to chin) and `shin` (leg + arrow
+  to shin), previously rejected as ambiguous, are now hand-drawn annotated art;
+  `shut` (closed door) added; `chip` redrawn as a potato chip (American English,
+  was french fries). Overall coverage ~53% → ~83%. DESIGN.md now permits ink-arrow
+  annotation art.
+
+## Deferred from v1.2.0 ship review (2026-07-05)
+
+### render() null-deck recovery is incomplete defense-in-depth (adversarial review, INVESTIGATE)
+- **What:** `render()` in `main.ts` (~:468), on `screen==='card'` with `findDeck()===null`,
+  repaints the picker but leaves `state.screen==='card'`. Since `startFromRow` guards on
+  `screen==='deck_pick'`, every picker row is then dead — only an EXIT long-press recovers.
+- **Reachability:** provably unreachable today (rehydrate maps null decks to `initialState`;
+  the `buildShuffledDeck` null branch can't fire because `startId` always names a real group;
+  start actions don't span a macrotask so dispatches can't interleave). This is latent, not a
+  live bug — but the defense-in-depth is itself incomplete if any future change reaches it.
+- **Fix:** in that branch also reset `state = initialState()` (or dispatch EXIT) rather than
+  only re-painting. One line. **Impact:** Robustness. **Category:** state machine.
+
+### dispatch() unknown-category shuffle null path untested (testing specialist, conf 5)
+- **What:** `activeShuffleDeck = group ? buildShuffledDeck(...) : null` (main.ts ~:557) — the
+  null branch (a `shuffle:<id>` whose category is absent → findDeck→null→picker) has no test.
+- **Fix:** extract the category-resolution into a tiny pure helper and unit-test the null
+  branch, or add an e2e that routes a synthetic unknown shuffle id and asserts picker fallback.
+  Not unit-testable as-is. **Impact:** Coverage. **Category:** testing.
+
+### Picker heading outline starts at h2 (design specialist, conf 6) — a11y
+- **What:** `.cat` category headers are `<h2>` but the app has no `<h1>` anywhere (corner label
+  and card words are `<div>`s), so the screen-reader heading outline skips level 1.
+- **Why deferred:** ties into the already-Held on-device VoiceOver work below — partial a11y
+  (one h1) without the full VoiceOver pass would be inconsistent. Do it with that pass.
+- **Fix:** add a visually-hidden `<h1>` for the picker (or promote the corner label), keeping
+  the `.cat` small-caps styling. **Impact:** a11y. **Category:** accessibility.
+
+### rowEl() / shuffleRowEl() duplication (maintainability specialist, conf 5) — optional
+- **What:** the two picker-row builders share an ~8-line button-construction + click-wiring
+  skeleton. Kept separate for now (clarity in user-visible rendering code).
+- **Fix (if touched again):** extract `makeRow({cls,label,count,aria,startId})`. **Impact:**
+  minor DRY. **Category:** maintainability.
+
 ## Shipped in v1.1.0 (2026-07-05)
 
 - **Offline cache-eviction recovery** — boot integrity check probes critical precached
@@ -71,23 +126,21 @@
 - **Recommendation (2026-07-05):** likely skip — low priority, no user-visible gain, real indirection risk.
 - **Impact:** Polish. **Category:** typography/consistency.
 
-### Cross-digraph variety mode (from user request 2026-07-04)
+### Cross-digraph variety mode (from user request 2026-07-04) — PARTLY SHIPPED
 - **What:** A way to see words spanning more than one digraph in a session, for variety once a child already knows the individual digraphs.
-- **Design constraint:** Random shuffle across all digraphs is explicitly rejected in the design doc — it removes the one-digraph-at-a-time scaffolding a beginning reader needs, turning every card into a cold decode. The sanctioned shape is the curated cross-digraph **review deck** already tracked below (`chip → ship → shop → chop`): a 5th deck, ordered by design, added alongside the per-digraph decks, never replacing them or randomizing them.
-- **Why deferred:** Needs the word ladders authored; only earns its place after a child has the individual digraphs down. Decide after a real session. (Consolidate with the "Mixed 'review' deck" line below when built.)
+- **Shipped (2026-07-05):** the **"shuffle all Digraphs"** picker row now pools sh/ch/th/wh into one randomized run — the variety mechanism the user asked for. It's opt-in and sits alongside the ordered per-digraph decks (never replaces or reorders them), so the one-digraph-at-a-time scaffolding is still the default path. The earlier "random shuffle is rejected" constraint is superseded by this opt-in design.
+- **Still deferred:** the *curated* cross-digraph **review deck** with authored word ladders (`chip → ship → shop → chop`) — a designed order, distinct from the random shuffle. Needs the ladders authored; earns its place after a child has the individual digraphs down.
 - **Impact:** Feature. **Category:** content/pedagogy.
 
 ### Figurative image coverage — remaining (from user request + /design-review 2026-07-04)
-- **Done this pass:** hush, wish, wham, math added (coverage now 17/32, 53%).
-- **Rejected as unreliable for a 3–5yo:** `whiz` (dashing-away glyph reads as smoke/cloud alone), `chin`, `shin` (body-part glyphs ambiguous), `thud` (no glyph plausibly evokes a dull impact in isolation). Left image-free by design.
-- **Rule (unchanged):** add art only where the image reliably evokes the word for a 3–5yo. Pure function words stay image-free — `much, such, that, this, them, with, when, rich` — the image-free one-beat is the honest card, not a gap to fill.
-- **Constraints:** OpenMoji source, palette-remapped muted warm (no blues), CC BY-SA, via the existing `fetch-art` + `validate` pipeline. Realistic ceiling ~60%; further gains need new figurative candidates that pass the rule.
+- **Done (2026-07-05):** `chin` (face + arrow to chin) and `shin` (leg + arrow to shin) — previously rejected as ambiguous — are now hand-drawn **annotated** art, plus `shut` (closed door). `chip` redrawn as a potato chip. New decks (CVC, Blends) authored at ~100% coverage. Overall ~83%.
+- **Still image-free by design:** `whiz` (no reliable glyph), `thud` (no glyph evokes a dull impact), `thin`/`chat`, and the pure function/sight words `much, such, that, this, them, with, when, rich`. The image-free one-beat is the honest card, not a gap to fill.
+- **Rule (updated):** add art only where the image reliably evokes the word for a 3–5yo — a plain OpenMoji glyph OR, where none reads, a hand-drawn figurative drawing (an ink arrow may point at the named part; see DESIGN.md). Palette-remapped muted warm (no blues), CC BY-SA where OpenMoji-derived, via the `fetch-art` + `validate` pipeline. Figurative annotation lifts the old ~60% ceiling.
 - **Impact:** Feature/polish. **Category:** content/art.
 
-### Picker footer gesture-hint mismatch (from /design-review 2026-07-05, deferred by user)
-- **What:** The deck-picker footer shows `two-finger tap: back · hold: exit` (`GESTURE_LINES.slice(1)`), but the picker is the root screen: there's no beat to go "back" to, and a long-press there opens the About overlay, not an "exit".
-- **Why deferred:** User call (2026-07-05) — it's a defensible persistent gesture legend, and the "hold" hint does point the parent at the long-press that reveals the full About legend. Leaving as-is.
-- **If revisited:** either show the picker's own gesture (`hold: about`, via a new constant so the in-deck legend stays intact) or drop the footer on the picker entirely.
+### Picker footer gesture-hint mismatch — FIXED by /design-review on v1.2/cvc-blends-category-shuffle, 2026-07-05
+- **What:** The deck-picker footer showed `two-finger tap: back · hold: exit` (`GESTURE_LINES.slice(1)`), but the picker is the root screen: there's no beat to go "back" to, and a long-press there opens the About overlay, not an "exit".
+- **Resolution:** Footer now reads `hold for about` (commit 87f7a8a) — the picker's one non-obvious gesture. The in-deck legend (`GESTURE_LINES`) still renders in full on the about overlay; the footer no longer derives from it. DESIGN.md updated to match.
 - **Impact:** Polish. **Category:** content/microcopy.
 
 ## v1.1 (already in design doc, tracked here for visibility)

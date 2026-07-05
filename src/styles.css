@@ -120,17 +120,30 @@ body {
 }
 
 /* --- Deck picker (the only screen the parent navigates) --- */
-.picker { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 30px 0 0; }
+.picker { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 20px 0 0; }
 .decks {
-  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  /* Grouped into CVC / Digraphs / Blends sections, each ending in a
+     "shuffle all" row — more rows than fit a phone in landscape, so this
+     scrolls (it was a centered no-scroll surface in v1.1). The parent
+     scrolls and taps; the child never touches the screen. */
+  flex: 1; display: flex; flex-direction: column; justify-content: flex-start;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
   /* max() with the safe-area insets: .picker is an abspos layer, so it
      bypasses #stage's env() padding (see .reveal .word). */
   padding: 0 max(var(--gutter), env(safe-area-inset-right))
            0 max(var(--gutter), env(safe-area-inset-left));
 }
+/* Category section header ("CVC", "Digraphs", "Blends"). Quiet chrome — the
+   deck words are the content, not this label. */
+.cat {
+  margin: 18px 2px 2px;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--label-readable);
+}
+.cat:first-child { margin-top: 6px; }
 .row {
   display: flex; align-items: baseline; justify-content: space-between;
-  padding: 13px 2px;
+  padding: 11px 2px;
   min-height: 44px;              /* >=44px tap target */
   border-bottom: 1px solid var(--hairline);
   /* it's a real control: strip default button chrome */
@@ -139,8 +152,11 @@ body {
   cursor: none;
 }
 .row:last-child { border-bottom: 0; }
-.row .dg { font-weight: 700; font-size: clamp(28px, 8vw, 34px); line-height: 1; color: var(--ink); }
+.row .dg { font-weight: 700; font-size: clamp(24px, 7vw, 32px); line-height: 1; color: var(--ink); }
 .row .ct { font-size: 0.8rem; color: var(--label-readable); }  /* must-read: readable token */
+/* "shuffle all" row: a secondary action within its category — lighter and
+   italic so it reads as an option, not another deck. */
+.row.shuffle .dg { font-weight: 400; font-style: italic; font-size: clamp(18px, 5vw, 24px); color: var(--label-readable); }
 
 .pfoot {
   /* The must-read gesture hint must clear the home-indicator zone. */

@@ -1,6 +1,6 @@
 {
   "name": "potty-flashcards",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "A calm, parent-operated phonics teleprompter PWA. Not a kids' app.",

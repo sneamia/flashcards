@@ -2,10 +2,11 @@
   "id": "ch",
   "title": "ch",
   "kind": "phonics",
+  "category": "digraphs",
   "order": 2,
   "cards": [
     { "type": "word", "text": "chip", "graphemes": ["ch", "i", "p"], "img": "art/chip.svg" },
-    { "type": "word", "text": "chin", "graphemes": ["ch", "i", "n"] },
+    { "type": "word", "text": "chin", "graphemes": ["ch", "i", "n"], "img": "art/chin.svg" },
     { "type": "word", "text": "chop", "graphemes": ["ch", "o", "p"], "img": "art/chop.svg" },
     { "type": "word", "text": "chat", "graphemes": ["ch", "a", "t"] },
     { "type": "word", "text": "chick", "graphemes": ["ch", "i", "ck"], "img": "art/chick.svg" },

@@ -30,9 +30,10 @@ async function waitForBoot(page: Page): Promise<void> {
 }
 
 async function openFirstDeck(page: Page): Promise<void> {
-  // Decks render sorted by `order` (sh, ch, th, wh) — the first `.row` is
-  // always "sh", whose first card ("ship") has an image (two-beat reveal).
-  await page.locator('#stage .row').first().tap();
+  // Open the "sh" deck by its stable data hook (the picker now groups decks
+  // under category headers, so row position is no longer fixed). sh's first
+  // card ("ship") has an image (two-beat reveal).
+  await page.locator('#stage .row[data-deck-id="sh"]').tap();
   await expect(page.locator('#stage')).toHaveAttribute('data-state', 'word');
 }
 
@@ -295,8 +296,8 @@ test.describe('end card', () => {
     await page.goto('/');
     await waitForBoot(page);
 
-    // wh (4th row) is the shortest deck: whip(img), whiz, wham, when — 5 beats.
-    await page.locator('#stage .row').nth(3).tap();
+    // wh is the shortest deck: whip(img), whiz, wham, when — 5 beats.
+    await page.locator('#stage .row[data-deck-id="wh"]').tap();
     const stage = page.locator('#stage');
     await expect(stage).toHaveAttribute('data-state', 'word');
 
@@ -323,6 +324,50 @@ test.describe('end card', () => {
   });
 });
 
+test.describe('categories + shuffle-all', () => {
+  test('the picker groups decks under category headers, each with a shuffle-all row', async ({ page }) => {
+    await page.goto('/');
+    await waitForBoot(page);
+
+    const stage = page.locator('#stage');
+    // Category headers (CVC, Digraphs, Blends).
+    await expect(stage.locator('.cat')).toHaveText(['CVC', 'Digraphs', 'Blends']);
+    // One shuffle-all row per category.
+    await expect(stage.locator('.row.shuffle')).toHaveCount(3);
+    await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"]')).toHaveCount(1);
+    // The digraphs shuffle pools all 32 digraph words.
+    await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"]')).toContainText('32 words');
+  });
+
+  test('a shuffle-all row starts a run with the category title in the corner', async ({ page }) => {
+    await page.goto('/');
+    await waitForBoot(page);
+
+    const stage = page.locator('#stage');
+    await stage.locator('.row.shuffle[data-shuffle="digraphs"]').tap();
+    await expect(stage).toHaveAttribute('data-state', 'word');
+    // Corner shows the category title, not a single digraph id.
+    await expect(page.locator('#stage .corner')).toContainText('Digraphs · 1 of 32');
+  });
+
+  test('a shuffle run is NOT resumable: reloading mid-run lands on the picker', async ({ page }) => {
+    await page.goto('/');
+    await waitForBoot(page);
+
+    const stage = page.locator('#stage');
+    await stage.locator('.row.shuffle[data-shuffle="digraphs"]').tap();
+    await expect(stage).toHaveAttribute('data-state', 'word');
+
+    // Nothing was persisted for the shuffle run (unlike a real deck position).
+    const persisted = await page.evaluate(() => localStorage.getItem('potty-flashcards:position'));
+    expect(persisted).toBeNull();
+
+    await page.reload();
+    await waitForBoot(page);
+    await expect(stage).toHaveAttribute('data-state', 'deck_pick');
+  });
+});
+
 test.describe('rehydrate validation', () => {
   const seedAndReload = async (page: Page, value: string) => {
     await page.goto('/');
@@ -339,6 +384,14 @@ test.describe('rehydrate validation', () => {
 
   test('a persisted deckId that no longer exists falls back to the picker', async ({ page }) => {
     await seedAndReload(page, JSON.stringify({ deckId: 'gone', cardIndex: 0, beat: 'word' }));
+    await expect(page.locator('#stage')).toHaveAttribute('data-state', 'deck_pick');
+  });
+
+  // findDeck()'s SHUFFLE_PREFIX branch: a shuffle run is never persisted, so any
+  // persisted shuffle: id is stale by definition and must resolve to null at boot
+  // rather than a broken card. Distinct code path from the plain decks.find() guard.
+  test('a persisted shuffle deckId falls back to the picker at boot', async ({ page }) => {
+    await seedAndReload(page, JSON.stringify({ deckId: 'shuffle:digraphs', cardIndex: 0, beat: 'word' }));
     await expect(page.locator('#stage')).toHaveAttribute('data-state', 'deck_pick');
   });
 });

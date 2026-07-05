@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Figurative: a face with an arrow pointing at the CHIN (bottom of the face). -->
+  <circle cx="44" cy="42" r="30" fill="#e0cba8" stroke="#3d3833" stroke-width="3"/>
+  <circle cx="34" cy="38" r="3.2" fill="#3d3833"/>
+  <circle cx="54" cy="38" r="3.2" fill="#3d3833"/>
+  <path d="M33 52 Q44 60 55 52" fill="none" stroke="#3d3833" stroke-width="3" stroke-linecap="round"/>
+  <!-- arrow: tip at the chin, shaft coming up from the lower right -->
+  <path d="M90 84 L58 70" fill="none" stroke="#3d3833" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M58 70 L68 72 M58 70 L63 62" fill="none" stroke="#3d3833" stroke-width="3.5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

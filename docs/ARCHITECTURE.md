@@ -12,16 +12,18 @@ file is only the *code seams*.
 
 ```
 src/
-  types.ts       # Deck, Card (DONE — do not edit the exported shapes)
+  types.ts       # Deck, Card, CategoryGroup (DONE — do not edit the exported shapes)
+  categories.ts  # PURE category manifest (id/title/order); validate-decks derives ids from it — Core-logic agent
   styles.css     # design tokens + all screen CSS (DONE — extend, don't rewrite)
   machine.ts     # PURE state reducer (no DOM, no timers) — Core-logic agent
   gestures.ts    # PURE pointer-event → Action recognizer — Core-logic agent
   lockout.ts     # PURE timestamp lockout guard — Core-logic agent
   integrity.ts   # PURE precache-completeness check (offline eviction) — Core-logic agent
-  decks.ts       # deck loader (import.meta.glob, sort, skip sentence) — Core-logic agent
+  shuffle.ts     # PURE Fisher–Yates (injected rng) — Core-logic agent
+  decks.ts       # deck loader + category grouping + shuffle-pool builder (skip sentence) — Core-logic agent
   main.ts        # DOM wiring: renders screens, owns timers/wakelock/persistence — Core-logic agent
 decks/
-  sh.json ch.json th.json wh.json   # Deck-data agent
+  cvc.json sh.json ch.json th.json wh.json blends.json   # Deck-data agent
 public/
   art/*.svg      # placeholder + pipeline art — Build-scripts agent
   fonts/*.woff2  # Andika — PWA/fonts agent
@@ -146,15 +148,30 @@ without and the assets actually found in the Cache API, is the offline
 precache whole? No DOM, caches, or `navigator` — main.ts gathers both inputs
 (iOS can evict Cache API storage) and renders the restore card off the boolean.
 
-## decks.ts — loader
+## decks.ts — loader + category grouping + shuffle-pool builder
 
 ```ts
-import type { Deck } from './types';
+import type { CategoryGroup, Deck } from './types';
 // Eagerly bundles /decks/*.json so the SW precaches them and "new deck = new
-// JSON file" holds. Sorts by `order`. Strips sentence cards (v1 skip) so the
-// corner counter counts renderable cards. Returns renderable decks.
+// JSON file" holds. Strips sentence cards (v1 skip) so the corner counter
+// counts renderable cards. Returns renderable decks (flat).
 export function loadDecks(): Deck[];
+// Groups decks under their category (CVC, Digraphs, Blends) in category
+// display order, decks sorted by intra-category `order`, empty categories
+// dropped. Pure (takes the manifest as an arg). Drives the grouped picker.
+export function groupByCategory(decks: Deck[], categories?): CategoryGroup[];
+// Builds the synthetic "shuffle all <category>" deck: every card in the group,
+// concatenated and shuffled with the injected rng. id = `shuffle:<catId>`.
+export function buildShuffledDeck(group: CategoryGroup, rng: () => number): Deck;
+export const SHUFFLE_PREFIX = 'shuffle:'; // reserved deck-id namespace
 ```
+
+The shuffle pool keeps randomness OUT of machine.ts: `shuffle()` (src/shuffle.ts)
+is a pure Fisher–Yates with an injected rng; main.ts builds `activeShuffleDeck`
+with `Math.random` on the shuffle-row tap, resolves the `shuffle:` id to it in
+`findDeck`, and the reducer walks it by index like any deck. A shuffle run is
+never persisted (a reshuffle-on-reload would move the saved index onto a
+different card) — see main.ts `persist()`.
 
 ## main.ts — the only impure module
 
@@ -179,12 +196,19 @@ precedence over `rotate` (evicted art is still broken in landscape).
 ## Deck JSON shape (Deck-data + Build-scripts + Tests all rely on this)
 
 ```json
-{ "id": "sh", "title": "sh", "kind": "phonics", "order": 1,
+{ "id": "sh", "title": "sh", "kind": "phonics", "category": "digraphs", "order": 1,
   "cards": [
     { "type": "word", "text": "ship", "graphemes": ["sh","i","p"], "img": "art/ship.svg" },
     { "type": "word", "text": "this", "graphemes": ["th","i","s"] }
   ] }
 ```
-- `order`: sh=1, ch=2, th=3, wh=4.
+- `category`: `"cvc" | "digraphs" | "blends"` — must match an id in `src/categories.ts`
+  (the picker groups decks under their category header). validate-decks.mjs enforces it.
+- `order`: the sort key WITHIN its category, unique per category (digraphs: sh=1, ch=2,
+  th=3, wh=4; cvc and blends each have one deck at order 1).
+- `id` must NOT start with `shuffle:` — that namespace is reserved for the synthetic
+  per-category "shuffle all" decks built at runtime.
 - A word WITH `img` is a two-beat reveal card; WITHOUT `img` it's a one-beat card.
 - `img` paths are relative (`art/xxx.svg`) and MUST resolve to a real file in `public/art/`.
+  Art is either OpenMoji-derived (fetch-art.mjs MAP) or hand-drawn in the warm palette
+  (e.g. the figurative `chin`/`shin` arrows, the potato-chip `chip`).

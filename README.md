@@ -6,8 +6,21 @@ screen. That inversion is the whole point: no menus, no mascots, no reward
 loops, nothing competing for the child's attention. Just a word, then an
 illustration that confirms the read, then the next word.
 
-Built for consonant digraphs (sh, ch, th, wh) on short-vowel words, as a
-sequel to plain CVC flashcards.
+Three phonics categories, shown grouped in the deck picker:
+
+- **CVC** — one deck of short-vowel three-letter words (cat, hen, pig, dog, bus…).
+- **Digraphs** — sh, ch, th, wh, one deck each, in that order.
+- **Blends** — one deck of initial/final consonant blends (flag, frog, star, nest…).
+
+Each category also offers an optional **"shuffle all"** entry that mixes every
+card in the category into a random order for review. The authored per-deck order
+is the default and stays the primary path — shuffle is an extra, opt-in row, and
+a shuffle run is deliberately not resumable across a relaunch.
+
+Words are chosen for high illustration coverage (>75%); where a plain glyph
+won't read, the art is figurative — e.g. `chin` is a face with an arrow to the
+chin, `shin` a leg with an arrow to the shin. American English throughout
+(`chip` is a potato chip, not fries).
 
 ## Design constraints (non-negotiable)
 
@@ -60,12 +73,16 @@ illustration palette, and optimizes with SVGO into `public/art/`.
 
 ## Adding a deck
 
-Add a new JSON file to `decks/` following the existing schema and run the art
-pipeline for any new illustrations. Decks are auto-discovered and sorted by
-their `order` field — **no app-logic changes required.** (Per Eng Decision
-#11: this is *not* "zero code changes" in general — a new deck still needs an
-art-pipeline run and passes through build-time validation — but it never
-touches `src/`.)
+Add a new JSON file to `decks/` following the existing schema (include a
+`category` of `cvc`, `digraphs`, or `blends`, and an `order` unique within that
+category) and run the art pipeline for any new illustrations. Decks are
+auto-discovered, grouped under their category, and sorted by `order` — **no
+app-logic changes required.** (Per Eng Decision #11: this is *not* "zero code
+changes" in general — a new deck still needs an art-pipeline run and passes
+through build-time validation — but it never touches `src/`.) To add a *new
+category*, add it to `src/categories.ts` only — `scripts/validate-decks.mjs`
+derives the valid category id set from that file at build time, so the two can't
+drift.
 
 ## Deploy
 

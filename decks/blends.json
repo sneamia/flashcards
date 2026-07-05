@@ -1,0 +1,27 @@
+{
+  "id": "blends",
+  "title": "Blends",
+  "kind": "phonics",
+  "category": "blends",
+  "order": 1,
+  "cards": [
+    { "type": "word", "text": "flag", "graphemes": ["fl", "a", "g"], "img": "art/flag.svg" },
+    { "type": "word", "text": "sled", "graphemes": ["sl", "e", "d"], "img": "art/sled.svg" },
+    { "type": "word", "text": "plug", "graphemes": ["pl", "u", "g"], "img": "art/plug.svg" },
+    { "type": "word", "text": "clock", "graphemes": ["cl", "o", "ck"], "img": "art/clock.svg" },
+    { "type": "word", "text": "glass", "graphemes": ["gl", "a", "ss"], "img": "art/glass.svg" },
+    { "type": "word", "text": "block", "graphemes": ["bl", "o", "ck"], "img": "art/block.svg" },
+    { "type": "word", "text": "frog", "graphemes": ["fr", "o", "g"], "img": "art/frog.svg" },
+    { "type": "word", "text": "drum", "graphemes": ["dr", "u", "m"], "img": "art/drum.svg" },
+    { "type": "word", "text": "crab", "graphemes": ["cr", "a", "b"], "img": "art/crab.svg" },
+    { "type": "word", "text": "truck", "graphemes": ["tr", "u", "ck"], "img": "art/truck.svg" },
+    { "type": "word", "text": "brick", "graphemes": ["br", "i", "ck"], "img": "art/brick.svg" },
+    { "type": "word", "text": "tree", "graphemes": ["tr", "ee"], "img": "art/tree.svg" },
+    { "type": "word", "text": "star", "graphemes": ["st", "ar"], "img": "art/star.svg" },
+    { "type": "word", "text": "spoon", "graphemes": ["sp", "oo", "n"], "img": "art/spoon.svg" },
+    { "type": "word", "text": "snail", "graphemes": ["sn", "ai", "l"], "img": "art/snail.svg" },
+    { "type": "word", "text": "skunk", "graphemes": ["sk", "u", "nk"], "img": "art/skunk.svg" },
+    { "type": "word", "text": "nest", "graphemes": ["n", "e", "st"], "img": "art/nest.svg" },
+    { "type": "word", "text": "tent", "graphemes": ["t", "e", "nt"], "img": "art/tent.svg" }
+  ]
+}

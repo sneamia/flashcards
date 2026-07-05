@@ -36,6 +36,14 @@ Muted flat-art palette (illustrations, palette-remapped from OpenMoji at build):
 low-saturation warm tones only. Examples in use: clay `#a6785a`, sand `#c9b48f`,
 sail `#e0cba8` / `#cbb287`, mast `#8a6a4a`. No blues, ever.
 
+**Figurative art is allowed** where a single object won't read: a drawing may
+annotate with an ink (`#3d3833`) arrow pointing at the part the word names —
+e.g. `chin` is a face with an arrow to the chin, `shin` a leg with an arrow to
+the shin. The arrow is the exception to "single-object" art; it stays inside the
+warm palette, and the printed WORD is still the canonical readable content (the
+SVG remains `aria-hidden`). This is a confirmation aid, not decoration — do not
+add arrows, labels, or annotations that aren't naming a part of the word.
+
 ## Typography
 
 - **Andika** (SIL OFL, bundled), all reading text. Chosen for early literacy:
@@ -57,7 +65,7 @@ sail `#e0cba8` / `#cbb287`, mast `#8a6a4a`. No blues, ever.
 | **WORD beat** | Word centered, dominant, at `--word-size`. Whole screen is one tap target. Corner label top-left (`--label`). |
 | **IMAGE reveal** | Illustration large & centered up top; word small bottom-right (`--reveal-word-size`). Confirms the read. |
 | **Image-free / one-beat** | Word only (function words + any card whose art failed to load — see fallback below). One beat, tap → next. |
-| **Deck picker** (only screen the parent navigates) | Rows in **pedagogical order** (sh→ch→th→wh), each = digraph in Andika left + `--label-readable` "N words" right; whole row a **≥44px** tap target with hairline dividers. Corner label "flashcards" top-left. Footer: one `--label-readable` gesture-hint line only. |
+| **Deck picker** (only screen the parent navigates) | Decks are grouped into **categories in pedagogical order** (CVC → digraphs → blends). Each category is a small-caps `--label-readable` header (`.cat`) over its deck rows. A deck row = title in Andika left + `--label-readable` "N words" right; digraph decks stay in order sh→ch→th→wh. Each category ends with a **shuffle row** (italic): "shuffle all" when the category spans more than one deck (e.g. digraphs = 32 words), plain "shuffle" for a single-deck category (CVC, Blends). Whole row a **≥44px** tap target with hairline dividers. Corner label "flashcards" top-left. Footer: one `--label-readable` line, "hold for about" — the picker's only non-obvious gesture (a long-press opens the about overlay; the full in-deck gesture list lives there, not in the footer). |
 | **About overlay** | Long-press the deck picker → calm overlay (`.syscard`) with full gesture list + CC BY-SA attribution; tap to dismiss. Keeps legal text off the home screen. |
 | **End card** | Centered "the end", `.syscard`, no counter, no celebration. Tap → picker (after lockout). |
 | **Rotate card** | Text-only "turn the phone sideways", `.syscard`. Shown in portrait (iOS can't lock PWA orientation). No glyph. |

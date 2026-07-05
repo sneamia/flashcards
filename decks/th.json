@@ -2,6 +2,7 @@
   "id": "th",
   "title": "th",
   "kind": "phonics",
+  "category": "digraphs",
   "order": 3,
   "cards": [
     { "type": "word", "text": "thin", "graphemes": ["th", "i", "n"] },
