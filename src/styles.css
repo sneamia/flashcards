@@ -155,7 +155,13 @@ body {
 /* --- Full-screen system cards (rotate / end / about) reuse one calm surface --- */
 .syscard {
   position: absolute; inset: 0;
-  display: grid; place-items: center;
+  /* Flex column (not grid place-items:center): with >1 child a grid stretches
+     its implicit rows to fill the height, centering each child in its own
+     ~half and defeating the per-card `gap`. Flex keeps children packed at the
+     real gap and centers the whole group — so a title and its sub-line read as
+     one message, not two fragments at opposite ends. */
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
   text-align: center; padding: 8vh 8vw;
   font-size: clamp(1.4rem, 5vw, 2.4rem);
   color: var(--ink);
