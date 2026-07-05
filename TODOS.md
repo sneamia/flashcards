@@ -47,6 +47,12 @@
 - **Constraints:** OpenMoji source, palette-remapped muted warm (no blues), CC BY-SA, via the existing `fetch-art` + `validate` pipeline. Realistic ceiling ~60%; further gains need new figurative candidates that pass the rule.
 - **Impact:** Feature/polish. **Category:** content/art.
 
+### Picker footer gesture-hint mismatch (from /design-review 2026-07-05, deferred by user)
+- **What:** The deck-picker footer shows `two-finger tap: back · hold: exit` (`GESTURE_LINES.slice(1)`), but the picker is the root screen: there's no beat to go "back" to, and a long-press there opens the About overlay, not an "exit".
+- **Why deferred:** User call (2026-07-05) — it's a defensible persistent gesture legend, and the "hold" hint does point the parent at the long-press that reveals the full About legend. Leaving as-is.
+- **If revisited:** either show the picker's own gesture (`hold: about`, via a new constant so the in-deck legend stays intact) or drop the footer on the picker entirely.
+- **Impact:** Polish. **Category:** content/microcopy.
+
 ## v1.1 (already in design doc, tracked here for visibility)
 - Sentence-finale cards + composed scene illustrations (`sentence` type already schema-valid, warned-and-skipped in v1).
 - Mixed "review" deck with cross-digraph word ladders (chip → ship → shop → chop).
