@@ -763,14 +763,20 @@ function criticalAssetUrls(): string[] {
 
 // caches.match() checks every open cache for a match, which is exactly
 // "is this URL present anywhere in the precache" — no need to enumerate
-// cache names ourselves.
+// cache names ourselves. ignoreSearch is REQUIRED: Workbox stores every
+// non-content-hashed precache entry (the fonts and art SVGs, which have no
+// hash in their filename) under a cache key with a `?__WB_REVISION__=<hash>`
+// query param appended. A plain `caches.match(url)` is exact-including-query,
+// so it would never match those keys — reporting the fonts/art perpetually
+// absent and firing the restore card on every offline boot. Matching on path
+// alone is the correct "is this asset cached at all" probe here.
 async function gatherPresentUrls(urls: string[]): Promise<Set<string>> {
   const present = new Set<string>();
   if (!('caches' in window)) return present; // no Cache API — treat as nothing present
   await Promise.all(
     urls.map(async (url) => {
       try {
-        if (await caches.match(url)) present.add(url);
+        if (await caches.match(url, { ignoreSearch: true })) present.add(url);
       } catch {
         // Threw (e.g. private-mode quirk) — leave unmarked; the pure check
         // below then correctly reports the precache incomplete.

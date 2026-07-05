@@ -42,7 +42,16 @@ async function installStub(page: Page): Promise<void> {
       Object.defineProperty(window, 'caches', {
         configurable: true,
         value: {
-          match: async () => (cacheComplete ? new Response('') : undefined),
+          // Models Workbox faithfully: every precached font/art SVG is stored
+          // under a cache key carrying a `?__WB_REVISION__=<hash>` query param
+          // the app's requested URL lacks. So an intact precache is only
+          // discoverable with { ignoreSearch: true } — a query-exact
+          // `caches.match(url)` (the pre-fix bug) misses those entries and
+          // reports the precache incomplete even when it's whole. This guards
+          // the fix: drop ignoreSearch and the "intact precache" case below
+          // regresses to the restore card.
+          match: async (_req: RequestInfo | URL, opts?: CacheQueryOptions) =>
+            cacheComplete && opts?.ignoreSearch ? new Response('') : undefined,
           keys: realCaches.keys.bind(realCaches),
           open: realCaches.open.bind(realCaches),
           has: realCaches.has.bind(realCaches),
@@ -109,6 +118,23 @@ test.describe('restore card (precache integrity)', () => {
     // existing "relaunch with connectivity restores it" path is trusted and
     // boot proceeds normally straight to the picker.
     await setFlags(page, /* offline */ false, /* cacheComplete */ false);
+    await page.reload();
+
+    await expect(page.locator('#stage')).toHaveAttribute('data-state', 'deck_pick');
+  });
+
+  test('offline + intact (revisioned) precache boots normally, not to the restore card', async ({
+    page,
+  }) => {
+    await installStub(page);
+    await page.goto('/');
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-state', 'boot');
+
+    // Offline AND a fully intact precache — but the stub only surfaces its
+    // entries via { ignoreSearch: true } (the revisioned-cache-key reality).
+    // gatherPresentUrls must probe with ignoreSearch, or the fonts/art read
+    // as absent and this regresses to 'restore' on a healthy offline launch.
+    await setFlags(page, /* offline */ true, /* cacheComplete */ true);
     await page.reload();
 
     await expect(page.locator('#stage')).toHaveAttribute('data-state', 'deck_pick');
