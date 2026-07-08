@@ -9,7 +9,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [1.3.0] - 2026-07-07
 
 ### Added
-- Eleven new decks (110 new words, 275 total): five **short-vowel CVC** decks
+- Eleven new decks (110 new words, 180 total): five **short-vowel CVC** decks
   (Short A/E/I/O/U), **NG** and **CK** digraph decks, and four **blend-family**
   decks (L-Blends, R-Blends, S-Blends, Ending Blends). Every category's
   "shuffle all" row now pools its full family — 70 CVC, 52 digraph, and 58

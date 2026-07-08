@@ -23,14 +23,15 @@ src/
   decks.ts       # deck loader + category grouping + shuffle-pool builder (skip sentence) — Core-logic agent
   main.ts        # DOM wiring: renders screens, owns timers/wakelock/persistence — Core-logic agent
 decks/
-  cvc.json sh.json ch.json th.json wh.json blends.json   # Deck-data agent
+  17 deck JSONs — cvc + cvc-{a,e,i,o,u} · sh ch th wh ng ck ·
+  blends + {l,r,s,end}-blends                            # Deck-data agent
 public/
   art/*.svg      # placeholder + pipeline art — Build-scripts agent
   fonts/*.woff2  # Andika — PWA/fonts agent
   icons/*.png    # PWA icons — PWA/fonts agent
 scripts/
-  fetch-art.mjs        # OpenMoji fetch + palette-remap + SVGO — Build-scripts agent
-  validate-decks.mjs   # build-time deck validation — Build-scripts agent
+  fetch-art.mjs        # OpenMoji fetch (SHA-pinned ref) + palette-remap (KEEP_COLORS color-word exception) + sanitize denylist + SVGO; exits non-zero on any failed fetch — Build-scripts agent
+  validate-decks.mjs   # build-time deck validation + art palette gate + graphemes-join check — Build-scripts agent
   check-contrast.mjs   # --label-readable >=4.5:1 on cream — Build-scripts agent
   gen-icons.mjs        # one-off PWA icon generator (manual; needs `npm i --no-save sharp opentype.js wawoff2` — outlines the Andika "a" glyph to a path so librsvg can't fall back to a double-story system font)
 tests/
@@ -205,10 +206,19 @@ precedence over `rotate` (evicted art is still broken in landscape).
 - `category`: `"cvc" | "digraphs" | "blends"` — must match an id in `src/categories.ts`
   (the picker groups decks under their category header). validate-decks.mjs enforces it.
 - `order`: the sort key WITHIN its category, unique per category (digraphs: sh=1, ch=2,
-  th=3, wh=4; cvc and blends each have one deck at order 1).
+  th=3, wh=4, ng=5, ck=6; cvc: cvc=1 then cvc-a…cvc-u=2…6; blends: blends=1 then
+  l/r/s/end-blends=2…5).
 - `id` must NOT start with `shuffle:` — that namespace is reserved for the synthetic
   per-category "shuffle all" decks built at runtime.
 - A word WITH `img` is a two-beat reveal card; WITHOUT `img` it's a one-beat card.
 - `img` paths are relative (`art/xxx.svg`) and MUST resolve to a real file in `public/art/`.
   Art is either OpenMoji-derived (fetch-art.mjs MAP) or hand-drawn in the warm palette
   (e.g. the figurative `chin`/`shin` arrows, the potato-chip `chip`).
+- `graphemes`, when present, must be a non-empty array of non-empty strings that joins
+  back to `text` exactly — validate-decks.mjs enforces it (forward-compat data; nothing
+  renders it yet).
+- Every shipped `public/art/*.svg` must stay within the six-hex warm palette —
+  validate-decks.mjs fails the build otherwise. The `KEEP_COLORS` map in fetch-art.mjs
+  (color-word fills, currently only `red`) is the single sanctioned exception; the
+  validator derives both the palette and the exception list from fetch-art.mjs so they
+  can't drift.

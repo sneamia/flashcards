@@ -6,7 +6,7 @@
 
 ## What this is
 
-Expanded the deck lineup from 6 to 17 decks (70 → 275 words) via six parallel subagents, one lane each: five short-vowel CVC decks, ng/ck digraphs, and four blend-family decks. Then raised art coverage on the new words from 68/110 (~62%) to 93/110 (~85%) via approved icon-first swaps (see Done).
+Expanded the deck lineup from 6 to 17 decks (70 → 180 words) via six parallel subagents, one lane each: five short-vowel CVC decks, ng/ck digraphs, and four blend-family decks. Then raised art coverage on the new words from 68/110 (~62%) to 93/110 (~85%) via approved icon-first swaps (see Done).
 
 ## Done
 
