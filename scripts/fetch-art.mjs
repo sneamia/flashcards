@@ -19,6 +19,11 @@ if (!existsSync(ART_DIR)) mkdirSync(ART_DIR, { recursive: true });
 // Muted warm palette (DESIGN.md). Every source color remaps to the nearest of these.
 const PALETTE = ['#a6785a', '#c9b48f', '#e0cba8', '#cbb287', '#8a6a4a', '#3d3833'];
 
+// Words whose glyph's meaning IS its color (exception approved 2026-07-07):
+// these files skip the palette remap entirely. Keep this list to color-words
+// only — everything else must stay within the six PALETTE hexes.
+const KEEP_COLORS = new Set(['red']);
+
 // art filename (without .svg) -> best-effort OpenMoji hexcode.
 // Hexcodes verified against the OpenMoji index where confident; the rest are
 // the closest available glyph and marked (~). Adjust as coverage is audited.
@@ -113,9 +118,16 @@ const MAP = {
   milk: '1F95B',      // glass of milk
   gift: '1F381',      // wrapped gift
   raft: '1F6F6',      // canoe (~ raft)
-  // spin, snap, slip, slam, skip, band, lamp, jump, belt, pond: no OpenMoji
-  // glyph reliably reads as these for a preschooler (a swirl isn't "spin",
-  // a slide isn't "slip", a bulb isn't "lamp"). Left unmapped — image-free.
+  spider: '1F577',    // spider
+  snake: '1F40D',     // snake
+  slide: '1F6DD',     // playground slide
+  swan: '1F9A2',      // swan
+  skate: '26F8',      // ice skate (~ skate)
+  plant: '1FAB4',     // potted plant (~ plant)
+  wolf: '1F43A',      // wolf
+  ant: '1F41C',       // ant
+  melt: '1FAE0',      // melting face (~ melt)
+  wind: '1F32C',      // wind face (~ wind)
 
   // --- CVC: Short A (cvc-a) ---
   map: '1F5FA',       // world map (~ map)
@@ -126,8 +138,8 @@ const MAP = {
   cap: '1F9E2',       // billed cap
   nap: '1F634',       // sleeping face (~ nap)
   tap: '1F6B0',       // potable water (faucet) (~ tap)
-  // jam: jar 1FAD9 reads as "jar", not jam, for a preschooler; mat: no
-  // plausible glyph. Left unmapped — cards stay image-free.
+  ram: '1F40F',       // ram
+  jam: '1FAD9-200D-1F7E5', // filled jar (jam jar; contents remap to warm palette)
 
   // --- CVC: Short E (cvc-e) ---
   pen: '1F58A',       // pen
@@ -136,9 +148,10 @@ const MAP = {
   leg: '1F9B5',       // leg
   wet: '1F4A7',       // droplet (~ wet)
   men: '1F46C',       // men holding hands (~ men)
-  // pet: paw prints 1F43E read as "paws"; vet: stethoscope 1FA7A won't read
-  // as "vet"; peg: safety pin 1F9F7 reads as a pin; red: the warm-palette
-  // recolor destroys any red glyph's meaning. Left unmapped — image-free.
+  gem: '1F48E',       // gem stone
+  red: '1F7E5',       // red square (in KEEP_COLORS — stays truly red)
+  // pet: paw prints 1F43E read as "paws"; peg: safety pin 1F9F7 reads as a
+  // pin. Left unmapped — image-free.
 
   // --- CVC: Short U (cvc-u) ---
   tub: '1F6C1',       // bathtub (~ tub)
@@ -172,8 +185,10 @@ const MAP = {
   pod: '1FADB',       // pea pod
   jog: '1F3C3',       // person running (~ jog)
   hot: '1F975',       // hot face
-  // top, cot, job: no OpenMoji glyph reliably reads for a preschooler —
-  // left unmapped (image-free cards).
+  cop: '1F46E',       // police officer (~ cop)
+  bot: '1F916',       // robot
+  // top: no OpenMoji glyph reliably reads for a preschooler — left unmapped
+  // (image-free card).
 
   // --- Blends: L-Blends (l-blends) ---
   clap: '1F44F',      // clapping hands
@@ -181,18 +196,24 @@ const MAP = {
   flip: '1F938',      // person cartwheeling (~ flip; mid-flip figure)
   glad: '1F60A',      // smiling face with smiling eyes (~ glad; happy face)
   plus: '2795',       // heavy plus sign
-  // flat, glue, plum, blob, blot: no OpenMoji glyph plausibly reads as these
-  // for a preschooler (flatbread 1FAD3 reads as "bread", not "flat"; no
-  // glue/plum/blob/blot glyphs). Left unmapped — cards stay image-free.
+  cloud: '2601',      // cloud
+  flute: '1FA88',     // flute
+  plane: '2708',      // airplane
+  plate: '1F37D',     // fork and knife with plate (~ plate)
+  // glue: no OpenMoji glyph plausibly reads as glue for a preschooler.
+  // Left unmapped — card stays image-free.
 
   // --- Blends: R-Blends (r-blends) ---
   grin: '1F600',      // grinning face
   grass: '1F33F',     // herb (~ grass; leafy sprigs)
   drip: '1F4A7',      // droplet (a drip)
   drop: '1FA78',      // drop of blood (recolors to a plain drop shape)
-  // grab, trap, trip, crib, prop, press: no glyph reliably reads for a
-  // preschooler (luggage 1F9F3 reads as "suitcase", not "trip"; bed 1F6CF
-  // reads as "bed", not "crib"). Left unmapped — cards stay image-free.
+  trap: '1FAA4',      // mouse trap
+  crown: '1F451',     // crown
+  train: '1F682',     // locomotive (~ train)
+  grapes: '1F347',    // grapes
+  bread: '1F35E',     // bread
+  brush: '1F58C',     // lower left paintbrush (~ brush)
 
   // --- Hand-drawn placeholders (leave UNMAPPED so fetch-art never overwrites) ---
   // whip, chip, chin, shin, shut, mop, block: no OpenMoji glyph plausibly
@@ -243,7 +264,7 @@ async function fetchOne(name, code) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   const raw = await res.text();
-  const recolored = remap(raw);
+  const recolored = KEEP_COLORS.has(name) ? raw : remap(raw);
   // preset-default does NOT strip <script> or on* handlers — and these SVGs
   // are remote content that ends up served from the site's own origin.
   const { data } = optimize(recolored, {

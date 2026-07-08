@@ -11,8 +11,8 @@
     { "type": "word", "text": "leg", "graphemes": ["l", "e", "g"], "img": "art/leg.svg" },
     { "type": "word", "text": "pet", "graphemes": ["p", "e", "t"] },
     { "type": "word", "text": "wet", "graphemes": ["w", "e", "t"], "img": "art/wet.svg" },
-    { "type": "word", "text": "vet", "graphemes": ["v", "e", "t"] },
-    { "type": "word", "text": "red", "graphemes": ["r", "e", "d"] },
+    { "type": "word", "text": "gem", "graphemes": ["g", "e", "m"], "img": "art/gem.svg" },
+    { "type": "word", "text": "red", "graphemes": ["r", "e", "d"], "img": "art/red.svg" },
     { "type": "word", "text": "peg", "graphemes": ["p", "e", "g"] },
     { "type": "word", "text": "men", "graphemes": ["m", "e", "n"], "img": "art/men.svg" }
   ]

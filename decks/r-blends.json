@@ -6,14 +6,14 @@
   "order": 3,
   "cards": [
     { "type": "word", "text": "grin", "graphemes": ["gr", "i", "n"], "img": "art/grin.svg" },
-    { "type": "word", "text": "grab", "graphemes": ["gr", "a", "b"] },
+    { "type": "word", "text": "crown", "graphemes": ["cr", "ow", "n"], "img": "art/crown.svg" },
     { "type": "word", "text": "grass", "graphemes": ["gr", "a", "ss"], "img": "art/grass.svg" },
-    { "type": "word", "text": "trap", "graphemes": ["tr", "a", "p"] },
-    { "type": "word", "text": "trip", "graphemes": ["tr", "i", "p"] },
+    { "type": "word", "text": "trap", "graphemes": ["tr", "a", "p"], "img": "art/trap.svg" },
+    { "type": "word", "text": "train", "graphemes": ["tr", "ai", "n"], "img": "art/train.svg" },
     { "type": "word", "text": "drip", "graphemes": ["dr", "i", "p"], "img": "art/drip.svg" },
     { "type": "word", "text": "drop", "graphemes": ["dr", "o", "p"], "img": "art/drop.svg" },
-    { "type": "word", "text": "crib", "graphemes": ["cr", "i", "b"] },
-    { "type": "word", "text": "prop", "graphemes": ["pr", "o", "p"] },
-    { "type": "word", "text": "press", "graphemes": ["pr", "e", "ss"] }
+    { "type": "word", "text": "grapes", "graphemes": ["gr", "a", "pes"], "img": "art/grapes.svg" },
+    { "type": "word", "text": "bread", "graphemes": ["br", "ea", "d"], "img": "art/bread.svg" },
+    { "type": "word", "text": "brush", "graphemes": ["br", "u", "sh"], "img": "art/brush.svg" }
   ]
 }

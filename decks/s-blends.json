@@ -6,14 +6,14 @@
   "order": 4,
   "cards": [
     { "type": "word", "text": "swim", "graphemes": ["sw", "i", "m"], "img": "art/swim.svg" },
-    { "type": "word", "text": "spin", "graphemes": ["sp", "i", "n"] },
+    { "type": "word", "text": "spider", "graphemes": ["sp", "i", "der"], "img": "art/spider.svg" },
     { "type": "word", "text": "stop", "graphemes": ["st", "o", "p"], "img": "art/stop.svg" },
     { "type": "word", "text": "step", "graphemes": ["st", "e", "p"], "img": "art/step.svg" },
-    { "type": "word", "text": "snap", "graphemes": ["sn", "a", "p"] },
-    { "type": "word", "text": "slip", "graphemes": ["sl", "i", "p"] },
-    { "type": "word", "text": "slam", "graphemes": ["sl", "a", "m"] },
+    { "type": "word", "text": "snake", "graphemes": ["sn", "a", "ke"], "img": "art/snake.svg" },
+    { "type": "word", "text": "slide", "graphemes": ["sl", "i", "de"], "img": "art/slide.svg" },
+    { "type": "word", "text": "swan", "graphemes": ["sw", "a", "n"], "img": "art/swan.svg" },
     { "type": "word", "text": "smog", "graphemes": ["sm", "o", "g"], "img": "art/smog.svg" },
-    { "type": "word", "text": "skip", "graphemes": ["sk", "i", "p"] },
+    { "type": "word", "text": "skate", "graphemes": ["sk", "a", "te"], "img": "art/skate.svg" },
     { "type": "word", "text": "stem", "graphemes": ["st", "e", "m"], "img": "art/stem.svg" }
   ]
 }
