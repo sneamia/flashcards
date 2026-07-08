@@ -1,7 +1,7 @@
 # Handoff — v1.3 deck expansion (11 new decks) + art-coverage swaps
 
 **Branch:** `v1.3/deck-expansion` (base `main` @ `43f392d`; `git log origin/main..` is authoritative for commit count)
-**Date:** 2026-07-07 · **Status:** decks built AND art-coverage swaps applied (James approved all 25 swaps + red exception 2026-07-07); fully verified; ready to ship
+**Date:** 2026-07-07 · **Status:** SHIPPED as v1.3.0 (PR #3, squash-merged `4ca1a99`, deployed to GitHub Pages and canary-verified 2026-07-07). Kept as a historical record; follow-ups now live in `TODOS.md`.
 **Source docs:** `~/.gstack/projects/flashcards/james-none-design-20260704-193000.md` (approved design spec), repo `DESIGN.md`, `TODOS.md`, `.claude/skills/add-deck/SKILL.md` (deck-adding process)
 
 ## What this is
@@ -27,11 +27,4 @@ Expanded the deck lineup from 6 to 17 decks (70 → 180 words) via six parallel 
 
 ## Next
 
-1. `/ship` (branch → PR → merge per land-and-deploy; merging is pre-authorized in user CLAUDE.md).
-
-## Deferred / follow-ups
-
-- Mulberry Symbols as second art source for the stubborn 17 image-free words (pipeline extension).
-- Eyeball pass on figurative art + the shared-glyph pairs: hut/shed (1F6D6), jog/run (1F3C3), drip/wet (1F4A7), plane/jet (2708), plate/dish (1F37D).
-- Split-digraph grapheme convention (e.g. `a_e`) if graphemes ever render (see review note above).
-- See `TODOS.md` for pre-existing backlog.
+Nothing — shipped. Follow-ups were folded into `TODOS.md` ("Deferred from v1.3.0 ship").
