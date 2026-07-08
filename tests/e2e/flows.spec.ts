@@ -335,8 +335,8 @@ test.describe('categories + shuffle-all', () => {
     // One shuffle-all row per category.
     await expect(stage.locator('.row.shuffle')).toHaveCount(3);
     await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"]')).toHaveCount(1);
-    // The digraphs shuffle pools all 32 digraph words.
-    await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"]')).toContainText('32 words');
+    // The digraphs shuffle pools all 52 digraph words.
+    await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"]')).toContainText('52 words');
   });
 
   test('a shuffle-all row starts a run with the category title in the corner', async ({ page }) => {
@@ -347,7 +347,7 @@ test.describe('categories + shuffle-all', () => {
     await stage.locator('.row.shuffle[data-shuffle="digraphs"]').tap();
     await expect(stage).toHaveAttribute('data-state', 'word');
     // Corner shows the category title, not a single digraph id.
-    await expect(page.locator('#stage .corner')).toContainText('Digraphs · 1 of 32');
+    await expect(page.locator('#stage .corner')).toContainText('Digraphs · 1 of 52');
   });
 
   test('a shuffle run is NOT resumable: reloading mid-run lands on the picker', async ({ page }) => {

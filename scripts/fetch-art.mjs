@@ -40,6 +40,28 @@ const MAP = {
   wham: '1F4A5',      // collision (comic impact burst)
   math: '1F522',      // input numbers (~ math; numerals)
 
+  // --- Digraphs: NG (ng) ---
+  ring: '1F48D',      // ring
+  king: '1FAC5',      // person with crown (~ king)
+  wing: '1FABD',      // wing
+  song: '1F3B5',      // musical note (~ song)
+  sing: '1F3A4',      // microphone (~ sing)
+  lung: '1FAC1',      // lungs (~ lung)
+  // long, hang, fang, gong: no OpenMoji glyph plausibly reads as these for a
+  // preschooler (long is an adjective; no hanger/gong glyph; tooth 1F9B7 is a
+  // molar, not a fang). Left unmapped — cards stay image-free.
+
+  // --- Digraphs: CK (ck) ---
+  duck: '1F986',      // duck
+  sock: '1F9E6',      // socks
+  rock: '1FAA8',      // rock
+  lock: '1F512',      // locked padlock (~ lock)
+  pack: '1F392',      // backpack (~ pack)
+  sick: '1F912',      // face with thermometer (~ sick)
+  // kick, neck, back, tick: no OpenMoji glyph plausibly reads as these for a
+  // preschooler (foot 1F9B6 reads "foot", not kick; back/neck are body
+  // regions with no glyph; no tick-insect glyph). Left unmapped — image-free.
+
   // --- CVC ---
   cat: '1F408',       // cat
   hat: '1F3A9',       // top hat
@@ -79,6 +101,98 @@ const MAP = {
   skunk: '1F9A8',     // skunk
   nest: '1FABA',      // nest with eggs (~ nest)
   tent: '26FA',       // tent
+
+  // --- S-Blends (s-blends) / Ending Blends (end-blends) ---
+  swim: '1F3CA',      // person swimming
+  stop: '1F6D1',      // stop sign
+  step: '1F463',      // footprints (~ step)
+  smog: '1F32B',      // fog (~ smog; haze cloud)
+  stem: '1F331',      // seedling (~ stem; sprout stalk)
+  hand: '270B',       // raised hand
+  sand: '1F3D6',      // beach with umbrella (~ sand)
+  milk: '1F95B',      // glass of milk
+  gift: '1F381',      // wrapped gift
+  raft: '1F6F6',      // canoe (~ raft)
+  // spin, snap, slip, slam, skip, band, lamp, jump, belt, pond: no OpenMoji
+  // glyph reliably reads as these for a preschooler (a swirl isn't "spin",
+  // a slide isn't "slip", a bulb isn't "lamp"). Left unmapped — image-free.
+
+  // --- CVC: Short A (cvc-a) ---
+  map: '1F5FA',       // world map (~ map)
+  pan: '1F373',       // cooking (egg in frying pan) (~ pan)
+  fan: '1FAAD',       // folding hand fan (~ fan)
+  bat: '1F987',       // bat (animal)
+  rat: '1F400',       // rat
+  cap: '1F9E2',       // billed cap
+  nap: '1F634',       // sleeping face (~ nap)
+  tap: '1F6B0',       // potable water (faucet) (~ tap)
+  // jam: jar 1FAD9 reads as "jar", not jam, for a preschooler; mat: no
+  // plausible glyph. Left unmapped — cards stay image-free.
+
+  // --- CVC: Short E (cvc-e) ---
+  pen: '1F58A',       // pen
+  ten: '1F51F',       // keycap 10 (numeral reads as "ten")
+  net: '1F945',       // goal net (~ net)
+  leg: '1F9B5',       // leg
+  wet: '1F4A7',       // droplet (~ wet)
+  men: '1F46C',       // men holding hands (~ men)
+  // pet: paw prints 1F43E read as "paws"; vet: stethoscope 1FA7A won't read
+  // as "vet"; peg: safety pin 1F9F7 reads as a pin; red: the warm-palette
+  // recolor destroys any red glyph's meaning. Left unmapped — image-free.
+
+  // --- CVC: Short U (cvc-u) ---
+  tub: '1F6C1',       // bathtub (~ tub)
+  nut: '1F95C',       // peanuts (~ nut)
+  pup: '1F436',       // dog face (~ pup; puppy face)
+  jug: '1F3FA',       // amphora (~ jug)
+  hut: '1F6D6',       // hut
+  run: '1F3C3',       // person running (~ run)
+  cut: '2702',        // scissors (~ cut)
+  // mud, rug, gum: no OpenMoji glyph plausibly reads as these for a
+  // preschooler (mud/gum have no glyph; yarn 1F9F6 is not a rug). Left
+  // unmapped — cards stay image-free.
+
+  // --- CVC: Short I (cvc-i) ---
+  wig: '1F9B1',       // curly hair component (~ wig; floating hairpiece)
+  dig: '26CF',        // pick (~ dig; digging tool)
+  fin: '1F988',       // shark (~ fin; iconic dorsal fin)
+  kid: '1F9D2',       // child (~ kid)
+  zip: '1F910',       // zipper-mouth face (~ zip; zipper across mouth)
+  sit: '1FA91',       // chair (~ sit)
+  rib: '1F356',       // meat on bone (~ rib)
+  bin: '1F5D1',       // wastebasket (bin)
+  // bib, hit: no OpenMoji glyph reliably reads for a preschooler — left
+  // unmapped (image-free cards).
+
+  // --- CVC: Short O (cvc-o) ---
+  pot: '1F372',       // pot of food (~ pot)
+  hop: '1F407',       // rabbit (~ hop; rabbits hop)
+  log: '1FAB5',       // wood (log)
+  cob: '1F33D',       // ear of corn (~ cob; corn on the cob)
+  pod: '1FADB',       // pea pod
+  jog: '1F3C3',       // person running (~ jog)
+  hot: '1F975',       // hot face
+  // top, cot, job: no OpenMoji glyph reliably reads for a preschooler —
+  // left unmapped (image-free cards).
+
+  // --- Blends: L-Blends (l-blends) ---
+  clap: '1F44F',      // clapping hands
+  clip: '1F4CE',      // paperclip (~ clip)
+  flip: '1F938',      // person cartwheeling (~ flip; mid-flip figure)
+  glad: '1F60A',      // smiling face with smiling eyes (~ glad; happy face)
+  plus: '2795',       // heavy plus sign
+  // flat, glue, plum, blob, blot: no OpenMoji glyph plausibly reads as these
+  // for a preschooler (flatbread 1FAD3 reads as "bread", not "flat"; no
+  // glue/plum/blob/blot glyphs). Left unmapped — cards stay image-free.
+
+  // --- Blends: R-Blends (r-blends) ---
+  grin: '1F600',      // grinning face
+  grass: '1F33F',     // herb (~ grass; leafy sprigs)
+  drip: '1F4A7',      // droplet (a drip)
+  drop: '1FA78',      // drop of blood (recolors to a plain drop shape)
+  // grab, trap, trip, crib, prop, press: no glyph reliably reads for a
+  // preschooler (luggage 1F9F3 reads as "suitcase", not "trip"; bed 1F6CF
+  // reads as "bed", not "crib"). Left unmapped — cards stay image-free.
 
   // --- Hand-drawn placeholders (leave UNMAPPED so fetch-art never overwrites) ---
   // whip, chip, chin, shin, shut, mop, block: no OpenMoji glyph plausibly

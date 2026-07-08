@@ -1,0 +1,19 @@
+{
+  "id": "end-blends",
+  "title": "Ending Blends",
+  "kind": "phonics",
+  "category": "blends",
+  "order": 5,
+  "cards": [
+    { "type": "word", "text": "hand", "graphemes": ["h", "a", "nd"], "img": "art/hand.svg" },
+    { "type": "word", "text": "band", "graphemes": ["b", "a", "nd"] },
+    { "type": "word", "text": "sand", "graphemes": ["s", "a", "nd"], "img": "art/sand.svg" },
+    { "type": "word", "text": "lamp", "graphemes": ["l", "a", "mp"] },
+    { "type": "word", "text": "jump", "graphemes": ["j", "u", "mp"] },
+    { "type": "word", "text": "milk", "graphemes": ["m", "i", "lk"], "img": "art/milk.svg" },
+    { "type": "word", "text": "belt", "graphemes": ["b", "e", "lt"] },
+    { "type": "word", "text": "gift", "graphemes": ["g", "i", "ft"], "img": "art/gift.svg" },
+    { "type": "word", "text": "pond", "graphemes": ["p", "o", "nd"] },
+    { "type": "word", "text": "raft", "graphemes": ["r", "a", "ft"], "img": "art/raft.svg" }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "l-blends",
+  "title": "L-Blends",
+  "kind": "phonics",
+  "category": "blends",
+  "order": 2,
+  "cards": [
+    { "type": "word", "text": "clap", "graphemes": ["cl", "a", "p"], "img": "art/clap.svg" },
+    { "type": "word", "text": "clip", "graphemes": ["cl", "i", "p"], "img": "art/clip.svg" },
+    { "type": "word", "text": "flip", "graphemes": ["fl", "i", "p"], "img": "art/flip.svg" },
+    { "type": "word", "text": "flat", "graphemes": ["fl", "a", "t"] },
+    { "type": "word", "text": "glue", "graphemes": ["gl", "ue"] },
+    { "type": "word", "text": "glad", "graphemes": ["gl", "a", "d"], "img": "art/glad.svg" },
+    { "type": "word", "text": "plum", "graphemes": ["pl", "u", "m"] },
+    { "type": "word", "text": "plus", "graphemes": ["pl", "u", "s"], "img": "art/plus.svg" },
+    { "type": "word", "text": "blob", "graphemes": ["bl", "o", "b"] },
+    { "type": "word", "text": "blot", "graphemes": ["bl", "o", "t"] }
+  ]
+}

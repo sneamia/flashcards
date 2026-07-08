@@ -28,16 +28,24 @@ import { buildShuffledDeck, groupByCategory, loadDecks, renderableCards } from '
 describe('loadDecks() against the real decks/*.json fixtures', () => {
   const decks = loadDecks();
 
-  it('resolves import.meta.glob and returns all six decks', () => {
-    expect(decks).toHaveLength(6);
+  it('resolves import.meta.glob and returns all seventeen decks', () => {
+    expect(decks).toHaveLength(17);
     expect(new Set(decks.map((d) => d.id))).toEqual(
-      new Set(['cvc', 'sh', 'ch', 'th', 'wh', 'blends']),
+      new Set([
+        'cvc', 'cvc-a', 'cvc-e', 'cvc-i', 'cvc-o', 'cvc-u',
+        'sh', 'ch', 'th', 'wh', 'ng', 'ck',
+        'blends', 'l-blends', 'r-blends', 's-blends', 'end-blends',
+      ]),
     );
   });
 
   it('has the documented per-deck renderable-card counts', () => {
     const counts = Object.fromEntries(decks.map((d) => [d.id, d.cards.length]));
-    expect(counts).toEqual({ cvc: 20, sh: 10, ch: 9, th: 9, wh: 4, blends: 18 });
+    expect(counts).toEqual({
+      cvc: 20, 'cvc-a': 10, 'cvc-e': 10, 'cvc-i': 10, 'cvc-o': 10, 'cvc-u': 10,
+      sh: 10, ch: 9, th: 9, wh: 4, ng: 10, ck: 10,
+      blends: 18, 'l-blends': 10, 'r-blends': 10, 's-blends': 10, 'end-blends': 10,
+    });
   });
 
   it('every returned card is renderable (no sentence cards survive)', () => {
@@ -63,14 +71,18 @@ describe('groupByCategory() against the real fixtures', () => {
     expect(groups.map((g) => g.title)).toEqual(['CVC', 'Digraphs', 'Blends']);
   });
 
-  it('orders the digraph decks by their intra-category `order`: sh, ch, th, wh', () => {
+  it('orders the digraph decks by their intra-category `order`: sh, ch, th, wh, ng, ck', () => {
     const digraphs = groups.find((g) => g.id === 'digraphs');
-    expect(digraphs?.decks.map((d) => d.id)).toEqual(['sh', 'ch', 'th', 'wh']);
+    expect(digraphs?.decks.map((d) => d.id)).toEqual(['sh', 'ch', 'th', 'wh', 'ng', 'ck']);
   });
 
-  it('puts the single-deck categories on their own', () => {
-    expect(groups.find((g) => g.id === 'cvc')?.decks.map((d) => d.id)).toEqual(['cvc']);
-    expect(groups.find((g) => g.id === 'blends')?.decks.map((d) => d.id)).toEqual(['blends']);
+  it('orders the CVC and Blends decks by their intra-category `order`', () => {
+    expect(groups.find((g) => g.id === 'cvc')?.decks.map((d) => d.id)).toEqual([
+      'cvc', 'cvc-a', 'cvc-e', 'cvc-i', 'cvc-o', 'cvc-u',
+    ]);
+    expect(groups.find((g) => g.id === 'blends')?.decks.map((d) => d.id)).toEqual([
+      'blends', 'l-blends', 'r-blends', 's-blends', 'end-blends',
+    ]);
   });
 });
 
@@ -159,9 +171,9 @@ describe('buildShuffledDeck()', () => {
   });
 });
 
-describe('buildShuffledDeck() — single-deck category (the real CVC / Blends path)', () => {
-  // Production CVC and Blends are single-deck categories, but the suite above
-  // only exercises a multi-deck group. This pins the one-deck pooling path:
+describe('buildShuffledDeck() — single-deck category', () => {
+  // No production category is single-deck anymore, but the suite above only
+  // exercises a multi-deck group. This pins the one-deck pooling path:
   // the pool is just that deck's cards, under the reserved shuffle id.
   const group = {
     id: 'cvc',

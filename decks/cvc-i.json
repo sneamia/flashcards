@@ -1,0 +1,19 @@
+{
+  "id": "cvc-i",
+  "title": "Short I",
+  "kind": "phonics",
+  "category": "cvc",
+  "order": 4,
+  "cards": [
+    { "type": "word", "text": "wig", "graphemes": ["w", "i", "g"], "img": "art/wig.svg" },
+    { "type": "word", "text": "dig", "graphemes": ["d", "i", "g"], "img": "art/dig.svg" },
+    { "type": "word", "text": "fin", "graphemes": ["f", "i", "n"], "img": "art/fin.svg" },
+    { "type": "word", "text": "bib", "graphemes": ["b", "i", "b"] },
+    { "type": "word", "text": "kid", "graphemes": ["k", "i", "d"], "img": "art/kid.svg" },
+    { "type": "word", "text": "zip", "graphemes": ["z", "i", "p"], "img": "art/zip.svg" },
+    { "type": "word", "text": "sit", "graphemes": ["s", "i", "t"], "img": "art/sit.svg" },
+    { "type": "word", "text": "hit", "graphemes": ["h", "i", "t"] },
+    { "type": "word", "text": "rib", "graphemes": ["r", "i", "b"], "img": "art/rib.svg" },
+    { "type": "word", "text": "bin", "graphemes": ["b", "i", "n"], "img": "art/bin.svg" }
+  ]
+}

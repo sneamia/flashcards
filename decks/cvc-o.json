@@ -1,0 +1,19 @@
+{
+  "id": "cvc-o",
+  "title": "Short O",
+  "kind": "phonics",
+  "category": "cvc",
+  "order": 5,
+  "cards": [
+    { "type": "word", "text": "pot", "graphemes": ["p", "o", "t"], "img": "art/pot.svg" },
+    { "type": "word", "text": "top", "graphemes": ["t", "o", "p"] },
+    { "type": "word", "text": "hop", "graphemes": ["h", "o", "p"], "img": "art/hop.svg" },
+    { "type": "word", "text": "log", "graphemes": ["l", "o", "g"], "img": "art/log.svg" },
+    { "type": "word", "text": "cob", "graphemes": ["c", "o", "b"], "img": "art/cob.svg" },
+    { "type": "word", "text": "cot", "graphemes": ["c", "o", "t"] },
+    { "type": "word", "text": "pod", "graphemes": ["p", "o", "d"], "img": "art/pod.svg" },
+    { "type": "word", "text": "job", "graphemes": ["j", "o", "b"] },
+    { "type": "word", "text": "jog", "graphemes": ["j", "o", "g"], "img": "art/jog.svg" },
+    { "type": "word", "text": "hot", "graphemes": ["h", "o", "t"], "img": "art/hot.svg" }
+  ]
+}

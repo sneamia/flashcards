@@ -1,0 +1,19 @@
+{
+  "id": "s-blends",
+  "title": "S-Blends",
+  "kind": "phonics",
+  "category": "blends",
+  "order": 4,
+  "cards": [
+    { "type": "word", "text": "swim", "graphemes": ["sw", "i", "m"], "img": "art/swim.svg" },
+    { "type": "word", "text": "spin", "graphemes": ["sp", "i", "n"] },
+    { "type": "word", "text": "stop", "graphemes": ["st", "o", "p"], "img": "art/stop.svg" },
+    { "type": "word", "text": "step", "graphemes": ["st", "e", "p"], "img": "art/step.svg" },
+    { "type": "word", "text": "snap", "graphemes": ["sn", "a", "p"] },
+    { "type": "word", "text": "slip", "graphemes": ["sl", "i", "p"] },
+    { "type": "word", "text": "slam", "graphemes": ["sl", "a", "m"] },
+    { "type": "word", "text": "smog", "graphemes": ["sm", "o", "g"], "img": "art/smog.svg" },
+    { "type": "word", "text": "skip", "graphemes": ["sk", "i", "p"] },
+    { "type": "word", "text": "stem", "graphemes": ["st", "e", "m"], "img": "art/stem.svg" }
+  ]
+}
