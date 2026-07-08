@@ -1,12 +1,12 @@
 # Handoff — v1.3 deck expansion (11 new decks) + art-coverage swaps
 
-**Branch:** `v1.3/deck-expansion` (base `main` @ `43f392d`, 2 commits ahead, tree clean)
+**Branch:** `v1.3/deck-expansion` (base `main` @ `43f392d`; `git log origin/main..` is authoritative for commit count)
 **Date:** 2026-07-07 · **Status:** decks built AND art-coverage swaps applied (James approved all 25 swaps + red exception 2026-07-07); fully verified; ready to ship
 **Source docs:** `~/.gstack/projects/flashcards/james-none-design-20260704-193000.md` (approved design spec), repo `DESIGN.md`, `TODOS.md`, `.claude/skills/add-deck/SKILL.md` (deck-adding process)
 
 ## What this is
 
-Expanded the deck lineup from 6 to 17 decks (70 → 275 words) via six parallel subagents, one lane each: five short-vowel CVC decks, ng/ck digraphs, and four blend-family decks. Then researched how to raise art coverage (currently 68/110 new words, ~62%) — findings below, not yet implemented.
+Expanded the deck lineup from 6 to 17 decks (70 → 275 words) via six parallel subagents, one lane each: five short-vowel CVC decks, ng/ck digraphs, and four blend-family decks. Then raised art coverage on the new words from 68/110 (~62%) to 93/110 (~85%) via approved icon-first swaps (see Done).
 
 ## Done
 

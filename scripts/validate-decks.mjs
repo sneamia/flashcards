@@ -43,6 +43,39 @@ if (files.length === 0) errors.push('decks/: no .json deck files found');
 // Exact-case listing of public/art — see the case-sensitivity note below.
 const artFiles = new Set(readdirSync(ART_DIR));
 
+// Palette gate (DESIGN.md): every shipped art SVG must stay within the six
+// warm-palette hexes. PALETTE and the KEEP_COLORS exception list are derived
+// from scripts/fetch-art.mjs (same anti-drift reason as CATEGORY_IDS above).
+const FETCH_ART_SRC = readFileSync(join(__dirname, 'fetch-art.mjs'), 'utf8');
+const PALETTE = new Set(
+  ((FETCH_ART_SRC.match(/const PALETTE = \[([^\]]+)\]/)?.[1] ?? '')
+    .match(/#[0-9a-fA-F]{6}/g) ?? []).map((h) => h.toLowerCase()),
+);
+const KEEP_COLORS = new Set(
+  ((FETCH_ART_SRC.match(/const KEEP_COLORS = new Map\(\[([\s\S]*?)\]\);/)?.[1] ?? '')
+    .match(/\['[^']+'/g) ?? []).map((s) => s.slice(2, -1)),
+);
+if (PALETTE.size === 0) {
+  errors.push('scripts/fetch-art.mjs: parsed zero PALETTE hexes (palette moved or regex drift?)');
+}
+for (const art of artFiles) {
+  if (!art.endsWith('.svg') || KEEP_COLORS.has(art.replace(/\.svg$/, ''))) continue;
+  const svg = readFileSync(join(ART_DIR, art), 'utf8');
+  const offPalette = new Set();
+  // Same hex-shape rules as fetch-art's remap(): skip url(#id) references.
+  for (const m of svg.matchAll(/(?<!url\()#([0-9a-fA-F]{6})\b/g)) {
+    const hex = `#${m[1].toLowerCase()}`;
+    if (!PALETTE.has(hex)) offPalette.add(hex);
+  }
+  for (const m of svg.matchAll(/(?<!url\()#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])\b(?![0-9a-fA-F])/g)) {
+    const hex = `#${m[1]}${m[1]}${m[2]}${m[2]}${m[3]}${m[3]}`.toLowerCase();
+    if (!PALETTE.has(hex)) offPalette.add(hex);
+  }
+  if (offPalette.size) {
+    errors.push(`public/art/${art}: off-palette color(s) ${[...offPalette].join(', ')} — art must stay within the six DESIGN.md hexes (KEEP_COLORS in scripts/fetch-art.mjs is the only sanctioned exception)`);
+  }
+}
+
 for (const file of files) {
   const path = join(DECKS_DIR, file);
   let deck;
@@ -110,6 +143,17 @@ for (const file of files) {
     }
     if (card.type === 'sentence') {
       warnings.push(`${where}: "sentence" card present — v1 loader SKIPS it (author-ahead forward-compat)`);
+    }
+    // graphemes is unused at runtime today (forward-compat, src/types.ts), but
+    // a split that doesn't join back to the word is an authoring error that
+    // would ship silently until a feature consumes the field.
+    if (card.graphemes != null) {
+      if (!Array.isArray(card.graphemes) || card.graphemes.length === 0
+          || card.graphemes.some((g) => typeof g !== 'string' || g.length === 0)) {
+        errors.push(`${where}: "graphemes" must be a non-empty array of non-empty strings`);
+      } else if (card.graphemes.join('') !== card.text) {
+        errors.push(`${where}: graphemes [${card.graphemes.join(', ')}] do not join to "${card.text}"`);
+      }
     }
     if (card.img != null) {
       const img = String(card.img);

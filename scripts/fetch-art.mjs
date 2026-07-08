@@ -20,13 +20,15 @@ if (!existsSync(ART_DIR)) mkdirSync(ART_DIR, { recursive: true });
 const PALETTE = ['#a6785a', '#c9b48f', '#e0cba8', '#cbb287', '#8a6a4a', '#3d3833'];
 
 // Words whose glyph's meaning IS its color (exception approved 2026-07-07):
-// these files skip the palette remap entirely. Keep this list to color-words
-// only — everything else must stay within the six PALETTE hexes.
-const KEEP_COLORS = new Set(['red']);
+// the listed hexes ship verbatim, but every OTHER color in the file still
+// remaps so outlines stay in design ink. Keep this to color-words only.
+const KEEP_COLORS = new Map([
+  ['red', ['#ea5a47']], // OpenMoji red-square fill
+]);
 
-// art filename (without .svg) -> best-effort OpenMoji hexcode.
-// Hexcodes verified against the OpenMoji index where confident; the rest are
-// the closest available glyph and marked (~). Adjust as coverage is audited.
+// art filename (without .svg) -> OpenMoji hexcode, verified to resolve (HTTP
+// 200) at the pinned OPENMOJI_REF. (~) marks a figurative/approximate concept
+// match (e.g. hut for "shed"), not an unverified guess.
 const MAP = {
   // --- Digraphs ---
   ship: '1F6A2',      // ship
@@ -149,7 +151,7 @@ const MAP = {
   wet: '1F4A7',       // droplet (~ wet)
   men: '1F46C',       // men holding hands (~ men)
   gem: '1F48E',       // gem stone
-  red: '1F7E5',       // red square (in KEEP_COLORS — stays truly red)
+  red: '1F7E5',       // red square (KEEP_COLORS preserves its red fill)
   // pet: paw prints 1F43E read as "paws"; peg: safety pin 1F9F7 reads as a
   // pin. Left unmapped — image-free.
 
@@ -228,10 +230,11 @@ const MAP = {
   // for a preschooler. Left unmapped (stays image-free).
 };
 
-// Pinned to a release tag, NOT `master`: this script writes remote content
-// into public/ (served from the github.io origin), so the upstream ref must
-// be immutable. Bump the tag deliberately to take new OpenMoji art.
-const OPENMOJI_REF = '15.1.0';
+// Pinned to a COMMIT SHA, not a tag or `master`: this script writes remote
+// content into public/ (served from the github.io origin), and tags can be
+// force-moved upstream — only a SHA is immutable. Bump deliberately to take
+// new OpenMoji art. 005bf5b == release tag 15.1.0.
+const OPENMOJI_REF = '005bf5bc62392a9f90e1b6429c163d17610a791e';
 const OPENMOJI_BASE = `https://raw.githubusercontent.com/hfg-gmuend/openmoji/${OPENMOJI_REF}/color/svg`;
 
 function hexToRgb(h) {
@@ -249,22 +252,28 @@ function nearest(hex) {
   return best;
 }
 
-function remap(svg) {
-  // Remap every #rrggbb / #rgb fill or stroke to the nearest palette token.
+function remap(svg, keepHexes) {
+  // Remap every #rrggbb / #rgb fill or stroke to the nearest palette token,
+  // except hexes explicitly preserved via KEEP_COLORS (color-word fills).
   // Negative lookbehind: url(#abc123)-style id references are hex-SHAPED but
   // not colors — rewriting them breaks gradient/<use> refs. (rgb()/named
   // colors pass through unremapped — a known limitation of this pipeline.)
-  return svg.replace(/(?<!url\()#[0-9a-fA-F]{6}\b/g, (m) => nearest(m))
+  const keep = new Set((keepHexes ?? []).map((h) => h.toLowerCase()));
+  return svg.replace(/(?<!url\()#[0-9a-fA-F]{6}\b/g,
+                     (m) => (keep.has(m.toLowerCase()) ? m : nearest(m)))
             .replace(/(?<!url\()#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])\b/g,
-                     (_, r, g, b) => nearest(`#${r}${r}${g}${g}${b}${b}`));
+                     (m, r, g, b) => {
+                       const full = `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+                       return keep.has(full) ? m : nearest(full);
+                     });
 }
 
 async function fetchOne(name, code) {
   const url = `${OPENMOJI_BASE}/${code}.svg`;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   const raw = await res.text();
-  const recolored = KEEP_COLORS.has(name) ? raw : remap(raw);
+  const recolored = remap(raw, KEEP_COLORS.get(name));
   // preset-default does NOT strip <script> or on* handlers — and these SVGs
   // are remote content that ends up served from the site's own origin.
   const { data } = optimize(recolored, {
@@ -275,6 +284,12 @@ async function fetchOne(name, code) {
       { name: 'removeAttrs', params: { attrs: '(^on.*)' } },
     ],
   });
+  // Belt-and-braces after SVGO: refuse to write if any active-content vector
+  // survived sanitization (these bytes are served from the site's own origin).
+  // Internal #id references (<use xlink:href="#x">) are allowed; anything
+  // external or executable fails the word loudly instead of shipping.
+  const DENYLIST = /<\s*(script|foreignObject|style|animate|animateTransform|animateMotion|set|iframe|image)\b|javascript:|(?:xlink:)?href\s*=\s*["'](?!#)/i;
+  if (DENYLIST.test(data)) throw new Error(`sanitization denylist hit — refused to write ${name}.svg`);
   // .tmp suffix (NOT .svg) so a crash mid-write can never leave a stray file
   // that vite.config.ts's `**/*.svg` precache glob would ship to every user.
   const tmp = join(ART_DIR, `${name}.svg.tmp`);
@@ -304,3 +319,6 @@ console.log(`\nfetch-art: ${ok} updated, ${failed} kept as placeholder.`);
 if (failed && !ok) {
   console.warn('Network appears unavailable; all placeholders preserved. App still builds.');
 }
+// Non-zero exit on any failure so a scripted/CI caller can't mistake a partial
+// run for success (existing files stay untouched either way — app still builds).
+if (failed) process.exitCode = 1;
