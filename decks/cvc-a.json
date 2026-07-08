@@ -1,0 +1,19 @@
+{
+  "id": "cvc-a",
+  "title": "Short A",
+  "kind": "phonics",
+  "category": "cvc",
+  "order": 2,
+  "cards": [
+    { "type": "word", "text": "map", "graphemes": ["m", "a", "p"], "img": "art/map.svg" },
+    { "type": "word", "text": "pan", "graphemes": ["p", "a", "n"], "img": "art/pan.svg" },
+    { "type": "word", "text": "fan", "graphemes": ["f", "a", "n"], "img": "art/fan.svg" },
+    { "type": "word", "text": "jam", "graphemes": ["j", "a", "m"], "img": "art/jam.svg" },
+    { "type": "word", "text": "bat", "graphemes": ["b", "a", "t"], "img": "art/bat.svg" },
+    { "type": "word", "text": "rat", "graphemes": ["r", "a", "t"], "img": "art/rat.svg" },
+    { "type": "word", "text": "ram", "graphemes": ["r", "a", "m"], "img": "art/ram.svg" },
+    { "type": "word", "text": "cap", "graphemes": ["c", "a", "p"], "img": "art/cap.svg" },
+    { "type": "word", "text": "nap", "graphemes": ["n", "a", "p"], "img": "art/nap.svg" },
+    { "type": "word", "text": "tap", "graphemes": ["t", "a", "p"], "img": "art/tap.svg" }
+  ]
+}

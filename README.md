@@ -8,9 +8,13 @@ illustration that confirms the read, then the next word.
 
 Three phonics categories, shown grouped in the deck picker:
 
-- **CVC** — one deck of short-vowel three-letter words (cat, hen, pig, dog, bus…).
-- **Digraphs** — sh, ch, th, wh, one deck each, in that order.
-- **Blends** — one deck of initial/final consonant blends (flag, frog, star, nest…).
+- **CVC** — a starter deck of short-vowel three-letter words (cat, hen, pig,
+  dog, bus…) plus one deck per short vowel (Short A/E/I/O/U): six decks, 70 words.
+- **Digraphs** — sh, ch, th, wh, ng, ck, one deck each, in that order: six
+  decks, 52 words.
+- **Blends** — a starter deck of initial/final consonant blends (flag, frog,
+  star, nest…) plus L-Blends, R-Blends, S-Blends, and Ending Blends: five
+  decks, 58 words.
 
 Each category also offers an optional **"shuffle all"** entry that mixes every
 card in the category into a random order for review. The authored per-deck order
@@ -60,7 +64,11 @@ npm run build
 ```
 
 Runs deck validation and a contrast check (`prebuild`), then `tsc --noEmit`
-and the Vite production build into `dist/`.
+and the Vite production build into `dist/`. Deck validation also gates the
+art: every shipped SVG must stay within the six-hex warm palette (the
+`KEEP_COLORS` color-word exception in `scripts/fetch-art.mjs` is the only
+sanctioned deviation), and every card's `graphemes` split must join back to
+its word.
 
 ## Refresh art
 
@@ -68,8 +76,13 @@ and the Vite production build into `dist/`.
 npm run fetch-art
 ```
 
-Pulls the relevant OpenMoji SVGs, palette-remaps them to the muted warm
-illustration palette, and optimizes with SVGO into `public/art/`.
+Pulls the relevant OpenMoji SVGs from an immutable, SHA-pinned upstream
+commit, palette-remaps them to the muted warm illustration palette
+(color-words like `red` keep their meaningful fill via the scoped
+`KEEP_COLORS` exception), sanitizes and optimizes with SVGO into
+`public/art/`. Any active-content SVG is refused, and the script exits
+non-zero if any fetch fails so a scripted caller can't mistake a partial run
+for success.
 
 ## Adding a deck
 

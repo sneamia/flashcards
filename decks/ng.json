@@ -1,0 +1,19 @@
+{
+  "id": "ng",
+  "title": "NG",
+  "kind": "phonics",
+  "category": "digraphs",
+  "order": 5,
+  "cards": [
+    { "type": "word", "text": "ring", "graphemes": ["r", "i", "ng"], "img": "art/ring.svg" },
+    { "type": "word", "text": "king", "graphemes": ["k", "i", "ng"], "img": "art/king.svg" },
+    { "type": "word", "text": "wing", "graphemes": ["w", "i", "ng"], "img": "art/wing.svg" },
+    { "type": "word", "text": "song", "graphemes": ["s", "o", "ng"], "img": "art/song.svg" },
+    { "type": "word", "text": "long", "graphemes": ["l", "o", "ng"] },
+    { "type": "word", "text": "sing", "graphemes": ["s", "i", "ng"], "img": "art/sing.svg" },
+    { "type": "word", "text": "hang", "graphemes": ["h", "a", "ng"] },
+    { "type": "word", "text": "lung", "graphemes": ["l", "u", "ng"], "img": "art/lung.svg" },
+    { "type": "word", "text": "fang", "graphemes": ["f", "a", "ng"] },
+    { "type": "word", "text": "gong", "graphemes": ["g", "o", "ng"] }
+  ]
+}

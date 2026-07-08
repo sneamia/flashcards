@@ -1,0 +1,19 @@
+{
+  "id": "ck",
+  "title": "CK",
+  "kind": "phonics",
+  "category": "digraphs",
+  "order": 6,
+  "cards": [
+    { "type": "word", "text": "duck", "graphemes": ["d", "u", "ck"], "img": "art/duck.svg" },
+    { "type": "word", "text": "sock", "graphemes": ["s", "o", "ck"], "img": "art/sock.svg" },
+    { "type": "word", "text": "kick", "graphemes": ["k", "i", "ck"] },
+    { "type": "word", "text": "rock", "graphemes": ["r", "o", "ck"], "img": "art/rock.svg" },
+    { "type": "word", "text": "lock", "graphemes": ["l", "o", "ck"], "img": "art/lock.svg" },
+    { "type": "word", "text": "pack", "graphemes": ["p", "a", "ck"], "img": "art/pack.svg" },
+    { "type": "word", "text": "neck", "graphemes": ["n", "e", "ck"] },
+    { "type": "word", "text": "sick", "graphemes": ["s", "i", "ck"], "img": "art/sick.svg" },
+    { "type": "word", "text": "back", "graphemes": ["b", "a", "ck"] },
+    { "type": "word", "text": "tick", "graphemes": ["t", "i", "ck"] }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "end-blends",
+  "title": "Ending Blends",
+  "kind": "phonics",
+  "category": "blends",
+  "order": 5,
+  "cards": [
+    { "type": "word", "text": "hand", "graphemes": ["h", "a", "nd"], "img": "art/hand.svg" },
+    { "type": "word", "text": "plant", "graphemes": ["pl", "a", "nt"], "img": "art/plant.svg" },
+    { "type": "word", "text": "sand", "graphemes": ["s", "a", "nd"], "img": "art/sand.svg" },
+    { "type": "word", "text": "wolf", "graphemes": ["w", "o", "lf"], "img": "art/wolf.svg" },
+    { "type": "word", "text": "ant", "graphemes": ["a", "nt"], "img": "art/ant.svg" },
+    { "type": "word", "text": "milk", "graphemes": ["m", "i", "lk"], "img": "art/milk.svg" },
+    { "type": "word", "text": "melt", "graphemes": ["m", "e", "lt"], "img": "art/melt.svg" },
+    { "type": "word", "text": "gift", "graphemes": ["g", "i", "ft"], "img": "art/gift.svg" },
+    { "type": "word", "text": "wind", "graphemes": ["w", "i", "nd"], "img": "art/wind.svg" },
+    { "type": "word", "text": "raft", "graphemes": ["r", "a", "ft"], "img": "art/raft.svg" }
+  ]
+}
