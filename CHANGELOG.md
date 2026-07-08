@@ -6,6 +6,28 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-07-07
+
+### Added
+- Eleven new decks (110 new words, 275 total): five **short-vowel CVC** decks
+  (Short A/E/I/O/U), **NG** and **CK** digraph decks, and four **blend-family**
+  decks (L-Blends, R-Blends, S-Blends, Ending Blends). Every category's
+  "shuffle all" row now pools its full family — 70 CVC, 52 digraph, and 58
+  blend words.
+- Illustrations for 93 of the 110 new words (~85% coverage): 25 words were
+  swapped for icon-friendly siblings that fit the same phonics pattern (e.g.
+  jump→ant, snap→snake, grab→crown), and two catalog finds added art for
+  `trap` and `jam`.
+- The **red** card now shows an actually-red square — the first sanctioned
+  exception to the warm six-color art palette, scoped to just that card's
+  fill (its outline stays in the standard ink).
+
+### Changed
+- Art pipeline hardening: illustrations are fetched from an immutable upstream
+  commit (not a movable tag), pass an active-content denylist after
+  sanitization, and the build now fails if any shipped illustration strays
+  from the six-color palette or a card's letter-split doesn't spell its word.
+
 ## [1.2.0] - 2026-07-05
 
 ### Added
