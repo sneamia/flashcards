@@ -212,7 +212,7 @@ const MAP = {
   trap: '1FAA4',      // mouse trap
   crown: '1F451',     // crown
   train: '1F682',     // locomotive (~ train)
-  grape: '1F347',     // grapes
+  grape: '1F347',     // grapes (~ grape)
   bread: '1F35E',     // bread
   brush: '1F58C',     // lower left paintbrush (~ brush)
 
