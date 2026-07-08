@@ -2,7 +2,7 @@
 
 ## Current state
 
-- **Active branch:** `v1.3/deck-expansion` — 11 new decks (short-vowel CVC, ng/ck, blend families) built and verified; art-coverage swap plan awaiting James's approval. Full state: `handoff.md`.
+- **Active branch:** `v1.3/deck-expansion` — 11 new decks (short-vowel CVC, ng/ck, blend families) built and verified; art-coverage swaps applied (93/110, ~85%); ready to ship. Full state: `handoff.md`.
 - **Design spec:** `~/.gstack/projects/flashcards/james-none-design-20260704-193000.md` (approved 2026-07-04) + repo `DESIGN.md` (absolute: zero animation/sound/gamification, six-hex warm palette).
 
 ## Reference docs
