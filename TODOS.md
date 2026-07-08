@@ -1,5 +1,45 @@
 # TODOS
 
+## Shipped in v1.3.0 (2026-07-07) — deck expansion + art-coverage swaps
+
+- **11 new decks** (17 total, 180 words) — five short-vowel CVC decks, NG/CK digraphs,
+  four blend-family decks; category shuffle pools now 70 (CVC) / 52 (Digraphs) / 58 (Blends).
+- **Art coverage 93/110 (~85%)** on the new words via 25 approved icon-first swaps +
+  trap/jam catalog finds; the `red` card keeps a true-red fill via the `KEEP_COLORS`
+  exception (fill-only; outline stays ink; recorded in DESIGN.md).
+- **Pipeline hardening** — OpenMoji pinned at a commit SHA (was a movable tag),
+  post-SVGO active-content denylist, fetch timeout + non-zero exit on failure;
+  validate-decks.mjs gained a six-hex palette gate on all shipped art and a
+  `graphemes.join('') === text` check.
+
+## Deferred from v1.3.0 ship review (2026-07-07)
+
+### Mulberry Symbols as a second art source (pipeline extension)
+- **What:** ~3,400 child-focused AAC SVGs, CC BY-SA 4.0 (same license as OpenMoji);
+  covers much of the stubborn 17-word image-free tail (glue, bib, kick, mud…).
+- **Fix:** name-based second source in `fetch-art.mjs`. **Impact:** coverage.
+  **Category:** content/art.
+
+### Eyeball pass on figurative art + shared-glyph pairs
+- **What:** shared glyphs render pixel-identical art for different words: hut/shed
+  (1F6D6), jog/run (1F3C3), drip/wet (1F4A7), plane/jet (2708), plate/dish (1F37D).
+- **Highest priority pair:** run (cvc-u) and jog (cvc-o) are in the SAME category, so
+  the CVC shuffle-all can show the identical picture for two different words in one
+  session (adversarial review, INVESTIGATE). Decide: drop jog's img or find distinct art.
+- **Impact:** pedagogy. **Category:** content/art.
+
+### Split-digraph grapheme convention (only if graphemes ever render)
+- **What:** silent-e words (snake, slide, skate, plate, flute, plane) segment as
+  consonant+e chunks (`["sn","a","ke"]`); if the UI ever renders graphemes, this
+  teaches the wrong vowel sound. A `a_e`-style convention would need design approval.
+- **Impact:** forward-compat data quality. **Category:** content/pedagogy.
+
+### validate-decks category-regex anchor (low)
+- **What:** `CATEGORY_IDS` harvests every `id: '...'` literal in `src/categories.ts`,
+  including any future commented-out ones — theoretically false-permissive.
+- **Fix:** anchor the parse to the `CATEGORIES` array literal. **Impact:** robustness.
+  **Category:** tooling.
+
 ## Shipped in v1.2.0 (2026-07-05) — CVC + Blends + category shuffle
 
 - **CVC + Blends decks** — a 20-word CVC deck (short-a…u) and an 18-word Blends

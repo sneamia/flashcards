@@ -2,7 +2,7 @@
 
 ## Current state
 
-- **Active branch:** `v1.3/deck-expansion` — 11 new decks (short-vowel CVC, ng/ck, blend families) built and verified; art-coverage swaps applied (93/110, ~85%); ready to ship. Full state: `handoff.md`.
+- **v1.3.0 SHIPPED** (PR #3, merged 2026-07-07, deployed + verified): 17 decks / 180 words live, art coverage 93/110 (~85%) on the new words, red-card `KEEP_COLORS` exception, palette + graphemes build gates, SHA-pinned art pipeline. No active feature branch; backlog in `TODOS.md`.
 - **Design spec:** `~/.gstack/projects/flashcards/james-none-design-20260704-193000.md` (approved 2026-07-04) + repo `DESIGN.md` (absolute: zero animation/sound/gamification, six-hex warm palette).
 
 ## Reference docs
