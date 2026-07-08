@@ -6,7 +6,6 @@
   "order": 4,
   "cards": [
     { "type": "word", "text": "swim", "graphemes": ["sw", "i", "m"], "img": "art/swim.svg" },
-    { "type": "word", "text": "spider", "graphemes": ["sp", "i", "der"], "img": "art/spider.svg" },
     { "type": "word", "text": "stop", "graphemes": ["st", "o", "p"], "img": "art/stop.svg" },
     { "type": "word", "text": "step", "graphemes": ["st", "e", "p"], "img": "art/step.svg" },
     { "type": "word", "text": "snake", "graphemes": ["sn", "a", "ke"], "img": "art/snake.svg" },

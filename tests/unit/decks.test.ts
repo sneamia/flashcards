@@ -44,7 +44,7 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
     expect(counts).toEqual({
       cvc: 20, 'cvc-a': 10, 'cvc-e': 10, 'cvc-i': 10, 'cvc-o': 10, 'cvc-u': 10,
       sh: 10, ch: 9, th: 9, wh: 4, ng: 10, ck: 10,
-      blends: 18, 'l-blends': 10, 'r-blends': 10, 's-blends': 10, 'end-blends': 10,
+      blends: 18, 'l-blends': 10, 'r-blends': 10, 's-blends': 9, 'end-blends': 10,
     });
   });
 

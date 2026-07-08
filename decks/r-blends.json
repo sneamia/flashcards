@@ -12,7 +12,7 @@
     { "type": "word", "text": "train", "graphemes": ["tr", "ai", "n"], "img": "art/train.svg" },
     { "type": "word", "text": "drip", "graphemes": ["dr", "i", "p"], "img": "art/drip.svg" },
     { "type": "word", "text": "drop", "graphemes": ["dr", "o", "p"], "img": "art/drop.svg" },
-    { "type": "word", "text": "grapes", "graphemes": ["gr", "a", "pes"], "img": "art/grapes.svg" },
+    { "type": "word", "text": "grape", "graphemes": ["gr", "a", "pe"], "img": "art/grape.svg" },
     { "type": "word", "text": "bread", "graphemes": ["br", "ea", "d"], "img": "art/bread.svg" },
     { "type": "word", "text": "brush", "graphemes": ["br", "u", "sh"], "img": "art/brush.svg" }
   ]

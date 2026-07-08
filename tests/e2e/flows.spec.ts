@@ -338,9 +338,10 @@ test.describe('categories + shuffle-all', () => {
     // The digraphs shuffle pools all 52 digraph words.
     await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"]')).toContainText('52 words');
     // CVC and Blends became multi-deck categories in v1.3 — pin their pooled
-    // counts too (cvc 20+5x10, blends 18+4x10).
+    // counts too (cvc 20+5x10, blends 18+10+10+9+10 — s-blends dropped to 9
+    // cards in v1.4 when the two-syllable "spider" card was removed).
     await expect(stage.locator('.row.shuffle[data-shuffle="cvc"]')).toContainText('70 words');
-    await expect(stage.locator('.row.shuffle[data-shuffle="blends"]')).toContainText('58 words');
+    await expect(stage.locator('.row.shuffle[data-shuffle="blends"]')).toContainText('57 words');
   });
 
   test('a shuffle-all row starts a run with the category title in the corner', async ({ page }) => {
