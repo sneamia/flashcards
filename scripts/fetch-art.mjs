@@ -45,7 +45,14 @@ const MAP = {
   hush: '1F92B',      // shushing face (finger to lips)
   wish: '1F320',      // shooting star (~ wish; wish-upon-a-star)
   wham: '1F4A5',      // collision (comic impact burst)
+  wheel: '1F6DE',     // wheel
+  whale: '1F40B',     // whale (full-body profile; better preschooler read
+                      // than the spouting-whale/whale-face glyph 1F433)
   math: '1F522',      // input numbers (~ math; numerals)
+  // whisk: no OpenMoji glyph exists for a whisk (checked the base set and
+  // extras-openmoji.csv at the pinned ref) and no figurative substitute
+  // (spoon, swirl, spiral shell) reliably reads as "whisk" for a
+  // preschooler. Left unmapped — card stays image-free.
 
   // --- Digraphs: NG (ng) ---
   ring: '1F48D',      // ring
