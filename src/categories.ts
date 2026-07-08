@@ -3,7 +3,7 @@
 
    Decks carry only a `category` id (in the deck JSON); the human title and
    the picker display order live HERE, once, rather than being repeated on
-   every deck file — the 4 digraph decks would otherwise duplicate identical
+   every deck file — the 6 digraph decks would otherwise duplicate identical
    strings, the exact drift risk the codebase already guards against for the
    deck `order` field. Pure data, no DOM.
 

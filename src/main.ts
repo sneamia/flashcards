@@ -280,8 +280,9 @@ function shuffleRowEl(group: CategoryGroup): HTMLButtonElement {
   const total = group.decks.reduce((n, d) => n + d.cards.length, 0);
   const startId = `${SHUFFLE_PREFIX}${group.id}`;
   // "all" only reads true when the run spans more than one deck (e.g. DIGRAPHS
-  // = sh+ch+th+wh). A single-deck category (CVC, Blends) just shuffles its one
-  // deck, so drop "all" there — nothing is being combined.
+  // = sh+ch+th+wh+ng+ck). A single-deck category (none currently — all three
+  // are multi-deck as of v1.3) would just shuffle its one deck, so drop "all"
+  // there — nothing is being combined.
   const label = group.decks.length > 1 ? 'shuffle all' : 'shuffle';
   const btn = el('button', 'row shuffle');
   btn.type = 'button';
