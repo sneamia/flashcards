@@ -48,6 +48,23 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
     });
   });
 
+  it('has the documented per-deck display titles (picker rows + run corner text)', () => {
+    // deck.title flows verbatim into the picker row and the in-run corner
+    // (`${deck.title} · 1 of N`, src/main.ts). v1.4 retitled four decks —
+    // digraph decks are lowercase like their sound (ck, ng), and the two
+    // starter decks no longer collide with their category headers
+    // (CVC Mix ≠ CVC, Mixed Blends ≠ Blends). Pin all seventeen so a retitle
+    // is always a deliberate, test-visible change.
+    const titles = Object.fromEntries(decks.map((d) => [d.id, d.title]));
+    expect(titles).toEqual({
+      cvc: 'CVC Mix', 'cvc-a': 'Short A', 'cvc-e': 'Short E', 'cvc-i': 'Short I',
+      'cvc-o': 'Short O', 'cvc-u': 'Short U',
+      sh: 'sh', ch: 'ch', th: 'th', wh: 'wh', ng: 'ng', ck: 'ck',
+      blends: 'Mixed Blends', 'l-blends': 'L-Blends', 'r-blends': 'R-Blends',
+      's-blends': 'S-Blends', 'end-blends': 'Ending Blends',
+    });
+  });
+
   it('every returned card is renderable (no sentence cards survive)', () => {
     for (const deck of decks) {
       for (const card of deck.cards) {
