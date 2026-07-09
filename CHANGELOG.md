@@ -6,6 +6,33 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-07-08
+
+### Added
+- Three new **wh** words — wheel, whale, whisk — bringing the digraphs
+  "shuffle all" pool to 55 words (182 words in the app). Wheel and whale come
+  illustrated; whisk stays a clean word-only card (no OpenMoji glyph reliably
+  reads as "whisk" for a preschooler).
+
+### Changed
+- Deck titles now read the way they're taught: the **ng** and **ck** decks are
+  lowercase like their sibling sounds (sh, ch, th, wh), and the two starter
+  decks are **CVC Mix** and **Mixed Blends** so they no longer echo the
+  category headers above them.
+- **grapes** became **grape** — singular, with a proper magic-e letter split
+  (gr·a·pe) — so every card stays a single, directly decodable word.
+
+### Removed
+- **spider** left the S-Blends deck: it was the app's only two-syllable word,
+  breaking the one-tap-one-syllable decoding promise. S-Blends now holds 9
+  words (blends pool 57).
+
+### Fixed
+- The README and design-doc word counts were resynced with the real decks and
+  are now pinned by tests so they can't silently drift again; the dev-time
+  art-fetch list is likewise test-pinned against the decks (the stale
+  spider/grapes entries it had accumulated prompted the guard).
+
 ## [1.3.0] - 2026-07-07
 
 ### Added
