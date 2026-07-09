@@ -11,10 +11,10 @@ Three phonics categories, shown grouped in the deck picker:
 - **CVC** — a starter deck of short-vowel three-letter words (cat, hen, pig,
   dog, bus…) plus one deck per short vowel (Short A/E/I/O/U): six decks, 70 words.
 - **Digraphs** — sh, ch, th, wh, ng, ck, one deck each, in that order: six
-  decks, 52 words.
+  decks, 55 words.
 - **Blends** — a starter deck of initial/final consonant blends (flag, frog,
   star, nest…) plus L-Blends, R-Blends, S-Blends, and Ending Blends: five
-  decks, 58 words.
+  decks, 57 words.
 
 Each category also offers an optional **"shuffle all"** entry that mixes every
 card in the category into a random order for review. The authored per-deck order
@@ -54,6 +54,7 @@ npm run dev
 
 ```
 npm test          # vitest — pure logic (state machine, lockout, gestures, deck loader, precache integrity)
+                  #        + drift guards (deck titles, README/DESIGN.md word counts, fetch-art MAP vs decks)
 npm run test:e2e  # playwright — browser behavior (rapid-tap defense, rotate, resume-after-reload, offline restore)
 ```
 

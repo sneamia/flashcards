@@ -1,5 +1,34 @@
 # TODOS
 
+## Shipped in v1.4.0 (2026-07-08) — taxonomy consistency + wh extension
+
+- **Deck retitles** — ng/ck lowercased to match sh/ch/th/wh; starter decks renamed
+  CVC Mix / Mixed Blends so they no longer echo their category headers. All 17
+  titles now pinned by a unit test.
+- **Word taxonomy fixes** — grapes→grape (singular, magic-e split gr·a·pe);
+  two-syllable spider dropped from S-Blends; wh extended with wheel/whale/whisk
+  (whisk image-free by design). 182 words total; pools 70/55/57.
+- **Docs-drift guards** — new `docs-sync.test.ts` pins README + DESIGN.md counts
+  to the real decks; new `art-map.test.ts` pins the fetch-art MAP against deck
+  img references (the stale spider/grapes entries prompted it).
+
+## Deferred from v1.4.0 ship review (2026-07-08)
+
+### Cross-deck duplicate-word guard in validate-decks (adversarial review, INVESTIGATE)
+- **What:** validate-decks.mjs checks id/order uniqueness but not card `text`
+  across decks; a future duplicate word would silently appear twice in that
+  category's shuffle-all pool. All 182 current words verified unique.
+- **Fix:** add a per-category (or global) duplicate-text check to
+  validate-decks.mjs. **Impact:** data quality. **Category:** tooling.
+
+### Resume-by-identity instead of index (red team, conf 8 — accepted for now)
+- **What:** rehydrate() bounds-checks `cardIndex` but has no card-identity check,
+  so removing a mid-deck card (spider, this release) makes a pre-update persisted
+  run resume one word off (graceful, no crash; index 9 falls back to picker).
+- **Fix (if ever worth it):** persist card text alongside cardIndex and re-locate
+  by text on rehydrate, falling back to the picker on miss. **Impact:** edge-case
+  resume fidelity. **Category:** state machine.
+
 ## Shipped in v1.3.0 (2026-07-07) — deck expansion + art-coverage swaps
 
 - **11 new decks** (17 total, 180 words) — five short-vowel CVC decks, NG/CK digraphs,

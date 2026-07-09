@@ -296,12 +296,14 @@ test.describe('end card', () => {
     await page.goto('/');
     await waitForBoot(page);
 
-    // wh is the shortest deck: whip(img), whiz, wham, when — 5 beats.
+    // wh is the shortest deck (7 cards): whip(img), whiz, wham, when,
+    // wheel(img), whale(img), whisk — 4 image cards x 2 taps + 3 no-image
+    // cards x 1 tap = 11 taps to reach 'end'.
     await page.locator('#stage .row[data-deck-id="wh"]').tap();
     const stage = page.locator('#stage');
     await expect(stage).toHaveAttribute('data-state', 'word');
 
-    for (let i = 0; i < 8 && (await stage.getAttribute('data-state')) !== 'end'; i++) {
+    for (let i = 0; i < 15 && (await stage.getAttribute('data-state')) !== 'end'; i++) {
       await page.waitForTimeout(SAFE_WAIT_MS);
       await stage.tap();
     }
@@ -335,12 +337,14 @@ test.describe('categories + shuffle-all', () => {
     // One shuffle-all row per category.
     await expect(stage.locator('.row.shuffle')).toHaveCount(3);
     await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"]')).toHaveCount(1);
-    // The digraphs shuffle pools all 52 digraph words.
-    await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"]')).toContainText('52 words');
+    // The digraphs shuffle pools all 55 digraph words (wh grew from 4 to 7
+    // cards in v1.4 — added wheel, whale, whisk).
+    await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"]')).toContainText('55 words');
     // CVC and Blends became multi-deck categories in v1.3 — pin their pooled
-    // counts too (cvc 20+5x10, blends 18+4x10).
+    // counts too (cvc 20+5x10, blends 18+10+10+9+10 — s-blends dropped to 9
+    // cards in v1.4 when the two-syllable "spider" card was removed).
     await expect(stage.locator('.row.shuffle[data-shuffle="cvc"]')).toContainText('70 words');
-    await expect(stage.locator('.row.shuffle[data-shuffle="blends"]')).toContainText('58 words');
+    await expect(stage.locator('.row.shuffle[data-shuffle="blends"]')).toContainText('57 words');
   });
 
   test('a shuffle-all row starts a run with the category title in the corner', async ({ page }) => {
@@ -351,7 +355,7 @@ test.describe('categories + shuffle-all', () => {
     await stage.locator('.row.shuffle[data-shuffle="digraphs"]').tap();
     await expect(stage).toHaveAttribute('data-state', 'word');
     // Corner shows the category title, not a single digraph id.
-    await expect(page.locator('#stage .corner')).toContainText('Digraphs · 1 of 52');
+    await expect(page.locator('#stage .corner')).toContainText('Digraphs · 1 of 55');
   });
 
   test('a shuffle run is NOT resumable: reloading mid-run lands on the picker', async ({ page }) => {

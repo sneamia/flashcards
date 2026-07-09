@@ -45,7 +45,14 @@ const MAP = {
   hush: '1F92B',      // shushing face (finger to lips)
   wish: '1F320',      // shooting star (~ wish; wish-upon-a-star)
   wham: '1F4A5',      // collision (comic impact burst)
+  wheel: '1F6DE',     // wheel
+  whale: '1F40B',     // whale (full-body profile; better preschooler read
+                      // than the spouting-whale/whale-face glyph 1F433)
   math: '1F522',      // input numbers (~ math; numerals)
+  // whisk: no OpenMoji glyph exists for a whisk (checked the base set and
+  // extras-openmoji.csv at the pinned ref) and no figurative substitute
+  // (spoon, swirl, spiral shell) reliably reads as "whisk" for a
+  // preschooler. Left unmapped — card stays image-free.
 
   // --- Digraphs: NG (ng) ---
   ring: '1F48D',      // ring
@@ -120,7 +127,6 @@ const MAP = {
   milk: '1F95B',      // glass of milk
   gift: '1F381',      // wrapped gift
   raft: '1F6F6',      // canoe (~ raft)
-  spider: '1F577',    // spider
   snake: '1F40D',     // snake
   slide: '1F6DD',     // playground slide
   swan: '1F9A2',      // swan
@@ -213,7 +219,7 @@ const MAP = {
   trap: '1FAA4',      // mouse trap
   crown: '1F451',     // crown
   train: '1F682',     // locomotive (~ train)
-  grapes: '1F347',    // grapes
+  grape: '1F347',     // grapes (~ grape)
   bread: '1F35E',     // bread
   brush: '1F58C',     // lower left paintbrush (~ brush)
 

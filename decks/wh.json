@@ -8,6 +8,9 @@
     { "type": "word", "text": "whip", "graphemes": ["wh", "i", "p"], "img": "art/whip.svg" },
     { "type": "word", "text": "whiz", "graphemes": ["wh", "i", "z"] },
     { "type": "word", "text": "wham", "graphemes": ["wh", "a", "m"], "img": "art/wham.svg" },
-    { "type": "word", "text": "when", "graphemes": ["wh", "e", "n"] }
+    { "type": "word", "text": "when", "graphemes": ["wh", "e", "n"] },
+    { "type": "word", "text": "wheel", "graphemes": ["wh", "ee", "l"], "img": "art/wheel.svg" },
+    { "type": "word", "text": "whale", "graphemes": ["wh", "a", "le"], "img": "art/whale.svg" },
+    { "type": "word", "text": "whisk", "graphemes": ["wh", "i", "sk"] }
   ]
 }

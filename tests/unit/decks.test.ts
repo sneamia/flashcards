@@ -43,8 +43,25 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
     const counts = Object.fromEntries(decks.map((d) => [d.id, d.cards.length]));
     expect(counts).toEqual({
       cvc: 20, 'cvc-a': 10, 'cvc-e': 10, 'cvc-i': 10, 'cvc-o': 10, 'cvc-u': 10,
-      sh: 10, ch: 9, th: 9, wh: 4, ng: 10, ck: 10,
-      blends: 18, 'l-blends': 10, 'r-blends': 10, 's-blends': 10, 'end-blends': 10,
+      sh: 10, ch: 9, th: 9, wh: 7, ng: 10, ck: 10,
+      blends: 18, 'l-blends': 10, 'r-blends': 10, 's-blends': 9, 'end-blends': 10,
+    });
+  });
+
+  it('has the documented per-deck display titles (picker rows + run corner text)', () => {
+    // deck.title flows verbatim into the picker row and the in-run corner
+    // (`${deck.title} · 1 of N`, src/main.ts). v1.4 retitled four decks —
+    // digraph decks are lowercase like their sound (ck, ng), and the two
+    // starter decks no longer collide with their category headers
+    // (CVC Mix ≠ CVC, Mixed Blends ≠ Blends). Pin all seventeen so a retitle
+    // is always a deliberate, test-visible change.
+    const titles = Object.fromEntries(decks.map((d) => [d.id, d.title]));
+    expect(titles).toEqual({
+      cvc: 'CVC Mix', 'cvc-a': 'Short A', 'cvc-e': 'Short E', 'cvc-i': 'Short I',
+      'cvc-o': 'Short O', 'cvc-u': 'Short U',
+      sh: 'sh', ch: 'ch', th: 'th', wh: 'wh', ng: 'ng', ck: 'ck',
+      blends: 'Mixed Blends', 'l-blends': 'L-Blends', 'r-blends': 'R-Blends',
+      's-blends': 'S-Blends', 'end-blends': 'Ending Blends',
     });
   });
 
