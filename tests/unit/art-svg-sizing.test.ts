@@ -38,8 +38,11 @@ describe('art SVG root dimensions', () => {
     for (const [path, src] of Object.entries(ART)) {
       const openTag = src.match(/<svg\b[^>]*>/i)?.[0] ?? '';
       // Only the ROOT <svg> tag is checked; inner <rect width=…> etc. are
-      // legitimate geometry and live past the first '>'.
-      if (/\b(?:width|height)\s*=/.test(openTag)) {
+      // legitimate geometry and live past the first '>'. Anchor the attribute
+      // name to a tag/whitespace boundary (not \b) so a presentation attribute
+      // like `stroke-width` on the root — a legitimate SVG idiom — isn't
+      // mis-flagged as a root dimension (\b treats the hyphen as a boundary).
+      if (/(?:^|\s)(?:width|height)\s*=/.test(openTag)) {
         offenders.push(path.replace(/^.*\/art\//, 'art/'));
       }
     }

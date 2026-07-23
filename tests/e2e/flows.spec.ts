@@ -441,6 +441,14 @@ test.describe('image (reveal) sizing', () => {
     });
   }
 
+  async function artWidthFraction(page: Page): Promise<number> {
+    return page.evaluate(() => {
+      const img = document.querySelector('#stage .reveal .art');
+      if (!img) return -1;
+      return img.getBoundingClientRect().width / window.innerWidth;
+    });
+  }
+
   test('an OpenMoji card (ship) reveals a large illustration, not its intrinsic size', async ({
     page,
   }) => {
@@ -480,6 +488,43 @@ test.describe('image (reveal) sizing', () => {
     const frac = await artHeightFraction(page);
     expect(frac).toBeGreaterThanOrEqual(MIN_ART_FRACTION);
     expect(frac).toBeLessThanOrEqual(MAX_ART_FRACTION);
+  });
+
+  test('a wide illustration (whip, ~4.4:1) fills the width via the max-width cap', async ({
+    page,
+  }) => {
+    // whip.svg (wh deck, cardIndex 0) has an extreme aspect ratio — its viewBox
+    // was tightened to 6 61 168 38 (~4.42:1) so the lash fills the frame. This
+    // is the case the two square-ish cards above can't exercise: at height 64vh
+    // a 4.42:1 image would want ~4.42×64vh of width, so the --art-max-w (82vw)
+    // cap bites and object-fit:contain letterboxes it. The box height stays a
+    // definite 64vh, but the box WIDTH pins to the cap — proving wide art fills
+    // the horizontal frame instead of collapsing to its intrinsic size.
+    await page.goto('/');
+    await waitForBoot(page);
+    await page.evaluate(() =>
+      localStorage.setItem(
+        'potty-flashcards:position',
+        JSON.stringify({ deckId: 'wh', cardIndex: 0, beat: 'word' }),
+      ),
+    );
+    await page.reload();
+    await waitForBoot(page);
+    await expect(page.locator('#stage .word')).toHaveText('whip');
+
+    await page.waitForTimeout(SAFE_WAIT_MS);
+    await page.locator('#stage').tap(); // word -> image
+    await expect(page.locator('#stage')).toHaveAttribute('data-state', 'image');
+
+    // Height: same definite 64vh band as the square cards.
+    const hFrac = await artHeightFraction(page);
+    expect(hFrac).toBeGreaterThanOrEqual(MIN_ART_FRACTION);
+    expect(hFrac).toBeLessThanOrEqual(MAX_ART_FRACTION);
+    // Width: pinned to the 82vw cap (allow tolerance). A square card sits near
+    // ~0.30 here, so this is the assertion those cards can't make.
+    const wFrac = await artWidthFraction(page);
+    expect(wFrac).toBeGreaterThanOrEqual(0.78);
+    expect(wFrac).toBeLessThanOrEqual(0.86);
   });
 });
 
