@@ -222,3 +222,9 @@ precedence over `rotate` (evicted art is still broken in landscape).
   (color-word fills, currently only `red`) is the single sanctioned exception; the
   validator derives both the palette and the exception list from fetch-art.mjs so they
   can't drift.
+- Every shipped `public/art/*.svg` is **size-agnostic**: a `viewBox` only, no root
+  `width`/`height`. The reveal (`.reveal .art` in styles.css) sizes art to a definite
+  height (`--art-max-h`) so every card fills the frame; a file that hard-codes a pixel
+  size draws at that size instead and comes out too small. `tests/unit/art-svg-sizing.test.ts`
+  pins both halves — no root width/height, viewBox present. Hand-drawn art must follow this
+  too (the fetch-art pipeline already emits viewBox-only SVGs).

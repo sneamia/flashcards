@@ -54,8 +54,9 @@ npm run dev
 
 ```
 npm test          # vitest — pure logic (state machine, lockout, gestures, deck loader, precache integrity)
-                  #        + drift guards (deck titles, README/DESIGN.md word counts, fetch-art MAP vs decks)
-npm run test:e2e  # playwright — browser behavior (rapid-tap defense, rotate, resume-after-reload, offline restore)
+                  #        + drift guards (deck titles, README/DESIGN.md word counts, fetch-art MAP vs decks,
+                  #          art SVGs stay size-agnostic — viewBox only, no root width/height)
+npm run test:e2e  # playwright — browser behavior (rapid-tap defense, rotate, resume-after-reload, offline restore, reveal image sizing)
 ```
 
 ## Build
