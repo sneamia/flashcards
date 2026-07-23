@@ -419,6 +419,115 @@ test.describe('word sizing', () => {
   });
 });
 
+test.describe('image (reveal) sizing', () => {
+  // Regression guard for the "illustrations sometimes come out really small"
+  // bug: `.reveal .art` used `width:auto;height:auto` + max-* caps, which
+  // renders an <img> at the SVG's INTRINSIC size and only ever shrinks it —
+  // so a hand-drawn placeholder that declared width="100" sat at 100px and the
+  // dimensionless OpenMoji SVGs at the ~150px browser default, none reaching
+  // the "illustration large up top" the design specifies. The fix gives the
+  // art a definite height (--art-max-h = 64vh), so every card fills the same
+  // large area regardless of what its file declares. We assert the rendered
+  // height is a large fraction of the viewport — old behavior (100/150px on a
+  // ~390px-tall landscape ≈ 0.26/0.38) fails this; the 64vh fix (≈0.64) passes.
+  const MIN_ART_FRACTION = 0.55;
+  const MAX_ART_FRACTION = 0.7; // 64vh + tolerance — proves it's CAPPED, not overflowing
+
+  async function artHeightFraction(page: Page): Promise<number> {
+    return page.evaluate(() => {
+      const img = document.querySelector('#stage .reveal .art');
+      if (!img) return -1;
+      return img.getBoundingClientRect().height / window.innerHeight;
+    });
+  }
+
+  async function artWidthFraction(page: Page): Promise<number> {
+    return page.evaluate(() => {
+      const img = document.querySelector('#stage .reveal .art');
+      if (!img) return -1;
+      return img.getBoundingClientRect().width / window.innerWidth;
+    });
+  }
+
+  test('an OpenMoji card (ship) reveals a large illustration, not its intrinsic size', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await waitForBoot(page);
+    await openFirstDeck(page);
+    await page.waitForTimeout(SAFE_WAIT_MS);
+    await page.locator('#stage').tap(); // word -> image (ship has art)
+    await expect(page.locator('#stage')).toHaveAttribute('data-state', 'image');
+
+    const frac = await artHeightFraction(page);
+    expect(frac).toBeGreaterThanOrEqual(MIN_ART_FRACTION);
+    expect(frac).toBeLessThanOrEqual(MAX_ART_FRACTION);
+  });
+
+  test('the reported hand-drawn card (shut, was pinned at 100px) also reveals large', async ({
+    page,
+  }) => {
+    // Resume straight onto "shut" (sh deck, cardIndex 5) via the persisted
+    // position, then reveal its image — avoids tapping through five cards.
+    await page.goto('/');
+    await waitForBoot(page);
+    await page.evaluate(() =>
+      localStorage.setItem(
+        'potty-flashcards:position',
+        JSON.stringify({ deckId: 'sh', cardIndex: 5, beat: 'word' }),
+      ),
+    );
+    await page.reload();
+    await waitForBoot(page);
+    await expect(page.locator('#stage .word')).toHaveText('shut'); // confirm we're on the reported card
+
+    await page.waitForTimeout(SAFE_WAIT_MS);
+    await page.locator('#stage').tap(); // word -> image
+    await expect(page.locator('#stage')).toHaveAttribute('data-state', 'image');
+
+    const frac = await artHeightFraction(page);
+    expect(frac).toBeGreaterThanOrEqual(MIN_ART_FRACTION);
+    expect(frac).toBeLessThanOrEqual(MAX_ART_FRACTION);
+  });
+
+  test('a wide illustration (whip, ~4.4:1) fills the width via the max-width cap', async ({
+    page,
+  }) => {
+    // whip.svg (wh deck, cardIndex 0) has an extreme aspect ratio — its viewBox
+    // was tightened to 6 61 168 38 (~4.42:1) so the lash fills the frame. This
+    // is the case the two square-ish cards above can't exercise: at height 64vh
+    // a 4.42:1 image would want ~4.42×64vh of width, so the --art-max-w (82vw)
+    // cap bites and object-fit:contain letterboxes it. The box height stays a
+    // definite 64vh, but the box WIDTH pins to the cap — proving wide art fills
+    // the horizontal frame instead of collapsing to its intrinsic size.
+    await page.goto('/');
+    await waitForBoot(page);
+    await page.evaluate(() =>
+      localStorage.setItem(
+        'potty-flashcards:position',
+        JSON.stringify({ deckId: 'wh', cardIndex: 0, beat: 'word' }),
+      ),
+    );
+    await page.reload();
+    await waitForBoot(page);
+    await expect(page.locator('#stage .word')).toHaveText('whip');
+
+    await page.waitForTimeout(SAFE_WAIT_MS);
+    await page.locator('#stage').tap(); // word -> image
+    await expect(page.locator('#stage')).toHaveAttribute('data-state', 'image');
+
+    // Height: same definite 64vh band as the square cards.
+    const hFrac = await artHeightFraction(page);
+    expect(hFrac).toBeGreaterThanOrEqual(MIN_ART_FRACTION);
+    expect(hFrac).toBeLessThanOrEqual(MAX_ART_FRACTION);
+    // Width: pinned to the 82vw cap (allow tolerance). A square card sits near
+    // ~0.30 here, so this is the assertion those cards can't make.
+    const wFrac = await artWidthFraction(page);
+    expect(wFrac).toBeGreaterThanOrEqual(0.78);
+    expect(wFrac).toBeLessThanOrEqual(0.86);
+  });
+});
+
 test.describe('resume-after-reload', () => {
   test('advancing a couple of beats then reloading resumes at that card\'s WORD beat', async ({ page }) => {
     await page.goto('/');

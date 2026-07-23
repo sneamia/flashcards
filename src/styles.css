@@ -103,9 +103,21 @@ body {
 .reveal .art {
   position: absolute;
   top: 6vh; left: 50%; transform: translateX(-50%);
-  max-height: var(--art-max-h);
+  /* Size to the design target, don't defer to the SVG's intrinsic size.
+     `width:auto;height:auto` + max-* only ever CAPS an image — it never scales
+     a small one UP, and for a dimensionless (viewBox-only) SVG the resolved
+     size is a browser/context-dependent quirk (some engines fill to
+     max-height, others fall back to a ~150px default). A hand-drawn
+     placeholder that declared width="100" was pinned at a tiny 100px while the
+     OpenMoji SVGs filled the frame — the "illustrations sometimes come out
+     really small" bug. A DEFINITE height fills every card to --art-max-h
+     regardless of what the file declares; width follows the viewBox ratio,
+     capped at --art-max-w; object-fit:contain letterboxes instead of
+     distorting on the rare viewport where the width cap bites first. */
+  height: var(--art-max-h);
+  width: auto;
   max-width: var(--art-max-w);
-  width: auto; height: auto;
+  object-fit: contain;
 }
 
 .reveal .word {
