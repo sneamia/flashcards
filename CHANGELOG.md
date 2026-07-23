@@ -6,6 +6,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-07-22
+
+### Fixed
+- Reveal illustrations now fill the card at the intended large size — big and
+  up top — on every card. Some drawings (the hand-drawn placeholders, and a few
+  of the OpenMoji illustrations) were coming out much too small because each
+  file's own declared size was deciding how large it drew; the reveal now sizes
+  every illustration to the same target height instead, and wide drawings like
+  the whip fill the width rather than shrinking.
+
+### Changed
+- Art files are now size-agnostic — each defines only its shape, not a pixel
+  size — and tests pin both that invariant and the on-screen reveal size (for a
+  normal, a hand-drawn, and a wide illustration) so the "tiny illustration" bug
+  can't quietly come back.
+
 ## [1.4.0] - 2026-07-08
 
 ### Added

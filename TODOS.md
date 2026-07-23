@@ -1,5 +1,40 @@
 # TODOS
 
+## Shipped in v1.5.0 (2026-07-22) — reveal illustration sizing
+
+- **Reveal art fills the frame** — `.reveal .art` now sizes to a definite
+  `--art-max-h` (64vh) with `width:auto` + `max-width` cap + `object-fit:contain`
+  instead of deferring to each SVG's intrinsic/declared size. Fixes the "some
+  illustrations come out really small" bug (hand-drawn placeholders pinned at
+  their declared 100px, dimensionless OpenMoji at the ~150px browser default).
+- **Size-agnostic art** — 7 hand-drawn SVGs had their root width/height removed
+  (viewBox-only, like the OpenMoji pipeline output); `whip.svg` viewBox tightened
+  to `6 61 168 38` so the lash fills the frame.
+- **Regression guards** — new `art-svg-sizing.test.ts` pins the dimensionless +
+  has-viewBox invariant across all art files; new e2e "image (reveal) sizing"
+  block asserts the rendered reveal fills the frame for a normal (ship), a
+  hand-drawn (shut), and a wide (whip) illustration.
+
+## Deferred from v1.5.0 ship review (2026-07-22)
+
+### Reveal-sizing e2e asserts the box, not painted pixels (adversarial review, INVESTIGATE)
+- **What:** the "image (reveal) sizing" e2e reads `getBoundingClientRect()`, which
+  for an `object-fit:contain` `<img>` is CSS-box geometry (definite height +
+  ratio-derived width) — independent of whether the SVG paints a visible pixel.
+  A future viewBox/art edit that clips or blanks a drawing would render a
+  correctly-sized empty box and pass all three tests green. `whip`'s tightened
+  viewBox runs near the ink edge (verified not clipped today).
+- **Fix:** add a pixel/visibility assertion (canvas alpha sample of the reveal,
+  or `naturalWidth>0` + rendered-content check) so "fills the frame" verifies
+  ink, not just box size. **Impact:** test fidelity. **Category:** testing.
+
+### Wide reveal illustrations sit shorter/lower than square ones (adversarial review, design note)
+- **What:** `whip` (~4.42:1) always hits the 82vw width cap, so its visible art is
+  ~40vh tall and vertically centered — top edge ~18vh down vs 6vh for square
+  cards. Inherent to a wide lash; "illustration large up top" reads as large in
+  width, shorter in height. Worth a human design glance, not a code fix.
+- **Impact:** visual polish. **Category:** design.
+
 ## Shipped in v1.4.0 (2026-07-08) — taxonomy consistency + wh extension
 
 - **Deck retitles** — ng/ck lowercased to match sh/ch/th/wh; starter decks renamed
