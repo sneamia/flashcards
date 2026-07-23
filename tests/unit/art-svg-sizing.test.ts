@@ -48,4 +48,22 @@ describe('art SVG root dimensions', () => {
     }
     expect(offenders).toEqual([]);
   });
+
+  it('every art SVG declares a viewBox — the ratio width:auto needs', () => {
+    // The dimensionless invariant above is only half the story: `.reveal .art`
+    // sets `height:64vh; width:auto`, so the browser derives width from the
+    // viewBox ratio. An SVG with NEITHER root dimensions NOR a viewBox has no
+    // intrinsic ratio, `width:auto` can't resolve, and the illustration
+    // collapses to nothing — passing the no-root-dimensions test while
+    // rendering invisibly. Pin the other half so the guard protects the whole
+    // sizing contract.
+    const missing: string[] = [];
+    for (const [path, src] of Object.entries(ART)) {
+      const openTag = src.match(/<svg\b[^>]*>/i)?.[0] ?? '';
+      if (!/(?:^|\s)viewBox\s*=/i.test(openTag)) {
+        missing.push(path.replace(/^.*\/art\//, 'art/'));
+      }
+    }
+    expect(missing).toEqual([]);
+  });
 });
