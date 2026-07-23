@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <!-- Figurative: a leg with an arrow pointing at the SHIN (front of the lower leg). -->
   <!-- ink outline behind, warm fill on top => a 2px outlined limb -->
   <path d="M46 16 L46 78 L72 82" fill="none" stroke="#3d3833" stroke-width="16"
