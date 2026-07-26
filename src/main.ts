@@ -829,6 +829,14 @@ function fontsReadyOrTimeout(timeoutMs: number): Promise<void> {
    itself (src/integrity.ts) is pure and unit-tested; everything here is
    just gathering its two inputs from the real Cache API. */
 
+// How many representative art SVGs to sample below — enough to catch a
+// partially-evicted precache without hardcoding the full per-deck asset list
+// this module has no business knowing. Single-use, but named (rather than
+// left as a literal in the loop) so the stopping condition can be derived
+// from it instead of from a total that silently drifts if the built/font
+// probes above ever change.
+const ART_SAMPLE_COUNT = 2;
+
 // The assets a render literally cannot happen without: this page's own
 // built JS/CSS (read off the live DOM so a build-hash change never goes
 // stale here), both Andika weights (every screen is text), and a couple of
@@ -845,10 +853,14 @@ function criticalAssetUrls(): string[] {
     .forEach((l) => urls.add(l.href));
   urls.add(artUrl('fonts/Andika-Regular.woff2'));
   urls.add(artUrl('fonts/Andika-Bold.woff2'));
+  // Captured BEFORE the art-sample loop so the stopping condition tracks
+  // whatever the built/font probes above actually added, rather than a
+  // hardcoded total that could silently drift out of sync with them.
+  const preArtCount = urls.size;
   for (const deck of decks) {
     const withArt = deck.cards.find((c) => c.img);
     if (withArt?.img) urls.add(artUrl(withArt.img));
-    if (urls.size >= 6) break; // 2 built assets + 2 fonts + up to 2 art samples
+    if (urls.size >= preArtCount + ART_SAMPLE_COUNT) break;
   }
   return [...urls];
 }
