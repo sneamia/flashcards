@@ -203,7 +203,7 @@ test.describe('gesture-on-touch', () => {
 });
 
 test.describe('pointer-cancel release path (iOS pointer-steal)', () => {
-  test('a pointercancel releases the gesture session; the next tap still advances exactly one beat', async ({
+  test('a pointercancel releases main\'s pointer bookkeeping: the next tap advances AND long-press EXIT still arms', async ({
     page,
   }) => {
     await page.goto('/');
@@ -214,18 +214,25 @@ test.describe('pointer-cancel release path (iOS pointer-steal)', () => {
     const stage = page.locator('#stage');
     // iOS can steal an in-progress touch for a system gesture (e.g. Control
     // Center) and deliver pointercancel instead of pointerup. onPointerCancel
-    // (main.ts:710-713) must feed the recognizer a 'cancel' (which clears its
-    // internal down-pointer bookkeeping) AND call releasePointer() (which
-    // clears main.ts's own downPointerIds/exit-timer bookkeeping) — otherwise
-    // the cancelled pointer lingers in the recognizer's session forever (its
-    // real up/cancel already happened; nothing will ever arrive to complete
-    // it), and every later tap's own down+up can never bring the tracked
-    // pointer count back to zero. Verified experimentally: gating off the
-    // recognizer.handle('cancel')/releasePointer() calls made the following
-    // tap silently do nothing (stage stuck on 'word') instead of advancing.
-    // Dispatch the cancel PROMPTLY: LONG_PRESS_MS is 800ms (gestures.ts:33) —
-    // a bare pointerdown held that long fires EXIT to the picker regardless
-    // of what happens next.
+    // (main.ts) must feed the recognizer a 'cancel' AND call
+    // releasePointer(), which clears main.ts's OWN downPointerIds/exit-timer
+    // bookkeeping. Nothing will ever complete that pointer — its real
+    // up/cancel already happened — so without the release it sits in
+    // downPointerIds for the full STALE_POINTER_MS (10s, gestures.ts).
+    //
+    // What that stale entry actually breaks is EXIT ARMING, not ADVANCE:
+    // gestures.ts is the sole source of gesture actions, so main's own map
+    // can never block an ADVANCE. But onPointerDown sees
+    // downPointerIds.size >= 2 for the next 10s, latches sessionBlocked and
+    // calls clearExitTimer() instead of armExitTimer() — so the parent's
+    // long-press-to-exit is DEAD for 10 seconds and the child is stuck in the
+    // deck with no way out. That is the failure mode the EXIT assertion at
+    // the bottom of this test guards; the ADVANCE assertions document the
+    // happy path but cannot detect the regression on their own.
+    //
+    // Dispatch the cancel PROMPTLY: LONG_PRESS_MS is 800ms (gestures.ts) — a
+    // bare pointerdown held that long fires EXIT to the picker regardless of
+    // what happens next.
     await stage.dispatchEvent('pointerdown', { pointerId: 111, isPrimary: true });
     await stage.dispatchEvent('pointercancel', { pointerId: 111 });
 
@@ -234,17 +241,27 @@ test.describe('pointer-cancel release path (iOS pointer-steal)', () => {
     await expect(stage).toHaveAttribute('data-state', 'word');
     await expect(page.locator('#stage .corner')).toHaveText('sh · 1 of 10');
 
-    // A fresh, ordinary tap afterward must read as a clean single-pointer
-    // gesture and advance exactly one beat — not get silently swallowed by
-    // a leftover multi-pointer session from the cancelled one.
+    // A fresh, ordinary tap afterward reads as a clean single-pointer gesture
+    // and advances exactly one beat.
     await stage.tap();
     await expect(stage).toHaveAttribute('data-state', 'image');
     await expect(page.locator('#stage .word')).toHaveText('ship');
+
+    // The discriminator: a long press must still reach the picker. With the
+    // cancelled pointer left in downPointerIds, this down is main's SECOND
+    // pointer — no EXIT timer is armed, nothing polls the recognizer, and the
+    // hold never resolves. (Same shape as 'long-press inside a deck exits to
+    // the picker' above, including releasing the pointer afterward so no
+    // dangling pointer is left for later tests/timers.)
+    await stage.dispatchEvent('pointerdown', { pointerId: 112, isPrimary: true });
+    await expect(stage).toHaveAttribute('data-state', 'deck_pick', { timeout: 3000 });
+    await stage.dispatchEvent('pointerup', { pointerId: 112 }); // suppressed post-EXIT
+    await expect(stage).toHaveAttribute('data-state', 'deck_pick');
   });
 });
 
 test.describe('visibilitychange resets stale pointer tracking', () => {
-  test('going hidden mid-gesture resets pointer tracking; the next tap still advances (not stuck)', async ({
+  test('going hidden mid-gesture resets main\'s pointer bookkeeping: the next tap advances AND long-press EXIT still arms', async ({
     page,
   }) => {
     // Override document.visibilityState with a configurable getter BEFORE
@@ -270,17 +287,20 @@ test.describe('visibilitychange resets stale pointer tracking', () => {
     const stage = page.locator('#stage');
     // A pointer goes down but never lifts — iOS may never deliver the
     // terminating pointerup/pointercancel for a gesture interrupted by the
-    // app being backgrounded (main.ts:750-760's comment). Dispatch PROMPTLY:
-    // LONG_PRESS_MS is 800ms (gestures.ts:33) — left down that long it would
-    // fire EXIT to the picker regardless of what happens next.
+    // app being backgrounded (see setupWakeLockReacquire's comment in
+    // main.ts). Dispatch PROMPTLY: LONG_PRESS_MS is 800ms (gestures.ts) —
+    // left down that long it would fire EXIT to the picker regardless of what
+    // happens next.
     await stage.dispatchEvent('pointerdown', { pointerId: 211, isPrimary: true });
 
-    // Flip the flag and fire the real event setupWakeLockReacquire
-    // (main.ts:750) is listening for. Without its `recognizer.reset()` +
-    // `resetPointerTracking()` calls, pointerId 211 lingers forever in both
-    // the recognizer's own pointer bookkeeping and main.ts's downPointerIds
-    // map — its terminating pointerup/cancel never arrives in this
-    // scenario, exactly like a real backgrounded gesture.
+    // Flip the flag and fire the real event setupWakeLockReacquire is
+    // listening for. Its hidden branch does two things: recognizer.reset()
+    // (gestures.ts's own bookkeeping) and resetPointerTracking() (main.ts's
+    // downPointerIds map + armed exit timer). This test targets the SECOND
+    // one: pointerId 211's terminating pointerup/cancel never arrives in this
+    // scenario, exactly like a real backgrounded gesture, so without
+    // resetPointerTracking() it sits in downPointerIds for the full
+    // STALE_POINTER_MS (10s, gestures.ts).
     await page.evaluate(() => {
       (window as unknown as { __hidden: boolean }).__hidden = true;
       document.dispatchEvent(new Event('visibilitychange'));
@@ -290,16 +310,25 @@ test.describe('visibilitychange resets stale pointer tracking', () => {
     // reducer — still mid-deck, still on the word beat.
     await expect(stage).toHaveAttribute('data-state', 'word');
 
-    // A fresh, ordinary tap must now read as a clean single-pointer gesture.
-    // Without the reset, the stale pointerId 211 entry means this tap's own
-    // pointerdown/up can never bring the tracked-pointer count back to zero,
-    // so the gesture never resolves to ADVANCE. Verified experimentally:
-    // gating off the two reset calls made this tap silently do nothing
-    // (stage stuck on 'word') instead of the plain single-tap advance a
-    // parent expects.
+    // A fresh, ordinary tap reads as a clean single-pointer gesture and
+    // advances one beat. (This alone does NOT prove resetPointerTracking()
+    // ran: gestures.ts is the sole source of gesture actions, so a stale
+    // entry in main's own map can never block an ADVANCE.)
     await stage.tap();
     await expect(stage).toHaveAttribute('data-state', 'image');
     await expect(page.locator('#stage .word')).toHaveText('ship');
+
+    // The discriminator — what a stale downPointerIds entry actually breaks is
+    // EXIT ARMING. onPointerDown would see downPointerIds.size >= 2 for the
+    // next 10s, latch sessionBlocked and clearExitTimer() instead of
+    // armExitTimer(), so the parent's long-press-to-exit is dead for 10
+    // seconds after any backgrounded gesture — a child stuck in a deck with no
+    // way out. (Same shape as 'long-press inside a deck exits to the picker'
+    // above, including releasing the pointer afterward.)
+    await stage.dispatchEvent('pointerdown', { pointerId: 212, isPrimary: true });
+    await expect(stage).toHaveAttribute('data-state', 'deck_pick', { timeout: 3000 });
+    await stage.dispatchEvent('pointerup', { pointerId: 212 }); // suppressed post-EXIT
+    await expect(stage).toHaveAttribute('data-state', 'deck_pick');
   });
 });
 
@@ -552,10 +581,18 @@ test.describe('image (reveal) sizing', () => {
 
   // Regression guard for a DIFFERENT failure mode than the box-size one
   // above (P4.12, adversarial review of v1.5): getBoundingClientRect() only
-  // proves the CSS BOX is sized right — it says nothing about whether the
-  // SVG actually PAINTS anything inside that box. An SVG whose viewBox gets
-  // edited to crop out the artwork (or one accidentally emptied) would still
-  // report a correctly-sized box and pass every assertion above it.
+  // proves the CSS BOX is sized right — it says nothing about whether the art
+  // FILE has any drawn content left in it. An SVG whose viewBox gets edited to
+  // crop out the artwork (or one accidentally emptied) would still report a
+  // correctly-sized box and pass every assertion above it.
+  //
+  // Scope of the claim, precisely: drawImage() rasterizes the SOURCE SVG at
+  // whatever dimensions it is handed and ignores `object-fit`, CSS `opacity`
+  // and `visibility` — so a nonzero fraction proves THE ART FILE ISN'T BLANK,
+  // not that ink is visible on screen. That is the regression being guarded
+  // (a blanked/over-cropped SVG); on-screen visibility is the box-size
+  // assertions' job, and DESIGN.md's zero-motion/zero-decoration rules mean
+  // there is no opacity or visibility trickery on `.art` to hide behind.
   //
   // Two candidate fixes were spiked against a deliberately blanked SVG
   // (viewBox-only, zero drawn content — see git history of this file for
@@ -597,9 +634,11 @@ test.describe('image (reveal) sizing', () => {
       return ink / (w * h);
     });
   }
-  // Well below either card's observed real-art fraction (~0.45 for ship,
-  // see below) — proves SOME meaningful painted area without pinning to a
-  // fragile exact percentage that would drift with any legitimate art edit.
+  // Well below every asserted card's measured fraction (ship 0.455, shut
+  // 0.458, whip 0.276 — whip is lowest because its 4.4:1 art letterboxes
+  // inside a box whose height is the same definite 64vh as the square cards)
+  // — proves SOME meaningful drawn area without pinning to a fragile exact
+  // percentage that would drift with any legitimate art edit.
   const MIN_INK_FRACTION = 0.05;
 
   test('an OpenMoji card (ship) reveals a large illustration, not its intrinsic size', async ({
@@ -617,8 +656,8 @@ test.describe('image (reveal) sizing', () => {
     expect(frac).toBeLessThanOrEqual(MAX_ART_FRACTION);
 
     // The box-size assertion above would stay green even if ship.svg's
-    // viewBox were edited to crop out the hull — assert the box is actually
-    // painted, not just correctly sized.
+    // viewBox were edited to crop out the hull — assert the art file still
+    // rasterizes to something, not just that its box is sized right.
     const ink = await paintedInkFraction(page);
     expect(ink).toBeGreaterThanOrEqual(MIN_INK_FRACTION);
   });
@@ -648,7 +687,7 @@ test.describe('image (reveal) sizing', () => {
     expect(frac).toBeGreaterThanOrEqual(MIN_ART_FRACTION);
     expect(frac).toBeLessThanOrEqual(MAX_ART_FRACTION);
 
-    // Same painted-ink guard as the OpenMoji case above, exercised against a
+    // Same not-blank guard as the OpenMoji case above, exercised against a
     // hand-drawn (also viewBox-only, per art-svg-sizing.test.ts) SVG.
     const ink = await paintedInkFraction(page);
     expect(ink).toBeGreaterThanOrEqual(MIN_INK_FRACTION);
@@ -689,6 +728,13 @@ test.describe('image (reveal) sizing', () => {
     const wFrac = await artWidthFraction(page);
     expect(wFrac).toBeGreaterThanOrEqual(0.78);
     expect(wFrac).toBeLessThanOrEqual(0.86);
+
+    // whip is the card P4.12 named as most at risk: its viewBox was tightened
+    // to 6 61 168 38, running close to the ink edge, so a further crop is
+    // likeliest to blank THIS art. Measured 0.276 — lower than the two
+    // square-ish cards (the letterboxing above) but far above the threshold.
+    const ink = await paintedInkFraction(page);
+    expect(ink).toBeGreaterThanOrEqual(MIN_INK_FRACTION);
   });
 });
 
