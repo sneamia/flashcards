@@ -66,6 +66,16 @@ describe('fetch-art MAP ↔ deck img consistency', () => {
     // every other test here. Scoped per category, matching the real exposure:
     // a shuffle pool never spans categories, and five cross-category pairs
     // (jet/plane, dish/plate, bath/tub, hut/shed, drip/wet) ship deliberately.
+    //
+    // SCOPE — this covers exactly ONE of the two ways the collision comes back:
+    // through the MAP (two keys, one hexcode). It joins card text -> MAP key, so
+    // it is structurally blind to the cheaper path of pointing a card's img
+    // straight at another word's existing file
+    // (`{"text": "jog", "img": "art/run.svg"}`), where `hexByKey.get('jog')` is
+    // undefined and the card is skipped by the `continue` below. That path is
+    // guarded in scripts/validate-decks.mjs (cardImgsByCategory), which checks
+    // the rendered artifact instead of the MAP. Both are needed; neither
+    // subsumes the other, so don't "simplify" by deleting one.
     const hexByKey = new Map(
       [...MAP_BLOCK.matchAll(/^\s{2}([a-z]+):\s*'([^']+)'/gm)].map((m) => [m[1], m[2]]),
     );

@@ -52,6 +52,19 @@ const ids = new Map(); // id -> deckFile (duplicate id = second deck silently un
 // deck repeating a word hits the same key twice, so this also catches
 // within-deck duplicates with no extra code.
 const cardTextsByCategory = new Map();
+// `${category}:${img}` -> where, for renderable "word" cards only. Same shuffle-pool
+// reasoning as cardTextsByCategory above, but on the RENDERED ARTIFACT rather than
+// the word: two cards in one category pointing at the same SVG file reveal the
+// identical drawing for two different words, which is what v1.6's P1.1 fix (jog/run,
+// both OpenMoji 1F3C3, both CVC) removed. tests/unit/art-map.test.ts guards the
+// path that reintroduces it through the fetch-art MAP (two MAP keys, one hexcode);
+// this guards the cheaper and likelier path that test cannot see, because it joins
+// on card text -> MAP key: pointing a card's img straight at another word's existing
+// file (`{"text": "jog", "img": "art/run.svg"}`) is invisible to a MAP-keyed check.
+// Cross-category reuse is deliberately allowed — a shuffle pool never spans
+// categories, so the five byte-identical cross-category pairs (jet/plane,
+// dish/plate, bath/tub, hut/shed, drip/wet) must NOT fail here.
+const cardImgsByCategory = new Map();
 
 if (CATEGORY_IDS.size === 0) {
   errors.push('src/categories.ts: parsed zero category ids (manifest moved or regex drift?)');
@@ -197,6 +210,19 @@ for (const file of files) {
         errors.push(`${where}: img "${img}" must match art/<name>.svg exactly`);
       } else if (!artFiles.has(img.slice('art/'.length))) {
         errors.push(`${where}: img "${img}" does not resolve (case-sensitively) to a file in public/art/`);
+      }
+      // Two words in ONE category must never point at the same drawing — the
+      // child uses the picture to confirm the read, so the identical image on
+      // two different words is worse than no image (the image-free one-beat
+      // card is the honest card). See cardImgsByCategory's declaration for why
+      // this lives here and not in the MAP-keyed unit test.
+      if (card.type === 'word' && typeof deck.category === 'string' && deck.category.length > 0) {
+        const key = `${deck.category}:${img}`;
+        if (cardImgsByCategory.has(key)) {
+          errors.push(`${where}: img "${img}" is already used by ${cardImgsByCategory.get(key)} in category "${deck.category}" — two words in one category would reveal the identical drawing in its "shuffle all" pool`);
+        } else {
+          cardImgsByCategory.set(key, where);
+        }
       }
     }
   });
