@@ -99,7 +99,7 @@ any code; **decision only** = no code — the deliverable is the call itself.
   pass (sentence renderer, word-size measurement for multi-word lines,
   composed-scene art direction) before any code.
 - **What:** `sentence` cards are schema-valid and warned-and-skipped today
-  (`validate-decks.mjs:144`).
+  (`validate-decks.mjs:178`).
 - **Impact:** feature. **Category:** content + renderer.
 
 ### 6. `th` deck ordering decision (S)
@@ -113,11 +113,53 @@ any code; **decision only** = no code — the deliverable is the call itself.
 
 ## P3 — Robustness quick wins
 
-Items 7–10 shipped in v1.6.0. Only the parked one is left.
+Items 7–10 shipped in v1.6.0. Two new items came out of v1.6's own review.
+
+### 15. No persistent test harness for `scripts/*.mjs` (S/M)
+- **Path: plan first** — it reverses a standing convention ("no unit-test harness
+  for .mjs scripts in this repo"), so the approach is a small design call before
+  code.
+- **What:** `validate-decks.mjs` now carries real logic — the CATEGORIES-literal
+  anchor with two-pass comment stripping, the per-category duplicate-word guard,
+  and the new per-category duplicate-`img` guard. All three are verified only by
+  hand-edited negative fixtures recorded in commit bodies; nothing persists in
+  the tree. **The anchor already regressed once inside v1.6** (46a6eaa stripped
+  only `//`, missing `/* */`; caught by a human review pass, not a test) — this
+  is a demonstrated, not hypothetical, gap. (Testing specialist, v1.6, conf 7.)
+- **Why it needs a decision, not just a test:** the obvious cheap move — mirror
+  the regex inside a `?raw`-based vitest test — tests the mirror, not the script,
+  and is exactly the vacuous-test shape v1.6's review spent its time deleting.
+  The honest options are (a) extract the pure parse/guard helpers into an
+  importable `scripts/lib/*.mjs` and test those directly, or (b) add a
+  node-typed vitest project so a test can drive the real script over a temp
+  fixture tree. Both interact with a known pitfall: `tsconfig` includes `tests/`
+  and `npm run build` runs `tsc --noEmit` with **no node types**, so a test
+  importing `node:fs` passes vitest silently and breaks the build gate *and* the
+  Playwright webServer.
+- **Impact:** regression safety on the build gate. **Category:** testing/tooling.
+
+### 16. Gesture EXIT is dead for up to 10s after a lost pointer terminator (S)
+- **Path: decision only** first — this is pre-existing v1.1 behavior and may be
+  an acceptable trade, so the deliverable is the call, then a test either way.
+- **What:** during a two-finger BACK, if one finger lifts normally and the other
+  is dragged off the screen edge, neither `pointerup` nor `pointercancel` ever
+  arrives for it. `recognizer.multi` stays latched AND a live entry remains in
+  `downPointerIds`, so the next `pointerdown` takes the `size >= 2` branch
+  (`main.ts:687`), sets `sessionBlocked`, and clears the EXIT timer — long-press
+  exit cannot fire until `sweepStalePointers` ages the ghost out after
+  `STALE_POINTER_MS` (10s, `gestures.ts:38`). A plausible toddler grip, and the
+  exact "stuck in a deck with no way out" outcome v1.6's new pointer tests were
+  written to rule out — those tests cover the delivered-terminator and
+  backgrounded cases, not this one. Self-heals; graceful. (Red team, v1.6,
+  conf 6.)
+- **Fix if unparked:** either document 10s as intended and add the third e2e
+  (pointerdown A + pointerdown B + pointerup A only, then assert EXIT), or drop
+  pointers from `downPointerIds` when the recognizer reports no live gesture.
+- **Impact:** recoverability mid-session. **Category:** gestures.
 
 ### 11. Resume-by-identity instead of index (parked — accepted risk; direct if unparked)
 - `rehydrate()` bounds-checks `cardIndex` but stores no card identity
-  (`main.ts:515–537`), so removing a mid-deck card makes a pre-update persisted
+  (`main.ts:521–543`), so removing a mid-deck card makes a pre-update persisted
   run resume one word off (graceful; worst case falls back to the picker).
   **Fix if ever worth it:** persist card text, re-locate by text on rehydrate.
   Revisit only when a release next removes/reorders mid-deck cards.

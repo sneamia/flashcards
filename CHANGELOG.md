@@ -6,6 +6,42 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-07-26
+
+### Fixed
+- **run** and **jog** no longer show the same picture. Both drew the same running
+  figure, and because they're both CVC words, one "shuffle all CVC" session could
+  reveal the identical illustration for two different words — precisely when a
+  child is using the picture to confirm what they just read. **jog** is now a
+  clean word-only card and **run** keeps the drawing. Illustrated words move from
+  152 to 151 of 182, on purpose.
+- Reconnecting now reliably clears the "reconnect once to restore" card. It could
+  previously stay stuck for the rest of the session in two situations: the phone
+  coming back online while the app sat in the background (a woken page can drop
+  that signal entirely), and coming back online during the app's own start-up
+  checks, before it was listening at all. The app now re-checks every time you
+  return to it, and once more the moment start-up finishes.
+
+### Changed
+- The build now refuses to ship either bug above. Two words in the same group can
+  no longer share a word or an illustration, and the category list is read
+  strictly enough that a commented-out entry can't pass itself off as a real one.
+- Illustration checks now confirm a drawing actually paints pixels, not merely
+  that its frame is the right size — an edit that blanked a drawing used to pass
+  unnoticed. The wide illustration that prompted the v1.5 work (the whip) is
+  covered too.
+- Touch recovery is now checked against what a real session produces: iOS
+  stealing a finger mid-gesture, and the app being backgrounded mid-gesture. In
+  both, the next tap advances normally *and* press-and-hold to exit still works.
+  That second half is the part that actually breaks, and it was going unchecked.
+- Offline start-up is checked against a phone with no cache storage at all and
+  one whose cache errors on read, so a half-evicted phone shows the calm restore
+  card instead of broken pictures.
+- Internal tidying with no visible change: the picker fully resets if it ever
+  can't find a deck, the offline check's illustration-sampling count no longer
+  rides on an unrelated total, and the "shuffle all" category lookup moved into a
+  small tested helper.
+
 ## [1.5.0] - 2026-07-22
 
 ### Fixed

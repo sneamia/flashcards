@@ -1,7 +1,7 @@
-# Handoff — v1.6 backlog quick-wins sweep (COMPLETE, awaiting `/ship`)
+# Handoff — v1.6 backlog quick-wins sweep (COMPLETE, shipped as v1.6.0, awaiting merge)
 
 **Branch:** `v1.6/backlog-quick-wins` (base `main` @ `3324acc`, tree clean)
-**Date:** 2026-07-26 · **Status:** all three waves landed, full gate green, adversarial review done and its findings fixed. The only thing left is `/ship` → `/land-and-deploy`.
+**Date:** 2026-07-26 · **Status:** all three waves landed; full gate green (validate / 98 unit / 33 e2e / build); adversarial review, coverage audit, 4 review specialists and a red team all done, findings fixed or backlogged. Version bumped to 1.6.0. The only thing left is the PR → `/land-and-deploy`.
 **Source docs:** `TODOS.md` (updated to match — the shipped items are out of the backlog and in its Shipped history), repo `DESIGN.md`, `CLAUDE.md` conventions.
 
 ## What this was
@@ -39,22 +39,53 @@ Review follow-ups (from the fresh adversarial pass on `git diff main...HEAD`):
 | `1b2b138` | F2 + F4 | **The important one.** The two new pointer tests asserted only that a later tap still ADVANCES — which the recognizer guarantees regardless, so they passed even with main.ts's own `releasePointer`/`resetPointerTracking` calls gated off. They now also assert long-press EXIT still arms (the thing a stale `downPointerIds` entry actually breaks: no way out of a deck for 10s after an iOS pointer-steal). Both mutation-verified red→green. Also ink-guards `whip`, P4.12's motivating card. |
 | `559b1a7` | F1 + F6 + F7 | The no-Cache-API test no longer overclaims (deleting that `if` makes the call throw into the catch below for an identical outcome, so no test can distinguish them); restore.spec header corrected; missing `.catch()` on the reload-triggering evaluate. |
 
-Docs (this commit): `TODOS.md`, `CLAUDE.md`, `handoff.md` brought in line with the above.
+Then `/ship` ran its own gates, which found more:
+
+| Commit | Source | What |
+|---|---|---|
+| `b41a9ba` | coverage audit | The P1.1 fix had **no enforcement** — only a human eyeball pass. Added a per-category shared-glyph invariant test (mutation-verified: `pan`→`map`'s hex trips it, precisely, with no collateral failures). |
+| `382a6d7` | coverage audit | The last untested recovery branch: a foreground return while STILL offline must be a no-op *and* must leave recovery armed. Needed a boot counter, a document sentinel, and a bounded settle — the first version of this test passed with the guard deleted because its assertions raced the navigation. |
+| `73846f3` | **red team** | The most important finding of the whole branch. `b41a9ba`'s guard keys on the fetch-art MAP, so it is blind to the likelier reintroduction: pointing a card's `img` straight at another word's file. Proven by execution — `jog` → `art/run.svg` left validate PASSING and 98/98 unit tests green. Closed with a `cardImgsByCategory` guard in the validator, which checks the rendered artifact. Both checks are needed; neither subsumes the other. |
+| `dfb1f00` | red team | `paintedInkFraction()` rasterized the reveal `<img>` without waiting for `img.complete`; `drawImage` on an incomplete image is a silent no-op, so the failure mode was a false RED. Now gated on `complete`. |
+
+Docs (final commit): `package.json` 1.5.0 → 1.6.0, `CHANGELOG.md` 1.6.0 entry, `TODOS.md`, `CLAUDE.md`, `handoff.md`.
 
 ## Verification (all run on the final tree)
 
 - `npm run validate` → 17 decks, 0 warnings
-- `npx vitest run` → **97 passed** (was 94 on `main`)
-- `npm run test:e2e` → **32 passed** (was 26 on `main`)
+- `npx vitest run` → **98 passed** (was 94 on `main`)
+- `npm run test:e2e` → **33 passed** (was 26 on `main`)
 - `npm run build` → green (`tsc --noEmit` + vite, 166 precache entries)
+
+Reviews run: the original adversarial pass, then `/ship`'s coverage audit, four
+review specialists (testing / maintainability / **security: no findings** /
+performance), and a red team. 13 findings total; 1 critical (fixed), 5 fixed,
+2 backlogged as new **P3.15** (no persistent test harness for `scripts/*.mjs` —
+the CATEGORIES anchor already regressed once inside this branch) and **P3.16**
+(gesture EXIT dead ≤10s after a lost pointer terminator, pre-existing v1.1), and
+5 skipped with rationale recorded in the PR body.
+
+**A methodology note worth carrying forward** (logged as a project learning):
+`playwright.config.ts` sets `reuseExistingServer: !CI` and its webServer runs
+`npm run build && npm run preview`. Mutation-testing a `src/` change therefore
+requires an explicit `npm run build` first — otherwise the suite is served a
+stale `dist/`, **every mutation appears survivable, and red-then-green evidence
+is worthless**. This bit twice during this branch.
 
 Also confirmed by the reviewer, independently: `src/machine.ts` untouched (Eng #11); nothing from the deferred P1.2(b)/(c)/(d) leaked in; DESIGN.md intact (no motion/sound/gamification); the art set is internally consistent (144 MAP entries, 182 word cards, 151 with `img`, 151 files in `public/art/`, zero orphans, zero missing); and **zero same-hexcode collisions remain within any single category** — the five byte-identical art pairs (tub/bath, dish/plate, drip/wet, hut/shed, jet/plane) are all cross-category, so no shuffle pool can show one drawing for two words. That closes P1.1's "one eyeball pass, then accept" note.
 
 ## Next
 
-1. `/ship` — suggested **v1.6.0**. Bumps VERSION, writes the CHANGELOG entry, opens the PR.
-2. `/land-and-deploy` (merge pre-approved per James's standing preference).
-3. Post-merge docs sync: update `CLAUDE.md`'s shipped-state line to v1.6.0 (**art coverage 152 → 151/182**) and its active-branch line.
+1. `/land-and-deploy` (merge pre-approved per James's standing preference).
+2. Post-merge docs sync: update `CLAUDE.md`'s shipped-state line to v1.6.0 (**art coverage 152 → 151/182**) and its active-branch line.
+
+Note on versioning: this repo keeps its version in `package.json` as 3-digit
+semver (`1.6.0`) with a Keep-a-Changelog `CHANGELOG.md`. gstack's
+`gstack-version-bump` CLI assumes a 4-digit `VERSION` file and reports
+`DRIFT_UNEXPECTED` here — that is the scheme mismatch, not real drift
+(`baseVersion`/`currentVersion` both read `0.0.0.0` because no `VERSION` file
+exists). The bump was done by hand to stay consistent with the repo's own
+convention and docs rather than inventing a `VERSION` file to satisfy the tool.
 
 For the PR body, two things worth surfacing to James:
 - **P1.2(a) widens the funnel into the deliberately-deferred P1.2(b) hole.** Recovery now triggers on every foreground return while `onLine`, not just a one-shot event, so a captive-portal reload (connected, no internet → degraded cards with no guidance, which TODOS itself calls "worse than the restore card") is reachable more often. Exposure class is unchanged — the existing `online` listener already reached the same code — but it raises P1.2(b)'s priority. Noted in TODOS.md.
