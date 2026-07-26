@@ -29,10 +29,13 @@ const CACHE_COMPLETE_KEY = 'e2e-restore-cache-complete';
 async function installStub(page: Page): Promise<void> {
   await page.addInitScript(
     ({ offlineKey, cacheCompleteKey }) => {
-      const offline = localStorage.getItem(offlineKey) === '1';
+      // Read LIVE on every access (not captured once at init): the
+      // visibilitychange-recovery test flips this flag mid-page, with no
+      // reload, and expects main.ts's live `navigator.onLine` read inside
+      // the visibilitychange handler to see the new value immediately.
       Object.defineProperty(window.navigator, 'onLine', {
         configurable: true,
-        get: () => !offline,
+        get: () => localStorage.getItem(offlineKey) !== '1',
       });
 
       // Only main.ts's `caches.match(url)` calls are stubbed; real cache
@@ -138,5 +141,41 @@ test.describe('restore card (precache integrity)', () => {
     await page.reload();
 
     await expect(page.locator('#stage')).toHaveAttribute('data-state', 'deck_pick');
+  });
+
+  test('backgrounded reconnect recovers via visibilitychange even when the online event never fires (P1.2(a))', async ({
+    page,
+  }) => {
+    await installStub(page);
+    await page.goto('/');
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-state', 'boot');
+
+    await setFlags(page, /* offline */ true, /* cacheComplete */ false);
+    await page.reload();
+
+    const stage = page.locator('#stage');
+    await expect(stage).toHaveAttribute('data-state', 'restore');
+    await expect(stage).toContainText('reconnect once to restore');
+
+    // Model the family's real fix action: background the PWA, toggle Wi-Fi,
+    // come back. A thawed/backgrounded page can coalesce or drop the `online`
+    // event entirely, so recovery can't depend on it alone. Flip connectivity
+    // LIVE (no reload — the onLine stub now reads its flag fresh on every
+    // access) and fire ONLY `visibilitychange`, deliberately withholding
+    // `online`, to prove main.ts's visibilitychange re-check is what recovers
+    // here, not a coincidental online event.
+    await setFlags(page, /* offline */ false, /* cacheComplete */ true);
+
+    // document.visibilityState is already 'visible' in a fresh Playwright
+    // page (the tab is never actually backgrounded by the test) — verify
+    // that rather than assume it, since a hidden state would make this
+    // firing a correct no-op instead of the recovery this test wants.
+    expect(await page.evaluate(() => document.visibilityState)).toBe('visible');
+
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+
+    // The reload lands back on the picker — proving visibilitychange alone
+    // (with online never firing) recovers the restore card.
+    await expect(stage).toHaveAttribute('data-state', 'deck_pick', { timeout: 10_000 });
   });
 });

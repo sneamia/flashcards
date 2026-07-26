@@ -939,6 +939,18 @@ async function boot(): Promise<void> {
     await fontsReadyOrTimeout(FONT_TIMEOUT_MS);
     render();
     window.addEventListener('online', recoverFromRestore, { once: true });
+    // Additive hardening, not a replacement: the family's natural fix action
+    // is to background the PWA, toggle Wi-Fi, and come back — and a
+    // thawed/backgrounded page can coalesce or drop the `online` event
+    // entirely, stranding the restore card with no event left to recover it.
+    // Re-check on the return-to-foreground signal too. Deliberately NOT
+    // `{ once: true }`: if the user returns while still offline, this firing
+    // must be a no-op, and a LATER return while online still has to recover —
+    // a one-shot here would burn itself on the first offline return and
+    // reintroduce the exact bug this exists to fix.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) recoverFromRestore();
+    });
     return;
   }
 
