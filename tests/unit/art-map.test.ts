@@ -22,7 +22,7 @@
 
 import { describe, expect, it } from 'vitest';
 import FETCH_ART_SRC from '../../scripts/fetch-art.mjs?raw';
-import { loadDecks } from '../../src/decks';
+import { groupByCategory, loadDecks } from '../../src/decks';
 
 // The MAP object literal body. Real entries are two-space-indented
 // `name: 'CODE',` lines; commented-out non-entries (`// whisk: no glyph…`)
@@ -53,6 +53,42 @@ describe('fetch-art MAP ↔ deck img consistency', () => {
     // are deliberately unmapped so fetch-art never clobbers them.)
     const stale = MAP_KEYS.filter((k) => !REFERENCED_ART.has(k));
     expect(stale).toEqual([]);
+  });
+
+  it('no MAP glyph is shared by two cards in the SAME category (v1.6 P1.1)', () => {
+    // The jog/run collision this branch fixed, guarded at its source. Two MAP
+    // keys pointing at the ONE OpenMoji hex produce two byte-identical SVGs, so
+    // a single "shuffle all" run over their category shows the child the
+    // identical picture for two different words — indistinguishable from the app
+    // having lost its place. fetch-art.mjs's comment says jog was left unmapped
+    // for exactly this reason, but nothing enforced it: re-adding
+    // `jog: '1F3C3'` (already `run`'s hex, also CVC) would have sailed through
+    // every other test here. Scoped per category, matching the real exposure:
+    // a shuffle pool never spans categories, and five cross-category pairs
+    // (jet/plane, dish/plate, bath/tub, hut/shed, drip/wet) ship deliberately.
+    const hexByKey = new Map(
+      [...MAP_BLOCK.matchAll(/^\s{2}([a-z]+):\s*'([^']+)'/gm)].map((m) => [m[1], m[2]]),
+    );
+    const collisions: string[] = [];
+    let mapped = 0;
+    for (const group of groupByCategory(loadDecks())) {
+      const seen = new Map<string, string>(); // hex -> the first card that used it
+      for (const deck of group.decks) {
+        for (const card of deck.cards) {
+          const hex = hexByKey.get(card.text);
+          if (hex === undefined) continue; // hand-drawn/unmapped — nothing to collide
+          mapped++;
+          const first = seen.get(hex);
+          if (first === undefined) seen.set(hex, card.text);
+          else collisions.push(`${group.id}: "${card.text}" reuses "${first}"'s glyph ${hex}`);
+        }
+      }
+    }
+    expect(collisions).toEqual([]);
+    // Anti-vacuous: a MAP-key/card-text mismatch (or a collapsed parse) would
+    // leave `mapped` at 0 and the assertion above trivially satisfied. ~145
+    // mapped cards ship today.
+    expect(mapped).toBeGreaterThan(100);
   });
 
   it('v1.4 taxonomy changes are reflected in the MAP', () => {
