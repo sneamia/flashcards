@@ -22,10 +22,13 @@
    boolean `cacheComplete`), because gatherPresentUrls (main.ts) has three
    distinct code paths worth exercising independently: the ordinary
    present/absent probe ('stub'), the Cache API being genuinely unavailable
-   ('absent' — a real WebIDL prototype deletion, not just an empty stub, so
-   `'caches' in window` is actually false), and every probe throwing
-   ('throw' — the private-mode-quirk catch branch). Each new test asserts
-   its precondition directly (`'caches' in window` / a probe actually
+   ('absent' — a plain `delete window.caches`, which really does make
+   `'caches' in window` false here because `caches` turns out to be a
+   configurable OWN property of the window instance in both engines, NOT a
+   shared prototype accessor; see the stub's own comment, and note that a
+   prototype-chain deletion would be a silent no-op), and every probe
+   throwing ('throw' — the private-mode-quirk catch branch). Each new test
+   asserts its precondition directly (`'caches' in window` / a probe actually
    throwing) so a broken stub can't let a test pass through the ordinary
    incomplete-precache path and prove nothing about the branch it targets.
    ========================================================================= */
@@ -203,6 +206,10 @@ test.describe('restore card (precache integrity)', () => {
     // about to trigger lands on a normal boot, THEN fire the real `online`
     // event main.ts listens for -> recoverFromRestore() -> location.reload().
     await setFlags(page, /* offline */ false, /* cacheComplete */ true);
+    // .catch: the dispatch synchronously reaches location.reload(), so this
+    // evaluate can lose its execution context to the navigation before it
+    // returns. The rejection is the race resolving in our favor, not a
+    // failure — the assertion below is what actually judges the outcome.
     await page.evaluate(() => window.dispatchEvent(new Event('online'))).catch(() => undefined);
 
     // The reload lands back on the picker (no persisted position from this
@@ -273,7 +280,12 @@ test.describe('restore card (precache integrity)', () => {
     // firing a correct no-op instead of the recovery this test wants.
     expect(await page.evaluate(() => document.visibilityState)).toBe('visible');
 
-    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    // Same `.catch()` as the online-dispatch test above, for the same reason:
+    // this dispatch synchronously reaches location.reload(), so the execution
+    // context can be destroyed by the navigation before the evaluate returns.
+    await page
+      .evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+      .catch(() => undefined);
 
     // The reload lands back on the picker — proving visibilitychange alone
     // (with online never firing) recovers the restore card.
@@ -325,9 +337,22 @@ test.describe('restore card (precache integrity)', () => {
     });
   });
 
-  test("offline boot with the Cache API genuinely absent shows the restore card (P4.14, gatherPresentUrls' !('caches' in window) branch)", async ({
+  test('offline boot with NO Cache API at all still shows the restore card, never broken art (P4.14)', async ({
     page,
   }) => {
+    // Scope of what this proves, stated plainly because the obvious reading is
+    // wrong: it guards the OUTCOME (offline + no Cache API -> restore card),
+    // not the individual `if (!('caches' in window)) return present;` line in
+    // gatherPresentUrls. With `caches` deleted, TWO paths reach the same
+    // outcome — that early return, and (if the early return were deleted) the
+    // `caches.match(...)` on the next line throwing a ReferenceError straight
+    // into the try/catch immediately below it, which also leaves `present`
+    // empty. So this test stays green if that guard line is removed, and is
+    // deliberately NOT contorted to be line-discriminating: the behavior is
+    // correct, doubly protected, and the outcome is what the family
+    // experiences. (The catch branch itself IS separately line-discriminating
+    // — deleting the try/catch fails the sibling 'caches.match throws' test
+    // below.)
     await installStub(page);
     await page.goto('/');
     await expect(page.locator('#stage')).not.toHaveAttribute('data-state', 'boot');
@@ -338,8 +363,8 @@ test.describe('restore card (precache integrity)', () => {
     // Precondition: prove the Cache API is actually gone, not merely a stub
     // reporting nothing present. Without this, a broken 'absent' stub could
     // fall through to the ordinary incomplete-precache path and this test
-    // would pass without ever exercising gatherPresentUrls' early-return
-    // branch.
+    // would prove nothing about the no-Cache-API environment it exists to
+    // cover.
     expect(await page.evaluate(() => 'caches' in window)).toBe(false);
 
     const stage = page.locator('#stage');
