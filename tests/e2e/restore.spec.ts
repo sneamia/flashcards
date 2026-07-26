@@ -39,6 +39,11 @@ const OFFLINE_KEY = 'e2e-restore-offline';
 const CACHE_COMPLETE_KEY = 'e2e-restore-cache-complete';
 const CACHES_MODE_KEY = 'e2e-restore-caches-mode';
 const SLOW_PROBE_KEY = 'e2e-restore-slow-probe';
+// Incremented by the init script on EVERY navigation, including the reloads
+// main.ts triggers itself. Lets a test prove a reload did NOT happen — which
+// "still on the restore card" alone cannot, since a reload while still offline
+// with an incomplete precache lands right back on the restore card.
+const BOOT_COUNT_KEY = 'e2e-restore-boot-count';
 
 type CachesMode = 'stub' | 'absent' | 'throw';
 
@@ -46,7 +51,14 @@ type CachesMode = 'stub' | 'absent' | 'throw';
 // main.ts itself triggers), so it re-reads the flags fresh each time.
 async function installStub(page: Page): Promise<void> {
   await page.addInitScript(
-    ({ offlineKey, cacheCompleteKey, cachesModeKey, slowProbeKey }) => {
+    ({ offlineKey, cacheCompleteKey, cachesModeKey, slowProbeKey, bootCountKey }) => {
+      // Count this navigation. Runs before any page script, so main.ts's own
+      // location.reload() recoveries are counted too — that is the point.
+      localStorage.setItem(
+        bootCountKey,
+        String(Number(localStorage.getItem(bootCountKey) ?? '0') + 1),
+      );
+
       // Read LIVE on every access (not captured once at init): the
       // visibilitychange-recovery test flips this flag mid-page, with no
       // reload, and expects main.ts's live `navigator.onLine` read inside
@@ -140,7 +152,17 @@ async function installStub(page: Page): Promise<void> {
       cacheCompleteKey: CACHE_COMPLETE_KEY,
       cachesModeKey: CACHES_MODE_KEY,
       slowProbeKey: SLOW_PROBE_KEY,
+      bootCountKey: BOOT_COUNT_KEY,
     },
+  );
+}
+
+// How many times the page has booted so far this test. Compared before/after an
+// action to prove main.ts did (or did not) trigger a recovery reload.
+async function bootCount(page: Page): Promise<number> {
+  return page.evaluate(
+    (bootCountKey) => Number(localStorage.getItem(bootCountKey) ?? '0'),
+    BOOT_COUNT_KEY,
   );
 }
 
@@ -289,6 +311,74 @@ test.describe('restore card (precache integrity)', () => {
 
     // The reload lands back on the picker — proving visibilitychange alone
     // (with online never firing) recovers the restore card.
+    await expect(stage).toHaveAttribute('data-state', 'deck_pick', { timeout: 10_000 });
+  });
+
+  test('a foreground return while STILL offline is a no-op and leaves recovery armed for the next one', async ({
+    page,
+  }) => {
+    await installStub(page);
+    await page.goto('/');
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-state', 'boot');
+
+    await setFlags(page, /* offline */ true, /* cacheComplete */ false);
+    await page.reload();
+
+    const stage = page.locator('#stage');
+    await expect(stage).toHaveAttribute('data-state', 'restore');
+
+    const bootsBefore = await bootCount(page);
+    // Tag THIS document. A recovery reload replaces it and wipes the tag, which
+    // is how the negative below is proven — see the settle comment.
+    await page.evaluate(() => {
+      (window as unknown as { __docSentinel?: string }).__docSentinel = 'alive';
+    });
+
+    // The realistic first return: the parent backgrounds the PWA, fumbles the
+    // Wi-Fi toggle (or joins a network that hasn't come up yet), and comes back
+    // still offline. main.ts's visibilitychange handler fires and must decline
+    // to act, because reloading here would just re-run the same failing
+    // integrity check.
+    // .catch for the same reason as the dispatches above: if the handler DOES
+    // wrongly reload, this evaluate can lose its context to the navigation. The
+    // assertions below are what judge the outcome, not this call's rejection.
+    await page
+      .evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+      .catch(() => undefined);
+
+    // Proving a negative needs a bounded wait: a reload that IS coming must be
+    // given time to land before we can claim it didn't happen. location.reload()
+    // against the local preview server commits in ~300ms, so 2s is generous.
+    // Without this settle the assertions race the navigation and win against the
+    // pre-reload document — which made an earlier version of this test pass even
+    // with the `navigator.onLine` guard deleted.
+    await page.waitForTimeout(2000);
+
+    // "Still on the restore card" does NOT prove the handler declined — a reload
+    // while still offline with an incomplete precache lands back on the restore
+    // card too, an identical observable. The surviving document sentinel and the
+    // unchanged boot counter are what separate "correctly did nothing" from
+    // "reloaded pointlessly": delete the `navigator.onLine` half of the
+    // handler's guard and these are the assertions that fail.
+    await expect(stage).toHaveAttribute('data-state', 'restore');
+    expect(
+      await page.evaluate(
+        () => (window as unknown as { __docSentinel?: string }).__docSentinel ?? null,
+      ),
+    ).toBe('alive');
+    expect(await bootCount(page)).toBe(bootsBefore);
+
+    // Now connectivity really returns and the parent foregrounds a SECOND time.
+    // This is what pins the handler's deliberately `{ once: true }`-free
+    // registration (see main.ts's comment): a one-shot listener would have been
+    // consumed by the offline firing above — spent on a no-op — and the restore
+    // card would be stranded for the rest of the session on a device that is
+    // now online. The whole point of P1.2(a) would be undone.
+    await setFlags(page, /* offline */ false, /* cacheComplete */ true);
+    await page
+      .evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+      .catch(() => undefined);
+
     await expect(stage).toHaveAttribute('data-state', 'deck_pick', { timeout: 10_000 });
   });
 
