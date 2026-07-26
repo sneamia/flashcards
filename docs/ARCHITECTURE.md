@@ -238,7 +238,9 @@ nothing yet listening. The reload can't loop: its `boot()` sees
   identical picture on two different words reads as the app having lost its place (v1.6:
   `jog` and `run` both resolved to OpenMoji `1F3C3`, so `jog` went image-free).
   validate-decks.mjs fails the build on both, scoped per category and to `word` cards only
-  (sentence cards never reach a pool). ACROSS categories the reuse is deliberate and stays
+  (sentence cards never reach a pool). It matches on the `img` PATH, so the same drawing under
+  two filenames is a second, separate gate: `tests/unit/art-map.test.ts` fails when one
+  fetch-art MAP hexcode is reused by two words in a category. ACROSS categories the reuse is deliberate and stays
   legal — a pool never spans categories — so the byte-identical pairs (`jet`/`plane`,
   `dish`/`plate`, `bath`/`tub`, `hut`/`shed`, `drip`/`wet`) must keep passing.
 - `graphemes`, when present, must be a non-empty array of non-empty strings that joins
