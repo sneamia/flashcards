@@ -23,7 +23,13 @@
 import { describe, expect, it } from 'vitest';
 import type { CategoryMeta } from '../../src/categories';
 import type { Deck } from '../../src/types';
-import { buildShuffledDeck, groupByCategory, loadDecks, renderableCards } from '../../src/decks';
+import {
+  buildShuffledDeck,
+  groupByCategory,
+  loadDecks,
+  renderableCards,
+  resolveShuffleDeck,
+} from '../../src/decks';
 
 describe('loadDecks() against the real decks/*.json fixtures', () => {
   const decks = loadDecks();
@@ -210,6 +216,46 @@ describe('buildShuffledDeck() — single-deck category', () => {
     expect(deck.title).toBe('CVC');
     expect(deck.cards).toHaveLength(3);
     expect(deck.cards.map((c) => c.text)).toEqual(['cat', 'dog', 'sun']); // identity rng
+  });
+});
+
+describe('resolveShuffleDeck()', () => {
+  // Mirrors the multi-deck `group` fixture above but wrapped in a `groups`
+  // array, since resolveShuffleDeck (unlike buildShuffledDeck) does its own
+  // category lookup — that's the whole point of extracting it (P4.13): the
+  // unknown-category branch used to be buried in main.ts's async, DOM-coupled
+  // dispatch(), unreachable from a unit test.
+  const groups = [
+    {
+      id: 'digraphs',
+      title: 'Digraphs',
+      decks: [
+        { id: 'sh', title: 'sh', kind: 'phonics' as const, category: 'digraphs', order: 1, cards: [
+          { type: 'word' as const, text: 'ship', img: 'art/ship.svg' },
+          { type: 'word' as const, text: 'shin' },
+        ] },
+        { id: 'ch', title: 'ch', kind: 'phonics' as const, category: 'digraphs', order: 2, cards: [
+          { type: 'word' as const, text: 'chip', img: 'art/chip.svg' },
+        ] },
+      ],
+    },
+  ];
+
+  it('a known category resolves to a freshly shuffled synthetic deck', () => {
+    const deck = resolveShuffleDeck(groups, 'shuffle:digraphs', () => 0.999);
+    expect(deck?.id).toBe('shuffle:digraphs');
+    expect(deck?.cards.map((c) => c.text)).toEqual(['ship', 'shin', 'chip']); // identity rng
+  });
+
+  it('an unknown category (no matching group id) resolves to null', () => {
+    // e.g. a stale/persisted shuffle id for a category dropped since — must
+    // recover to null, not throw or fall through to some other deck.
+    expect(resolveShuffleDeck(groups, 'shuffle:nope', () => 0.5)).toBeNull();
+  });
+
+  it('a start id lacking the shuffle prefix resolves to null without touching groups', () => {
+    expect(resolveShuffleDeck(groups, 'sh', () => 0.5)).toBeNull();
+    expect(resolveShuffleDeck(groups, '', () => 0.5)).toBeNull();
   });
 });
 

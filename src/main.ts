@@ -26,7 +26,7 @@ import {
   createRecognizer,
 } from './gestures';
 import { isLocked } from './lockout';
-import { SHUFFLE_PREFIX, buildShuffledDeck, groupByCategory, loadDecks } from './decks';
+import { SHUFFLE_PREFIX, groupByCategory, loadDecks, resolveShuffleDeck } from './decks';
 import { isPrecacheComplete } from './integrity';
 import { registerSW } from 'virtual:pwa-register';
 
@@ -561,9 +561,7 @@ async function dispatch(action: Action): Promise<void> {
   // order differ on each re-entry. Must happen before render()/applyWordSize()
   // below, which resolve the active deck via findDeck().
   if (typeof action === 'object' && action.start.startsWith(SHUFFLE_PREFIX)) {
-    const categoryId = action.start.slice(SHUFFLE_PREFIX.length);
-    const group = groups.find((g) => g.id === categoryId);
-    activeShuffleDeck = group ? buildShuffledDeck(group, Math.random) : null;
+    activeShuffleDeck = resolveShuffleDeck(groups, action.start, Math.random);
   }
 
   const generation = dispatchGeneration;
