@@ -23,9 +23,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   return to it, and once more the moment start-up finishes.
 
 ### Changed
-- The build now refuses to ship either bug above. Two words in the same group can
-  no longer share a word or an illustration, and the category list is read
-  strictly enough that a commented-out entry can't pass itself off as a real one.
+- Neither bug above can come back quietly. Two words in the same group can no
+  longer share a word or an illustration, and the category list is read strictly
+  enough that a commented-out entry can't pass itself off as a real one — those
+  three fail the build. The shared-illustration rule is also checked in the test
+  suite, because a shared drawing can arrive two different ways and each needs
+  its own gate. The reconnect paths are covered end-to-end.
 - Illustration checks now confirm a drawing actually paints pixels, not merely
   that its frame is the right size — an edit that blanked a drawing used to pass
   unnoticed. The wide illustration that prompted the v1.5 work (the whip) is

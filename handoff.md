@@ -1,7 +1,7 @@
-# Handoff — v1.6 backlog quick-wins sweep (COMPLETE, shipped as v1.6.0, awaiting merge)
+# Handoff — v1.6 backlog quick-wins sweep (MERGED + DEPLOYED as v1.6.0)
 
-**Branch:** `v1.6/backlog-quick-wins` (base `main` @ `3324acc`, tree clean)
-**Date:** 2026-07-26 · **Status:** all three waves landed; full gate green (validate / 98 unit / 33 e2e / build); adversarial review, coverage audit, 4 review specialists and a red team all done, findings fixed or backlogged. Version bumped to 1.6.0. The only thing left is the PR → `/land-and-deploy`.
+**Branch:** `v1.6/backlog-quick-wins` — squash-merged as `c0652c6` (PR #9), remote branch deleted. Base was `main` @ `3324acc`.
+**Date:** 2026-07-26 · **Status:** DONE. All three waves landed; full gate green (validate / 98 unit / 33 e2e / build); adversarial review, coverage audit, 4 review specialists and a red team all done, findings fixed or backlogged; shipped as v1.6.0, merged, deployed to GitHub Pages, and canary-verified live (200, 0 console errors, 2.42s load).
 **Source docs:** `TODOS.md` (updated to match — the shipped items are out of the backlog and in its Shipped history), repo `DESIGN.md`, `CLAUDE.md` conventions.
 
 ## What this was
@@ -74,10 +74,21 @@ is worthless**. This bit twice during this branch.
 
 Also confirmed by the reviewer, independently: `src/machine.ts` untouched (Eng #11); nothing from the deferred P1.2(b)/(c)/(d) leaked in; DESIGN.md intact (no motion/sound/gamification); the art set is internally consistent (144 MAP entries, 182 word cards, 151 with `img`, 151 files in `public/art/`, zero orphans, zero missing); and **zero same-hexcode collisions remain within any single category** — the five byte-identical art pairs (tub/bath, dish/plate, drip/wet, hut/shed, jet/plane) are all cross-category, so no shuffle pool can show one drawing for two words. That closes P1.1's "one eyeball pass, then accept" note.
 
-## Next
+## Shipped
 
-1. `/land-and-deploy` (merge pre-approved per James's standing preference).
-2. Post-merge docs sync: update `CLAUDE.md`'s shipped-state line to v1.6.0 (**art coverage 152 → 151/182**) and its active-branch line.
+Squash-merged as `c0652c6` (PR #9, the convention every release since #2 has
+used), GitHub Pages deploy run `30213826580` succeeded in 44s, and the live site
+canary-verified: 200, zero console errors, 2.42s load, full picker rendering all
+17 decks with pools 70/55/57. Report: `.gstack/deploy-reports/2026-07-26-pr9-deploy.md`.
+
+One correction landed after the merge, in the post-merge docs sync: CHANGELOG's
+"The build now refuses to ship either bug above" over-claimed. `npm run build` is
+`prebuild` (validate + check-contrast) then `tsc --noEmit && vite build` — it
+never invokes vitest or playwright, so the restore-card fix has no build-time
+gate (e2e only) and the shared-drawing fix is only half build-gated (the
+MAP-hexcode route is caught by `npm test`). Caught by the `/document-release`
+pass, which escalated it rather than silently rewording a shipped CHANGELOG
+entry. That was the right call.
 
 Note on versioning: this repo keeps its version in `package.json` as 3-digit
 semver (`1.6.0`) with a Keep-a-Changelog `CHANGELOG.md`. gstack's
