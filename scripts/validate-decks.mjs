@@ -17,8 +17,16 @@ const ART_DIR = join(ROOT, 'public', 'art');
 // pass while groupByCategory() silently drops the deck from the picker. This
 // .mjs can't import TS, so parse the `id:` string literals out of CATEGORIES.
 const CATEGORIES_SRC = readFileSync(join(ROOT, 'src', 'categories.ts'), 'utf8');
+// Anchor to the CATEGORIES array literal itself rather than scanning the whole
+// file for `id:` — a bare file-wide scan would also harvest a commented-out
+// entry (e.g. `// { id: 'zzz', ... },` left behind during editing), which is
+// false-permissive: a stale/retired id would keep validating as real forever.
+const CATEGORIES_BLOCK = CATEGORIES_SRC.match(/const CATEGORIES\b[\s\S]*?=\s*\[([\s\S]*?)\];/)?.[1] ?? '';
+// Strip line comments within the block so a commented-out entry's `id:` can't
+// leak into the harvest below.
+const CATEGORIES_BLOCK_CLEAN = CATEGORIES_BLOCK.replace(/\/\/.*$/gm, '');
 const CATEGORY_IDS = new Set(
-  [...CATEGORIES_SRC.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1]),
+  [...CATEGORIES_BLOCK_CLEAN.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1]),
 );
 // Reserved id namespace for synthetic per-category "shuffle all" decks.
 // A real deck must never claim it. Derived from src/decks.ts (same anti-drift
