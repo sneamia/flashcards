@@ -13,7 +13,7 @@
     { "type": "word", "text": "cop", "graphemes": ["c", "o", "p"], "img": "art/cop.svg" },
     { "type": "word", "text": "pod", "graphemes": ["p", "o", "d"], "img": "art/pod.svg" },
     { "type": "word", "text": "bot", "graphemes": ["b", "o", "t"], "img": "art/bot.svg" },
-    { "type": "word", "text": "jog", "graphemes": ["j", "o", "g"], "img": "art/jog.svg" },
+    { "type": "word", "text": "jog", "graphemes": ["j", "o", "g"] },
     { "type": "word", "text": "hot", "graphemes": ["h", "o", "t"], "img": "art/hot.svg" }
   ]
 }

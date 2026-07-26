@@ -11,47 +11,135 @@
    flakiness risk.
 
    Instead, an addInitScript stubs `navigator.onLine` and `window.caches`
-   (the two real browser primitives main.ts reads), driven by two
-   localStorage flags the test flips across reloads. This exercises the
-   EXACT same main.ts code path a real iOS eviction would hit — only the
-   inputs to checkPrecacheIntegrity() are synthetic; the decision logic
-   itself (isPrecacheComplete) is covered directly and unconditionally by
-   tests/unit/integrity.test.ts.
+   (the two real browser primitives main.ts reads), driven by localStorage
+   flags the test flips across reloads (and, for onLine, live mid-page — see
+   below). This exercises the EXACT same main.ts code path a real iOS
+   eviction would hit — only the inputs to checkPrecacheIntegrity() are
+   synthetic; the decision logic itself (isPrecacheComplete) is covered
+   directly and unconditionally by tests/unit/integrity.test.ts.
+
+   The caches stub has three modes (a `cachesMode` flag, not just the
+   boolean `cacheComplete`), because gatherPresentUrls (main.ts) has three
+   distinct code paths worth exercising independently: the ordinary
+   present/absent probe ('stub'), the Cache API being genuinely unavailable
+   ('absent' — a plain `delete window.caches`, which really does make
+   `'caches' in window` false here because `caches` turns out to be a
+   configurable OWN property of the window instance in both engines, NOT a
+   shared prototype accessor; see the stub's own comment, and note that a
+   prototype-chain deletion would be a silent no-op), and every probe
+   throwing ('throw' — the private-mode-quirk catch branch). Each new test
+   asserts its precondition directly (`'caches' in window` / a probe actually
+   throwing) so a broken stub can't let a test pass through the ordinary
+   incomplete-precache path and prove nothing about the branch it targets.
    ========================================================================= */
 
 import { test, expect, type Page } from '@playwright/test';
 
 const OFFLINE_KEY = 'e2e-restore-offline';
 const CACHE_COMPLETE_KEY = 'e2e-restore-cache-complete';
+const CACHES_MODE_KEY = 'e2e-restore-caches-mode';
+const SLOW_PROBE_KEY = 'e2e-restore-slow-probe';
+// Incremented by the init script on EVERY navigation, including the reloads
+// main.ts triggers itself. Lets a test prove a reload did NOT happen — which
+// "still on the restore card" alone cannot, since a reload while still offline
+// with an incomplete precache lands right back on the restore card.
+const BOOT_COUNT_KEY = 'e2e-restore-boot-count';
+
+type CachesMode = 'stub' | 'absent' | 'throw';
 
 // Installed before EVERY navigation on this page (including the reloads
 // main.ts itself triggers), so it re-reads the flags fresh each time.
 async function installStub(page: Page): Promise<void> {
   await page.addInitScript(
-    ({ offlineKey, cacheCompleteKey }) => {
-      const offline = localStorage.getItem(offlineKey) === '1';
+    ({ offlineKey, cacheCompleteKey, cachesModeKey, slowProbeKey, bootCountKey }) => {
+      // Count this navigation. Runs before any page script, so main.ts's own
+      // location.reload() recoveries are counted too — that is the point.
+      localStorage.setItem(
+        bootCountKey,
+        String(Number(localStorage.getItem(bootCountKey) ?? '0') + 1),
+      );
+
+      // Read LIVE on every access (not captured once at init): the
+      // visibilitychange-recovery test flips this flag mid-page, with no
+      // reload, and expects main.ts's live `navigator.onLine` read inside
+      // the visibilitychange handler to see the new value immediately.
       Object.defineProperty(window.navigator, 'onLine', {
         configurable: true,
-        get: () => !offline,
+        get: () => localStorage.getItem(offlineKey) !== '1',
       });
+
+      const cachesMode = (localStorage.getItem(cachesModeKey) as 'stub' | 'absent' | 'throw' | null) ?? 'stub';
+
+      if (cachesMode === 'absent') {
+        // Spiked against both engines this suite runs under (webkit and
+        // chromium, via a throwaway script launching each against this app's
+        // preview server): on a secure-context origin (localhost or https —
+        // the Cache API is unavailable at all on insecure origins, which is
+        // NOT the "absent" case this models), `caches` turns out to be a
+        // configurable OWN property of the `window` instance here, not a
+        // shared WebIDL prototype accessor — so a plain `delete` actually
+        // works, verified via `Object.getOwnPropertyDescriptor(window,
+        // 'caches').configurable === true` and `'caches' in window === false`
+        // afterward in that spike. (A prototype-chain deletion — e.g.
+        // `Reflect.deleteProperty(Object.getPrototypeOf(window), 'caches')`
+        // — does NOT work here: `caches` isn't on the prototype at all, so
+        // that call is a silent no-op and `'caches' in window` stays true.)
+        // The test itself still asserts the precondition rather than trust
+        // this comment, in case that ever drifts with a browser update.
+        delete (window as unknown as { caches?: unknown }).caches;
+        return;
+      }
 
       // Only main.ts's `caches.match(url)` calls are stubbed; real cache
       // methods pass through untouched in case anything else needs them.
       const cacheComplete = localStorage.getItem(cacheCompleteKey) === '1';
+
+      // Probe gate ('slowProbe' flag): park EVERY caches.match() on one
+      // SHARED promise until the test releases it, and flag that it parked.
+      // That gives a test a way to act while boot is provably still inside
+      // checkPrecacheIntegrity()'s await — no sleeps, no timing race. One
+      // shared gate, not a per-call one: gatherPresentUrls awaits
+      // Promise.all over every probe, so a single release has to unblock all
+      // of them or boot would hang. (A parked probe is also realistic: Cache
+      // Storage reads on the thrashing/half-evicted iOS cache this whole
+      // suite models are not instant.)
+      const slowProbe = localStorage.getItem(slowProbeKey) === '1';
+      const probeSignals = window as unknown as {
+        __probeParked?: boolean;
+        __releaseProbe?: () => void;
+      };
+      let releaseGate = (): void => {};
+      const gate = new Promise<void>((resolve) => {
+        releaseGate = resolve;
+      });
+      probeSignals.__releaseProbe = () => releaseGate();
+
       const realCaches = window.caches;
       Object.defineProperty(window, 'caches', {
         configurable: true,
         value: {
-          // Models Workbox faithfully: every precached font/art SVG is stored
-          // under a cache key carrying a `?__WB_REVISION__=<hash>` query param
-          // the app's requested URL lacks. So an intact precache is only
-          // discoverable with { ignoreSearch: true } — a query-exact
-          // `caches.match(url)` (the pre-fix bug) misses those entries and
-          // reports the precache incomplete even when it's whole. This guards
-          // the fix: drop ignoreSearch and the "intact precache" case below
-          // regresses to the restore card.
-          match: async (_req: RequestInfo | URL, opts?: CacheQueryOptions) =>
-            cacheComplete && opts?.ignoreSearch ? new Response('') : undefined,
+          match: async (_req: RequestInfo | URL, opts?: CacheQueryOptions) => {
+            if (slowProbe) {
+              probeSignals.__probeParked = true;
+              await gate;
+            }
+            if (cachesMode === 'throw') {
+              // Models a private-mode-style quirk where Cache Storage reads
+              // reject instead of resolving. gatherPresentUrls' try/catch
+              // around this call must leave the URL unmarked rather than
+              // propagate, so the precache correctly reads as incomplete.
+              throw new Error('e2e-restore stub: caches.match throws');
+            }
+            // Models Workbox faithfully: every precached font/art SVG is
+            // stored under a cache key carrying a `?__WB_REVISION__=<hash>`
+            // query param the app's requested URL lacks. So an intact
+            // precache is only discoverable with { ignoreSearch: true } — a
+            // query-exact `caches.match(url)` (the pre-fix bug) misses those
+            // entries and reports the precache incomplete even when it's
+            // whole. This guards the fix: drop ignoreSearch and the "intact
+            // precache" case regresses to the restore card.
+            return cacheComplete && opts?.ignoreSearch ? new Response('') : undefined;
+          },
           keys: realCaches.keys.bind(realCaches),
           open: realCaches.open.bind(realCaches),
           has: realCaches.has.bind(realCaches),
@@ -59,17 +147,58 @@ async function installStub(page: Page): Promise<void> {
         },
       });
     },
-    { offlineKey: OFFLINE_KEY, cacheCompleteKey: CACHE_COMPLETE_KEY },
+    {
+      offlineKey: OFFLINE_KEY,
+      cacheCompleteKey: CACHE_COMPLETE_KEY,
+      cachesModeKey: CACHES_MODE_KEY,
+      slowProbeKey: SLOW_PROBE_KEY,
+      bootCountKey: BOOT_COUNT_KEY,
+    },
   );
 }
 
-async function setFlags(page: Page, offline: boolean, cacheComplete: boolean): Promise<void> {
+// How many times the page has booted so far this test. Compared before/after an
+// action to prove main.ts did (or did not) trigger a recovery reload.
+async function bootCount(page: Page): Promise<number> {
+  return page.evaluate(
+    (bootCountKey) => Number(localStorage.getItem(bootCountKey) ?? '0'),
+    BOOT_COUNT_KEY,
+  );
+}
+
+async function setFlags(
+  page: Page,
+  offline: boolean,
+  cacheComplete: boolean,
+  cachesMode: CachesMode = 'stub',
+  slowProbe = false,
+): Promise<void> {
   await page.evaluate(
-    ({ offlineKey, cacheCompleteKey, offline, cacheComplete }) => {
+    ({
+      offlineKey,
+      cacheCompleteKey,
+      cachesModeKey,
+      slowProbeKey,
+      offline,
+      cacheComplete,
+      cachesMode,
+      slowProbe,
+    }) => {
       localStorage.setItem(offlineKey, offline ? '1' : '0');
       localStorage.setItem(cacheCompleteKey, cacheComplete ? '1' : '0');
+      localStorage.setItem(cachesModeKey, cachesMode);
+      localStorage.setItem(slowProbeKey, slowProbe ? '1' : '0');
     },
-    { offlineKey: OFFLINE_KEY, cacheCompleteKey: CACHE_COMPLETE_KEY, offline, cacheComplete },
+    {
+      offlineKey: OFFLINE_KEY,
+      cacheCompleteKey: CACHE_COMPLETE_KEY,
+      cachesModeKey: CACHES_MODE_KEY,
+      slowProbeKey: SLOW_PROBE_KEY,
+      offline,
+      cacheComplete,
+      cachesMode,
+      slowProbe,
+    },
   );
 }
 
@@ -99,6 +228,10 @@ test.describe('restore card (precache integrity)', () => {
     // about to trigger lands on a normal boot, THEN fire the real `online`
     // event main.ts listens for -> recoverFromRestore() -> location.reload().
     await setFlags(page, /* offline */ false, /* cacheComplete */ true);
+    // .catch: the dispatch synchronously reaches location.reload(), so this
+    // evaluate can lose its execution context to the navigation before it
+    // returns. The rejection is the race resolving in our favor, not a
+    // failure — the assertion below is what actually judges the outcome.
     await page.evaluate(() => window.dispatchEvent(new Event('online'))).catch(() => undefined);
 
     // The reload lands back on the picker (no persisted position from this
@@ -138,5 +271,225 @@ test.describe('restore card (precache integrity)', () => {
     await page.reload();
 
     await expect(page.locator('#stage')).toHaveAttribute('data-state', 'deck_pick');
+  });
+
+  test('backgrounded reconnect recovers via visibilitychange even when the online event never fires (P1.2(a))', async ({
+    page,
+  }) => {
+    await installStub(page);
+    await page.goto('/');
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-state', 'boot');
+
+    await setFlags(page, /* offline */ true, /* cacheComplete */ false);
+    await page.reload();
+
+    const stage = page.locator('#stage');
+    await expect(stage).toHaveAttribute('data-state', 'restore');
+    await expect(stage).toContainText('reconnect once to restore');
+
+    // Model the family's real fix action: background the PWA, toggle Wi-Fi,
+    // come back. A thawed/backgrounded page can coalesce or drop the `online`
+    // event entirely, so recovery can't depend on it alone. Flip connectivity
+    // LIVE (no reload — the onLine stub now reads its flag fresh on every
+    // access) and fire ONLY `visibilitychange`, deliberately withholding
+    // `online`, to prove main.ts's visibilitychange re-check is what recovers
+    // here, not a coincidental online event.
+    await setFlags(page, /* offline */ false, /* cacheComplete */ true);
+
+    // document.visibilityState is already 'visible' in a fresh Playwright
+    // page (the tab is never actually backgrounded by the test) — verify
+    // that rather than assume it, since a hidden state would make this
+    // firing a correct no-op instead of the recovery this test wants.
+    expect(await page.evaluate(() => document.visibilityState)).toBe('visible');
+
+    // Same `.catch()` as the online-dispatch test above, for the same reason:
+    // this dispatch synchronously reaches location.reload(), so the execution
+    // context can be destroyed by the navigation before the evaluate returns.
+    await page
+      .evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+      .catch(() => undefined);
+
+    // The reload lands back on the picker — proving visibilitychange alone
+    // (with online never firing) recovers the restore card.
+    await expect(stage).toHaveAttribute('data-state', 'deck_pick', { timeout: 10_000 });
+  });
+
+  test('a foreground return while STILL offline is a no-op and leaves recovery armed for the next one', async ({
+    page,
+  }) => {
+    await installStub(page);
+    await page.goto('/');
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-state', 'boot');
+
+    await setFlags(page, /* offline */ true, /* cacheComplete */ false);
+    await page.reload();
+
+    const stage = page.locator('#stage');
+    await expect(stage).toHaveAttribute('data-state', 'restore');
+
+    const bootsBefore = await bootCount(page);
+    // Tag THIS document. A recovery reload replaces it and wipes the tag, which
+    // is how the negative below is proven — see the settle comment.
+    await page.evaluate(() => {
+      (window as unknown as { __docSentinel?: string }).__docSentinel = 'alive';
+    });
+
+    // The realistic first return: the parent backgrounds the PWA, fumbles the
+    // Wi-Fi toggle (or joins a network that hasn't come up yet), and comes back
+    // still offline. main.ts's visibilitychange handler fires and must decline
+    // to act, because reloading here would just re-run the same failing
+    // integrity check.
+    // .catch for the same reason as the dispatches above: if the handler DOES
+    // wrongly reload, this evaluate can lose its context to the navigation. The
+    // assertions below are what judge the outcome, not this call's rejection.
+    await page
+      .evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+      .catch(() => undefined);
+
+    // Proving a negative needs a bounded wait: a reload that IS coming must be
+    // given time to land before we can claim it didn't happen. location.reload()
+    // against the local preview server commits in ~300ms, so 2s is generous.
+    // Without this settle the assertions race the navigation and win against the
+    // pre-reload document — which made an earlier version of this test pass even
+    // with the `navigator.onLine` guard deleted.
+    await page.waitForTimeout(2000);
+
+    // "Still on the restore card" does NOT prove the handler declined — a reload
+    // while still offline with an incomplete precache lands back on the restore
+    // card too, an identical observable. The surviving document sentinel and the
+    // unchanged boot counter are what separate "correctly did nothing" from
+    // "reloaded pointlessly": delete the `navigator.onLine` half of the
+    // handler's guard and these are the assertions that fail.
+    await expect(stage).toHaveAttribute('data-state', 'restore');
+    expect(
+      await page.evaluate(
+        () => (window as unknown as { __docSentinel?: string }).__docSentinel ?? null,
+      ),
+    ).toBe('alive');
+    expect(await bootCount(page)).toBe(bootsBefore);
+
+    // Now connectivity really returns and the parent foregrounds a SECOND time.
+    // This is what pins the handler's deliberately `{ once: true }`-free
+    // registration (see main.ts's comment): a one-shot listener would have been
+    // consumed by the offline firing above — spent on a no-op — and the restore
+    // card would be stranded for the rest of the session on a device that is
+    // now online. The whole point of P1.2(a) would be undone.
+    await setFlags(page, /* offline */ false, /* cacheComplete */ true);
+    await page
+      .evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+      .catch(() => undefined);
+
+    await expect(stage).toHaveAttribute('data-state', 'deck_pick', { timeout: 10_000 });
+  });
+
+  test('connectivity returning DURING boot\'s own await still recovers (no listener exists yet)', async ({
+    page,
+  }) => {
+    await installStub(page);
+    await page.goto('/');
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-state', 'boot');
+
+    // The window this covers: boot() reads `!navigator.onLine`, then awaits
+    // checkPrecacheIntegrity() + fontsReadyOrTimeout() BEFORE either recovery
+    // listener is attached. Connectivity returning inside that window fires an
+    // `online` event with nobody listening, and no visibility change need ever
+    // follow — so without a re-check after attaching, the restore card strands
+    // for the rest of the session on a device that is already back online.
+    await setFlags(page, /* offline */ true, /* cacheComplete */ false, 'stub', /* slowProbe */ true);
+    await page.reload({ waitUntil: 'commit' });
+
+    // Precondition (and the whole point of the gate): a parked probe proves
+    // boot is INSIDE that await right now — gatherPresentUrls only runs as the
+    // second operand of `!navigator.onLine && !(await ...)`, so reaching it
+    // means the offline read already happened and the restore branch is
+    // committed. Without this the flip below could land before boot even
+    // started and the test would pass vacuously as an ordinary online boot.
+    await page.waitForFunction(
+      () => (window as unknown as { __probeParked?: boolean }).__probeParked === true,
+    );
+
+    // Connectivity returns HERE — mid-await, before any listener exists. The
+    // test deliberately fires NEITHER `online` nor `visibilitychange`: both
+    // recovery listeners are attached after this moment, so a real `online`
+    // event at this instant would be heard by nothing. Only boot's own
+    // post-attach re-check can catch it.
+    await setFlags(page, /* offline */ false, /* cacheComplete */ true, 'stub', /* slowProbe */ false);
+    await page.evaluate(() =>
+      (window as unknown as { __releaseProbe: () => void }).__releaseProbe(),
+    );
+
+    // The re-check reloads and the reload boots normally to the picker. (The
+    // restore card is never asserted here: the re-check runs synchronously
+    // after render(), so that paint is not reliably observable — and the
+    // parked-probe precondition above already proves the restore branch ran.)
+    await expect(page.locator('#stage')).toHaveAttribute('data-state', 'deck_pick', {
+      timeout: 10_000,
+    });
+  });
+
+  test('offline boot with NO Cache API at all still shows the restore card, never broken art (P4.14)', async ({
+    page,
+  }) => {
+    // Scope of what this proves, stated plainly because the obvious reading is
+    // wrong: it guards the OUTCOME (offline + no Cache API -> restore card),
+    // not the individual `if (!('caches' in window)) return present;` line in
+    // gatherPresentUrls. With `caches` deleted, TWO paths reach the same
+    // outcome — that early return, and (if the early return were deleted) the
+    // `caches.match(...)` on the next line throwing a ReferenceError straight
+    // into the try/catch immediately below it, which also leaves `present`
+    // empty. So this test stays green if that guard line is removed, and is
+    // deliberately NOT contorted to be line-discriminating: the behavior is
+    // correct, doubly protected, and the outcome is what the family
+    // experiences. (The catch branch itself IS separately line-discriminating
+    // — deleting the try/catch fails the sibling 'caches.match throws' test
+    // below.)
+    await installStub(page);
+    await page.goto('/');
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-state', 'boot');
+
+    await setFlags(page, /* offline */ true, /* cacheComplete */ false, 'absent');
+    await page.reload();
+
+    // Precondition: prove the Cache API is actually gone, not merely a stub
+    // reporting nothing present. Without this, a broken 'absent' stub could
+    // fall through to the ordinary incomplete-precache path and this test
+    // would prove nothing about the no-Cache-API environment it exists to
+    // cover.
+    expect(await page.evaluate(() => 'caches' in window)).toBe(false);
+
+    const stage = page.locator('#stage');
+    await expect(stage).toHaveAttribute('data-state', 'restore');
+    await expect(stage).toContainText('reconnect once to restore');
+  });
+
+  test('offline boot where caches.match throws on every probe shows the restore card (P4.14, the private-mode-quirk catch branch)', async ({
+    page,
+  }) => {
+    await installStub(page);
+    await page.goto('/');
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-state', 'boot');
+
+    // cacheComplete=true deliberately: if the throw/catch in gatherPresentUrls
+    // ever regressed to swallowing the throw AND reporting present, this
+    // would be the combination that would let it slip through unnoticed.
+    await setFlags(page, /* offline */ true, /* cacheComplete */ true, 'throw');
+    await page.reload();
+
+    // Precondition: prove the probe actually throws rather than assuming the
+    // stub wiring did what it claims — otherwise this test could pass
+    // vacuously through some other path.
+    const probeThrew = await page.evaluate(async () => {
+      try {
+        await caches.match('/');
+        return false;
+      } catch {
+        return true;
+      }
+    });
+    expect(probeThrew).toBe(true);
+
+    const stage = page.locator('#stage');
+    await expect(stage).toHaveAttribute('data-state', 'restore');
+    await expect(stage).toContainText('reconnect once to restore');
   });
 });

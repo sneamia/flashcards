@@ -26,7 +26,7 @@ import {
   createRecognizer,
 } from './gestures';
 import { isLocked } from './lockout';
-import { SHUFFLE_PREFIX, buildShuffledDeck, groupByCategory, loadDecks } from './decks';
+import { SHUFFLE_PREFIX, groupByCategory, loadDecks, resolveShuffleDeck } from './decks';
 import { isPrecacheComplete } from './integrity';
 import { registerSW } from 'virtual:pwa-register';
 
@@ -469,6 +469,12 @@ function render(): void {
       const deck = findDeck(state.deckId);
       if (!deck) {
         // Corrupt/stale deckId — recover to the picker rather than a blank screen.
+        // Reset state itself, not just the paint: startFromRow() guards on
+        // `state.screen !== 'deck_pick'`, so leaving state.screen === 'card'
+        // here would repaint live-looking rows that are actually dead — every
+        // tap a no-op until a long-press EXIT. initialState() puts the picker
+        // back in charge of its own rows.
+        state = initialState();
         stage.setAttribute('data-state', 'deck_pick');
         stage.append(renderPicker());
         return;
@@ -555,9 +561,7 @@ async function dispatch(action: Action): Promise<void> {
   // order differ on each re-entry. Must happen before render()/applyWordSize()
   // below, which resolve the active deck via findDeck().
   if (typeof action === 'object' && action.start.startsWith(SHUFFLE_PREFIX)) {
-    const categoryId = action.start.slice(SHUFFLE_PREFIX.length);
-    const group = groups.find((g) => g.id === categoryId);
-    activeShuffleDeck = group ? buildShuffledDeck(group, Math.random) : null;
+    activeShuffleDeck = resolveShuffleDeck(groups, action.start, Math.random);
   }
 
   const generation = dispatchGeneration;
@@ -823,6 +827,14 @@ function fontsReadyOrTimeout(timeoutMs: number): Promise<void> {
    itself (src/integrity.ts) is pure and unit-tested; everything here is
    just gathering its two inputs from the real Cache API. */
 
+// How many representative art SVGs to sample below — enough to catch a
+// partially-evicted precache without hardcoding the full per-deck asset list
+// this module has no business knowing. Single-use, but named (rather than
+// left as a literal in the loop) so the stopping condition can be derived
+// from it instead of from a total that silently drifts if the built/font
+// probes above ever change.
+const ART_SAMPLE_COUNT = 2;
+
 // The assets a render literally cannot happen without: this page's own
 // built JS/CSS (read off the live DOM so a build-hash change never goes
 // stale here), both Andika weights (every screen is text), and a couple of
@@ -839,10 +851,14 @@ function criticalAssetUrls(): string[] {
     .forEach((l) => urls.add(l.href));
   urls.add(artUrl('fonts/Andika-Regular.woff2'));
   urls.add(artUrl('fonts/Andika-Bold.woff2'));
+  // Captured BEFORE the art-sample loop so the stopping condition tracks
+  // whatever the built/font probes above actually added, rather than a
+  // hardcoded total that could silently drift out of sync with them.
+  const preArtCount = urls.size;
   for (const deck of decks) {
     const withArt = deck.cards.find((c) => c.img);
     if (withArt?.img) urls.add(artUrl(withArt.img));
-    if (urls.size >= 6) break; // 2 built assets + 2 fonts + up to 2 art samples
+    if (urls.size >= preArtCount + ART_SAMPLE_COUNT) break;
   }
   return [...urls];
 }
@@ -923,6 +939,29 @@ async function boot(): Promise<void> {
     await fontsReadyOrTimeout(FONT_TIMEOUT_MS);
     render();
     window.addEventListener('online', recoverFromRestore, { once: true });
+    // Additive hardening, not a replacement: the family's natural fix action
+    // is to background the PWA, toggle Wi-Fi, and come back — and a
+    // thawed/backgrounded page can coalesce or drop the `online` event
+    // entirely, stranding the restore card with no event left to recover it.
+    // Re-check on the return-to-foreground signal too. Deliberately NOT
+    // `{ once: true }`: if the user returns while still offline, this firing
+    // must be a no-op, and a LATER return while online still has to recover —
+    // a one-shot here would burn itself on the first offline return and
+    // reintroduce the exact bug this exists to fix.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) recoverFromRestore();
+    });
+    // Closes the window BEFORE those listeners existed: the checks above are
+    // async (a Cache API probe per critical asset, then the font pre-warm), so
+    // connectivity can return while boot is still awaiting them — firing an
+    // `online` event with nothing listening yet, with no guarantee a visibility
+    // change ever follows. Without this one re-check the restore card strands
+    // for the whole session on a device that is already back online. Cannot
+    // loop: the resulting reload's boot() sees navigator.onLine === true and
+    // takes the normal path, never re-entering this branch. No new exposure
+    // either — the `online` listener above already recovers on this same
+    // signal; this only catches the signal that arrived too early to be heard.
+    if (navigator.onLine) recoverFromRestore();
     return;
   }
 

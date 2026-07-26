@@ -17,8 +17,21 @@ const ART_DIR = join(ROOT, 'public', 'art');
 // pass while groupByCategory() silently drops the deck from the picker. This
 // .mjs can't import TS, so parse the `id:` string literals out of CATEGORIES.
 const CATEGORIES_SRC = readFileSync(join(ROOT, 'src', 'categories.ts'), 'utf8');
+// Anchor to the CATEGORIES array literal itself rather than scanning the whole
+// file for `id:` — a bare file-wide scan would also harvest a commented-out
+// entry (e.g. `// { id: 'zzz', ... },` left behind during editing), which is
+// false-permissive: a stale/retired id would keep validating as real forever.
+const CATEGORIES_BLOCK = CATEGORIES_SRC.match(/const CATEGORIES\b[\s\S]*?=\s*\[([\s\S]*?)\];/)?.[1] ?? '';
+// Strip comments within the block so a commented-out entry's `id:` can't leak
+// into the harvest below. BOTH comment forms, in this order: block comments
+// first (they can span lines and can wrap a whole entry), then line comments.
+// Stripping only `//` would still let `/* { id: 'zzz', ... }, */` through.
+const CATEGORIES_BLOCK_CLEAN = CATEGORIES_BLOCK.replace(/\/\*[\s\S]*?\*\//g, '').replace(
+  /\/\/.*$/gm,
+  '',
+);
 const CATEGORY_IDS = new Set(
-  [...CATEGORIES_SRC.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1]),
+  [...CATEGORIES_BLOCK_CLEAN.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1]),
 );
 // Reserved id namespace for synthetic per-category "shuffle all" decks.
 // A real deck must never claim it. Derived from src/decks.ts (same anti-drift
@@ -32,6 +45,26 @@ const errors = [];
 const warnings = [];
 const orders = new Map(); // `${category}:${order}` -> deckFile (order is unique WITHIN a category)
 const ids = new Map(); // id -> deckFile (duplicate id = second deck silently unreachable)
+// `${category}:${text}` -> deckFile, for renderable "word" cards only (sentence
+// cards are skipped by the v1 loader and never enter a shuffle pool). Scoped to
+// category, not global: two decks in the SAME category sharing a word means
+// that word appears twice in that category's "shuffle all" pool — a single
+// deck repeating a word hits the same key twice, so this also catches
+// within-deck duplicates with no extra code.
+const cardTextsByCategory = new Map();
+// `${category}:${img}` -> where, for renderable "word" cards only. Same shuffle-pool
+// reasoning as cardTextsByCategory above, but on the RENDERED ARTIFACT rather than
+// the word: two cards in one category pointing at the same SVG file reveal the
+// identical drawing for two different words, which is what v1.6's P1.1 fix (jog/run,
+// both OpenMoji 1F3C3, both CVC) removed. tests/unit/art-map.test.ts guards the
+// path that reintroduces it through the fetch-art MAP (two MAP keys, one hexcode);
+// this guards the cheaper and likelier path that test cannot see, because it joins
+// on card text -> MAP key: pointing a card's img straight at another word's existing
+// file (`{"text": "jog", "img": "art/run.svg"}`) is invisible to a MAP-keyed check.
+// Cross-category reuse is deliberately allowed — a shuffle pool never spans
+// categories, so the five byte-identical cross-category pairs (jet/plane,
+// dish/plate, bath/tub, hut/shed, drip/wet) must NOT fail here.
+const cardImgsByCategory = new Map();
 
 if (CATEGORY_IDS.size === 0) {
   errors.push('src/categories.ts: parsed zero category ids (manifest moved or regex drift?)');
@@ -144,6 +177,19 @@ for (const file of files) {
     if (card.type === 'sentence') {
       warnings.push(`${where}: "sentence" card present — v1 loader SKIPS it (author-ahead forward-compat)`);
     }
+    // Duplicate word text within a category means the word appears twice in
+    // that category's "shuffle all" pool — silently, since nothing else
+    // de-dupes by text. Scoped to card.type === 'word': sentence cards never
+    // reach the loader's shuffle pools, so a repeated sentence text is harmless.
+    if (card.type === 'word' && typeof card.text === 'string' && card.text.length > 0
+        && typeof deck.category === 'string' && deck.category.length > 0) {
+      const key = `${deck.category}:${card.text}`;
+      if (cardTextsByCategory.has(key)) {
+        errors.push(`${where}: duplicate word "${card.text}" in category "${deck.category}" (also in ${cardTextsByCategory.get(key)}) — this word would appear twice in the category's "shuffle all" pool`);
+      } else {
+        cardTextsByCategory.set(key, where);
+      }
+    }
     // graphemes is unused at runtime today (forward-compat, src/types.ts), but
     // a split that doesn't join back to the word is an authoring error that
     // would ship silently until a feature consumes the field.
@@ -164,6 +210,19 @@ for (const file of files) {
         errors.push(`${where}: img "${img}" must match art/<name>.svg exactly`);
       } else if (!artFiles.has(img.slice('art/'.length))) {
         errors.push(`${where}: img "${img}" does not resolve (case-sensitively) to a file in public/art/`);
+      }
+      // Two words in ONE category must never point at the same drawing — the
+      // child uses the picture to confirm the read, so the identical image on
+      // two different words is worse than no image (the image-free one-beat
+      // card is the honest card). See cardImgsByCategory's declaration for why
+      // this lives here and not in the MAP-keyed unit test.
+      if (card.type === 'word' && typeof deck.category === 'string' && deck.category.length > 0) {
+        const key = `${deck.category}:${img}`;
+        if (cardImgsByCategory.has(key)) {
+          errors.push(`${where}: img "${img}" is already used by ${cardImgsByCategory.get(key)} in category "${deck.category}" — two words in one category would reveal the identical drawing in its "shuffle all" pool`);
+        } else {
+          cardImgsByCategory.set(key, where);
+        }
       }
     }
   });

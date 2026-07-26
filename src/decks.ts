@@ -91,3 +91,27 @@ export function buildShuffledDeck(group: CategoryGroup, rng: () => number): Deck
     cards: shuffle(pool, rng),
   };
 }
+
+/**
+ * Resolve a picker row's `start` id to the synthetic "shuffle all" deck it
+ * names, or `null` if it doesn't name a live one. Extracted out of main.ts's
+ * dispatch() (P4.13): that fn is async and DOM-coupled, so the one branch
+ * that matters here — a shuffle id whose category has since vanished from
+ * `groups` (a stale persisted id, or a category dropped between releases) —
+ * had no way to be exercised by a unit test. Living here, next to
+ * buildShuffledDeck() it delegates to, it's plain data in and data out.
+ * A non-shuffle id (missing SHUFFLE_PREFIX) also resolves to `null` rather
+ * than throwing, so the fn is total over any string a caller hands it —
+ * though today's only caller (dispatch()) already gates the call on the
+ * prefix itself, before it touches session state.
+ */
+export function resolveShuffleDeck(
+  groups: CategoryGroup[],
+  startId: string,
+  rng: () => number,
+): Deck | null {
+  if (!startId.startsWith(SHUFFLE_PREFIX)) return null;
+  const categoryId = startId.slice(SHUFFLE_PREFIX.length);
+  const group = groups.find((g) => g.id === categoryId);
+  return group ? buildShuffledDeck(group, rng) : null;
+}
