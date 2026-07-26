@@ -1,253 +1,261 @@
 # TODOS
 
-## Shipped in v1.5.0 (2026-07-22) — reveal illustration sizing
+Prioritized backlog, restructured in a triage pass 2026-07-25. Every code
+reference below was re-verified against `main` that day. Release history lives
+in CHANGELOG.md; the detailed "shipped in vX" notes this file used to carry are
+preserved in its git history (see the Shipped history section at the bottom).
 
-- **Reveal art fills the frame** — `.reveal .art` now sizes to a definite
-  `--art-max-h` (64vh) with `width:auto` + `max-width` cap + `object-fit:contain`
-  instead of deferring to each SVG's intrinsic/declared size. Fixes the "some
-  illustrations come out really small" bug (hand-drawn placeholders pinned at
-  their declared 100px, dimensionless OpenMoji at the ~150px browser default).
-- **Size-agnostic art** — 7 hand-drawn SVGs had their root width/height removed
-  (viewBox-only, like the OpenMoji pipeline output); `whip.svg` viewBox tightened
-  to `6 61 168 38` so the lash fills the frame.
-- **Regression guards** — new `art-svg-sizing.test.ts` pins the dimensionless +
-  has-viewBox invariant across all art files; new e2e "image (reveal) sizing"
-  block asserts the rendered reveal fills the frame for a normal (ship), a
-  hand-drawn (shut), and a wide (whip) illustration.
+Effort: **S** = under an hour, **M** = a focused session, **L** = multi-session.
+Path: **direct** = go straight to implementation (TDD, no spec needed);
+**plan first** = write a short spec / get a design or product decision before
+any code; **decision only** = no code — the deliverable is the call itself.
 
-## Deferred from v1.5.0 ship review (2026-07-22)
+---
 
-### Reveal-sizing e2e asserts the box, not painted pixels (adversarial review, INVESTIGATE)
-- **What:** the "image (reveal) sizing" e2e reads `getBoundingClientRect()`, which
-  for an `object-fit:contain` `<img>` is CSS-box geometry (definite height +
-  ratio-derived width) — independent of whether the SVG paints a visible pixel.
-  A future viewBox/art edit that clips or blanks a drawing would render a
-  correctly-sized empty box and pass all three tests green. `whip`'s tightened
-  viewBox runs near the ink edge (verified not clipped today).
-- **Fix:** add a pixel/visibility assertion (canvas alpha sample of the reveal,
-  or `naturalWidth>0` + rendered-content check) so "fills the frame" verifies
-  ink, not just box size. **Impact:** test fidelity. **Category:** testing.
+## P1 — Next up (visible in a real session)
 
-### Wide reveal illustrations sit shorter/lower than square ones (adversarial review, design note)
-- **What:** `whip` (~4.42:1) always hits the 82vw width cap, so its visible art is
-  ~40vh tall and vertically centered — top edge ~18vh down vs 6vh for square
-  cards. Inherent to a wide lash; "illustration large up top" reads as large in
-  width, shorter in height. Worth a human design glance, not a code fix.
-- **Impact:** visual polish. **Category:** design.
-
-## Shipped in v1.4.0 (2026-07-08) — taxonomy consistency + wh extension
-
-- **Deck retitles** — ng/ck lowercased to match sh/ch/th/wh; starter decks renamed
-  CVC Mix / Mixed Blends so they no longer echo their category headers. All 17
-  titles now pinned by a unit test.
-- **Word taxonomy fixes** — grapes→grape (singular, magic-e split gr·a·pe);
-  two-syllable spider dropped from S-Blends; wh extended with wheel/whale/whisk
-  (whisk image-free by design). 182 words total; pools 70/55/57.
-- **Docs-drift guards** — new `docs-sync.test.ts` pins README + DESIGN.md counts
-  to the real decks; new `art-map.test.ts` pins the fetch-art MAP against deck
-  img references (the stale spider/grapes entries prompted it).
-
-## Deferred from v1.4.0 ship review (2026-07-08)
-
-### Cross-deck duplicate-word guard in validate-decks (adversarial review, INVESTIGATE)
-- **What:** validate-decks.mjs checks id/order uniqueness but not card `text`
-  across decks; a future duplicate word would silently appear twice in that
-  category's shuffle-all pool. All 182 current words verified unique.
-- **Fix:** add a per-category (or global) duplicate-text check to
-  validate-decks.mjs. **Impact:** data quality. **Category:** tooling.
-
-### Resume-by-identity instead of index (red team, conf 8 — accepted for now)
-- **What:** rehydrate() bounds-checks `cardIndex` but has no card-identity check,
-  so removing a mid-deck card (spider, this release) makes a pre-update persisted
-  run resume one word off (graceful, no crash; index 9 falls back to picker).
-- **Fix (if ever worth it):** persist card text alongside cardIndex and re-locate
-  by text on rehydrate, falling back to the picker on miss. **Impact:** edge-case
-  resume fidelity. **Category:** state machine.
-
-## Shipped in v1.3.0 (2026-07-07) — deck expansion + art-coverage swaps
-
-- **11 new decks** (17 total, 180 words) — five short-vowel CVC decks, NG/CK digraphs,
-  four blend-family decks; category shuffle pools now 70 (CVC) / 52 (Digraphs) / 58 (Blends).
-- **Art coverage 93/110 (~85%)** on the new words via 25 approved icon-first swaps +
-  trap/jam catalog finds; the `red` card keeps a true-red fill via the `KEEP_COLORS`
-  exception (fill-only; outline stays ink; recorded in DESIGN.md).
-- **Pipeline hardening** — OpenMoji pinned at a commit SHA (was a movable tag),
-  post-SVGO active-content denylist, fetch timeout + non-zero exit on failure;
-  validate-decks.mjs gained a six-hex palette gate on all shipped art and a
-  `graphemes.join('') === text` check.
-
-## Deferred from v1.3.0 ship review (2026-07-07)
-
-### Mulberry Symbols as a second art source (pipeline extension)
-- **What:** ~3,400 child-focused AAC SVGs, CC BY-SA 4.0 (same license as OpenMoji);
-  covers much of the stubborn 17-word image-free tail (glue, bib, kick, mud…).
-- **Fix:** name-based second source in `fetch-art.mjs`. **Impact:** coverage.
-  **Category:** content/art.
-
-### Eyeball pass on figurative art + shared-glyph pairs
-- **What:** shared glyphs render pixel-identical art for different words: hut/shed
-  (1F6D6), jog/run (1F3C3), drip/wet (1F4A7), plane/jet (2708), plate/dish (1F37D).
-- **Highest priority pair:** run (cvc-u) and jog (cvc-o) are in the SAME category, so
-  the CVC shuffle-all can show the identical picture for two different words in one
-  session (adversarial review, INVESTIGATE). Decide: drop jog's img or find distinct art.
+### 1. run/jog show the identical picture inside one CVC shuffle run (S)
+- **Path: direct.** The only decision — (a) vs (b) below — is a micro-call to
+  make in the PR itself; recommend (a).
+- **What:** `run` (cvc-u) and `jog` (cvc-o) both map to OpenMoji `1F3C3`
+  (`scripts/fetch-art.mjs:170` and `:194`), and both live in the **same
+  category**, so a single "shuffle all CVC" session can reveal the same
+  drawing for two different words — actively confusing for a child using the
+  picture to confirm the read. (Adversarial review, v1.3; still live.)
+- **Fix:** decide — (a) drop `jog`'s `img` (the image-free one-beat is the
+  honest card), or (b) source/draw visibly distinct art. (a) is a one-line
+  deck edit + MAP removal.
+- **Note:** the other shared-glyph pairs — hut/shed `1F6D6`, drip/wet `1F4A7`,
+  plane/jet `2708`, plate/dish `1F37D` — are all **cross-category**, so they
+  can't collide in one shuffle pool. One eyeball pass, then accept.
 - **Impact:** pedagogy. **Category:** content/art.
 
-### Split-digraph grapheme convention (only if graphemes ever render)
-- **What:** silent-e words (snake, slide, skate, plate, flute, plane) segment as
-  consonant+e chunks (`["sn","a","ke"]`); if the UI ever renders graphemes, this
-  teaches the wrong vowel sound. A `a_e`-style convention would need design approval.
-- **Impact:** forward-compat data quality. **Category:** content/pedagogy.
+### 2. Offline restore recovery hardening (M; one sub-item needs a device)
+- **Path: plan first.** Four sub-items interact (the recovery-signal matrix,
+  what an online-but-broken boot should show, whether art leaves the required
+  set) and (b) is a real product decision — a half-page spec settling those,
+  then (a)+(b)+(d) implement directly with headless e2e.
+- The family's real iOS failure mode: cache eviction → restore card → recovery
+  depends on fragile signals. From the v1.1 adversarial review; all four
+  sub-items re-verified still live in `main.ts` today.
+- **(a) Backgrounded reconnect can strand the restore card** (conf 8): recovery
+  is a single one-shot `online` listener (`main.ts:925`). Backgrounding the PWA
+  to toggle Wi-Fi — the natural fix action — can coalesce/drop that event on a
+  thawed page. **Fix:** also re-check on `visibilitychange`→visible +
+  `navigator.onLine`.
+- **(b) Captive-portal over-trust** (conf 7): boot skips the integrity check
+  entirely when `navigator.onLine` (`main.ts:917`), so a
+  connected-but-no-internet reconnect reloads into degraded cards with **no**
+  guidance — worse than the restore card. **Fix:** run
+  `checkPrecacheIntegrity()` even when online, or verify reachability before
+  dismissing restore.
+- **(c) Reload may not actually re-precache** (INVESTIGATE, needs real iOS):
+  Workbox fills the precache on SW *install*; `recoverFromRestore()` is a bare
+  `location.reload()` (`main.ts:886`), which with the same activated SW may
+  serve evicted entries from network without repopulating — next offline
+  launch shows restore again. **Fix:** force `registration.update()` /
+  reinstall on recovery; confirm against real iOS eviction (→ device-session
+  checklist, P5).
+- **(d) Restore over-blocks on art-only eviction:** art has a graceful
+  image-free fallback (D2), yet `criticalAssetUrls()` (`main.ts:832`) puts two
+  art samples in the *required* set — a single evicted SVG blocks the whole
+  app offline. **Consider:** restrict the required set to assets without a
+  runtime fallback (built JS/CSS + fonts).
+- **Suggested shape:** ship (a)+(b)+(d) with headless e2e coverage as one
+  release; fold (c)'s verification into the next device session.
+- **Impact:** offline reliability. **Category:** PWA/robustness.
 
-### validate-decks category-regex anchor (low)
-- **What:** `CATEGORY_IDS` harvests every `id: '...'` literal in `src/categories.ts`,
-  including any future commented-out ones — theoretically false-permissive.
-- **Fix:** anchor the parse to the `CATEGORIES` array literal. **Impact:** robustness.
-  **Category:** tooling.
+### 3. Mulberry Symbols as a second art source (M)
+- **Path: plan first.** Needs design sign-off before any pipeline code: a
+  second illustration style will sit beside OpenMoji on equal footing (does it
+  hold the "one warm world" feel after palette remap?), attribution must
+  extend beyond OpenMoji (the About overlay `ATTRIBUTION` constant, README
+  credits, `public/art/LICENSE`), and each candidate glyph needs the
+  "reliably evokes the word" eyeball. The spec is a curated word→glyph list +
+  attribution wording; the pipeline change itself is then direct.
+- **What:** ~3,400 child-focused AAC SVGs, CC BY-SA 4.0 (same license as
+  OpenMoji). Coverage today is **152/182 (~84%)**; the reachable image-free
+  tail is 17 words: kick, neck, back, tick, pet, peg, bib, hit, top, mud, rug,
+  gum, glue, long, hang, fang, gong — potentially lifting coverage to ~93%.
+- **Stays image-free by design** (do NOT chase art for these 13): the
+  function/sight words much, such, that, this, them, with, when, rich, plus
+  whiz, thud, thin, chat, whisk (no glyph reliably reads for a 3–5yo).
+- **Fix:** name-based second source in `fetch-art.mjs` (SHA-pinned like
+  OpenMoji), same palette remap + SVGO + active-content gates.
+- **Impact:** coverage. **Category:** content/art + pipeline.
 
-## Shipped in v1.2.0 (2026-07-05) — CVC + Blends + category shuffle
+---
 
-- **CVC + Blends decks** — a 20-word CVC deck (short-a…u) and an 18-word Blends
-  deck (L/R/S initial + `-nk`/`-st`/`-nt` finals), both authored for ~100% image
-  coverage. Words selected for a clean OpenMoji glyph or a hand-drawn fallback.
-- **Categories** — decks now group under CVC / Digraphs / Blends headers in the
-  picker. `category` field on each deck JSON + `src/categories.ts` manifest
-  (title + display order); `groupByCategory()` in `src/decks.ts` (pure, tested).
-  validate-decks.mjs enforces the category and per-category `order` uniqueness.
-- **Per-category "shuffle all"** — reverses the earlier blanket no-shuffle stance
-  (see the now-updated "Cross-digraph variety mode" note below) but keeps its
-  pedagogy: shuffle is an **opt-in** extra row per category, the authored ordered
-  decks stay the default, and the digraphs shuffle pools sh/ch/th/wh. Pure
-  `shuffle(items, rng)` (`src/shuffle.ts`) + synthetic `shuffle:<cat>` deck built
-  in `main.ts` with `Math.random`; machine.ts untouched; runs are non-resumable.
-- **Figurative coverage** — `chin` (face + arrow to chin) and `shin` (leg + arrow
-  to shin), previously rejected as ambiguous, are now hand-drawn annotated art;
-  `shut` (closed door) added; `chip` redrawn as a potato chip (American English,
-  was french fries). Overall coverage ~53% → ~83%. DESIGN.md now permits ink-arrow
-  annotation art.
+## P2 — Features (design-doc v1.1 remainder)
 
-## Deferred from v1.2.0 ship review (2026-07-05)
+### 4. Curated cross-digraph review deck (M)
+- **Path: plan first.** The ladders ARE the spec — authoring them is content
+  design that deserves its own written pass (plus one small design call on
+  picker placement). Once authored, shipping is pure data (Eng #11).
+- **What:** authored word ladders (`chip → ship → shop → chop`) as a designed
+  review deck — the *curated* counterpart to the shipped random "shuffle all".
+  Earns its place once a child has the individual digraphs down.
+- **Impact:** feature. **Category:** content/pedagogy.
 
-### render() null-deck recovery is incomplete defense-in-depth (adversarial review, INVESTIGATE)
-- **What:** `render()` in `main.ts` (~:468), on `screen==='card'` with `findDeck()===null`,
-  repaints the picker but leaves `state.screen==='card'`. Since `startFromRow` guards on
-  `screen==='deck_pick'`, every picker row is then dead — only an EXIT long-press recovers.
-- **Reachability:** provably unreachable today (rehydrate maps null decks to `initialState`;
-  the `buildShuffledDeck` null branch can't fire because `startId` always names a real group;
-  start actions don't span a macrotask so dispatches can't interleave). This is latent, not a
-  live bug — but the defense-in-depth is itself incomplete if any future change reaches it.
-- **Fix:** in that branch also reset `state = initialState()` (or dispatch EXIT) rather than
-  only re-painting. One line. **Impact:** Robustness. **Category:** state machine.
+### 5. Sentence-finale cards + composed scene illustrations (L)
+- **Path: plan first.** The largest open feature: needs a full design + eng
+  pass (sentence renderer, word-size measurement for multi-word lines,
+  composed-scene art direction) before any code.
+- **What:** `sentence` cards are schema-valid and warned-and-skipped today
+  (`validate-decks.mjs:144`).
+- **Impact:** feature. **Category:** content + renderer.
 
-### dispatch() unknown-category shuffle null path untested (testing specialist, conf 5)
-- **What:** `activeShuffleDeck = group ? buildShuffledDeck(...) : null` (main.ts ~:557) — the
-  null branch (a `shuffle:<id>` whose category is absent → findDeck→null→picker) has no test.
-- **Fix:** extract the category-resolution into a tiny pure helper and unit-test the null
-  branch, or add an e2e that routes a synthetic unknown shuffle id and asserts picker fallback.
-  Not unit-testable as-is. **Impact:** Coverage. **Category:** testing.
+### 6. `th` deck ordering decision (S)
+- **Path: decision only** (no code until decided; blocked on a child session).
+- **What:** decide unvoiced-first vs splitting into two passes — explicitly
+  deferred until after one real session (design doc). → child-session
+  checklist, P5.
+- **Impact:** pedagogy. **Category:** content.
 
-### Picker heading outline starts at h2 (design specialist, conf 6) — a11y
-- **What:** `.cat` category headers are `<h2>` but the app has no `<h1>` anywhere (corner label
-  and card words are `<div>`s), so the screen-reader heading outline skips level 1.
-- **Why deferred:** ties into the already-Held on-device VoiceOver work below — partial a11y
-  (one h1) without the full VoiceOver pass would be inconsistent. Do it with that pass.
-- **Fix:** add a visually-hidden `<h1>` for the picker (or promote the corner label), keeping
-  the `.cat` small-caps styling. **Impact:** a11y. **Category:** accessibility.
+---
 
-### rowEl() / shuffleRowEl() duplication (maintainability specialist, conf 5) — optional
-- **What:** the two picker-row builders share an ~8-line button-construction + click-wiring
-  skeleton. Kept separate for now (clarity in user-visible rendering code).
-- **Fix (if touched again):** extract `makeRow({cls,label,count,aria,startId})`. **Impact:**
-  minor DRY. **Category:** maintainability.
+## P3 — Robustness quick wins (bundle as one small chore PR)
 
-## Shipped in v1.1.0 (2026-07-05)
+All small, all verified still-present, **all Path: direct** — acceptance is
+unambiguous and each is a contained TDD change. Good rainy-day bundle or
+ride-along with the next feature branch.
 
-- **Offline cache-eviction recovery** — boot integrity check probes critical precached
-  assets (built JS/CSS, both Andika woff2, representative art) via the Cache API; if
-  incomplete AND offline, shows a calm text-only "reconnect once to restore" `.syscard`
-  (precedence over rotate), recovering on the `online` event. Pure decision logic in
-  `src/integrity.ts` (unit-tested); shell I/O in `main.ts`. DESIGN.md updated.
-- **Icon font fidelity** — `scripts/gen-icons.mjs` now outlines the Andika "a" glyph via
-  opentype.js (decompressing the bundled woff2 at gen time), fixing the double-story "a"
-  librsvg was substituting. 4 PNGs regenerated; single-story confirmed.
-- **Gesture-scoped long-press timer** — replaced the always-on 100ms `setInterval` poll
-  with a `pointerdown`-scoped `setTimeout` (fires EXIT at ~820ms, zero idle wakeups).
-  Ship review caught that the removed poll also ran the `STALE_POINTER_MS` lost-pointer
-  self-heal; the sweep now runs on the next `handle('down')` / `onPointerDown` instead
-  (`gestures.ts` + `main.ts`, regression-tested), keeping the zero-idle-timer win.
-- **Figurative image coverage** — reveal-image coverage raised 41% → **53% (17/32)**:
-  added `hush` (shushing face), `wish` (shooting star), `wham` (collision burst),
-  `math` (input numbers), all palette-remapped warm via the fetch-art pipeline.
-- **Ship-review polish** — restore card pre-warms the font (no fallback→Andika flash) and
-  its explanation clamps ≥16px in portrait; `releasePointer()` extracted (DRY).
+### 7. render() null-deck recovery leaves dead picker rows (S, direct)
+- `render()` on `screen==='card'` with `findDeck()===null` repaints the picker
+  but leaves `state.screen==='card'` (`main.ts:468–474`); `startFromRow` guards
+  on `screen==='deck_pick'` (`main.ts:257`), so every row would be dead — only
+  a long-press EXIT recovers. Provably unreachable today; the defense-in-depth
+  is incomplete if a future change reaches it. **Fix:** also reset
+  `state = initialState()` in that branch. One line. (Adversarial review, v1.2.)
 
-## Deferred from v1.1.0 ship review (2026-07-05)
+### 8. Cross-deck duplicate-word guard in validate-decks (S, direct)
+- `validate-decks.mjs` checks id/order uniqueness but not card `text` across
+  decks; a future duplicate would silently appear twice in that category's
+  shuffle pool. All 182 current words verified unique. **Fix:** per-category
+  (or global) duplicate-text check. (Adversarial review, v1.4.)
 
-### Offline restore recovery hardening (adversarial review)
-- **Restore may not recover on a backgrounded reconnect** (conf 8): recovery relies on a
-  single one-shot `online` event. The natural fix action (background the PWA to toggle
-  Wi-Fi) can coalesce/drop that event on a thawed page, stranding the child on the
-  restore card until force-quit. **Fix:** also re-check on `visibilitychange`→visible +
-  `navigator.onLine`, not just the one-shot `online`.
-- **`navigator.onLine` over-trust** (conf 7): a captive-portal / connected-but-no-internet
-  reconnect fires `online` → reload → boot sees online → skips the integrity check →
-  renders degraded cards with no guidance (worse than the restore card). **Fix:** on
-  reload still run `checkPrecacheIntegrity()` even when online, or verify reachability
-  before dismissing restore.
-- **Reload may not actually re-precache** (INVESTIGATE): Workbox only fills the precache on
-  SW *install*; a bare `location.reload()` with the same activated SW serves evicted
-  entries from network without repopulating, so the next offline launch shows restore
-  again. **Fix:** force `registration.update()` / reinstall on recovery, confirm vs real
-  iOS eviction behavior.
-- **Restore over-blocks on art-only eviction** (INVESTIGATE): art has a graceful
-  image-free fallback (D2), yet a single missing art SVG in the required set blocks the
-  whole app offline. **Consider:** drop art from the *required* set so restore fires only
-  for assets without a runtime fallback (built JS/CSS + fonts).
+### 9. Anchor the CATEGORY_IDS parse to the CATEGORIES literal (S, direct)
+- The regex harvests every `id: '...'` in `src/categories.ts`
+  (`validate-decks.mjs:20`), including any future commented-out ones —
+  theoretically false-permissive. **Fix:** scope the parse to the `CATEGORIES`
+  array literal. (v1.3 review.)
 
-### Test-coverage gaps (all in changed code, coverage 83% — above 80% target)
-- `gatherPresentUrls` untested branches: `!('caches' in window)` and the `caches.match`
-  throw/catch.
-- `onPointerCancel` release path (iOS pointer-steal) has no e2e test.
-- `resetPointerTracking()` on `visibilitychange`→hidden has no e2e test.
+### 10. Name the art-sample cap in criticalAssetUrls (S, direct)
+- `urls.size >= 6` magic number (`main.ts:845`) couples the art-sample cap to
+  the built/font asset count. **Fix:** derive from a named `ART_SAMPLE_COUNT`.
+  (v1.1 review. Note: doing P1.2(d) first may remove art from the required set
+  and moot this — sequence after that decision.)
 
-### Minor
-- `criticalAssetUrls` `urls.size >= 6` magic number: derive from a named
-  `ART_SAMPLE_COUNT` so the art-sample cap is independent of the built/font asset count.
+### 11. Resume-by-identity instead of index (parked — accepted risk; direct if unparked)
+- `rehydrate()` bounds-checks `cardIndex` but stores no card identity
+  (`main.ts:515–537`), so removing a mid-deck card makes a pre-update persisted
+  run resume one word off (graceful; worst case falls back to the picker).
+  **Fix if ever worth it:** persist card text, re-locate by text on rehydrate.
+  Revisit only when a release next removes/reorders mid-deck cards.
+  (Red team, v1.4, conf 8 — accepted.)
 
-## v1.1
+---
 
-### Screen-reader announcement polish
-- **What:** Live-region announcements on beat transitions (WORD→IMAGE→next) plus VoiceOver-tuned focus order, tested on-device.
-- **Why:** v1 ships the cheap semantic baseline (labelled deck rows, word-as-text, `aria-hidden` art, accessible tap-stage name), but a VoiceOver user still gets no feedback when a card advances — the beats are silent to them.
-- **Pros:** Makes the app usable end-to-end with VoiceOver.
-- **Cons:** Real work (live regions + device VoiceOver testing) for an audience currently one known sighted family; announcements must not fight the calm/silent ethos.
-- **Context:** From /plan-design-review D5 (2026-07-04). The v1 baseline already covers labelling; this is the expensive remainder.
-- **Held (2026-07-05):** acceptance criterion is on-device VoiceOver verification, which can't be met headlessly. Do when a real device session is available.
-- **Depends on:** v1 state machine + semantic baseline shipped.
+## P4 — Test fidelity (all Path: direct — test-only changes)
 
-### Type-scale token (from /design-review 2026-07-04, Polish)
-- **What:** Font sizes are untokenized — `0.72rem` appears on both `.corner` and `.pfoot .gest`, `.ct` is `0.8rem`, and each card size is its own `clamp()`. A `--step-*` scale would make "same size" relationships enforced rather than coincidental.
-- **Why deferred:** Visual output is already coherent and this is a hand-tuned file; adding a type-scale system risks indirection with zero user-visible gain.
-- **Recommendation (2026-07-05):** likely skip — low priority, no user-visible gain, real indirection risk.
-- **Impact:** Polish. **Category:** typography/consistency.
+### 12. Reveal-sizing e2e asserts the box, not painted ink (S/M, direct)
+- The "image (reveal) sizing" e2e reads `getBoundingClientRect()`
+  (`flows.spec.ts:440–448`) — CSS-box geometry, independent of whether the SVG
+  paints a pixel. A future viewBox/art edit that blanks a drawing would pass
+  green. `whip`'s tightened viewBox runs near the ink edge (verified not
+  clipped today). **Fix:** add a pixel/visibility assertion (canvas alpha
+  sample, or `naturalWidth>0` + rendered-content check — pick whichever proves
+  ink in the spike). (v1.5 review.)
 
-### Cross-digraph variety mode (from user request 2026-07-04) — PARTLY SHIPPED
-- **What:** A way to see words spanning more than one digraph in a session, for variety once a child already knows the individual digraphs.
-- **Shipped (2026-07-05):** the **"shuffle all Digraphs"** picker row now pools sh/ch/th/wh into one randomized run — the variety mechanism the user asked for. It's opt-in and sits alongside the ordered per-digraph decks (never replaces or reorders them), so the one-digraph-at-a-time scaffolding is still the default path. The earlier "random shuffle is rejected" constraint is superseded by this opt-in design.
-- **Still deferred:** the *curated* cross-digraph **review deck** with authored word ladders (`chip → ship → shop → chop`) — a designed order, distinct from the random shuffle. Needs the ladders authored; earns its place after a child has the individual digraphs down.
-- **Impact:** Feature. **Category:** content/pedagogy.
+### 13. dispatch() unknown-category shuffle null path untested (S, direct)
+- `activeShuffleDeck = group ? buildShuffledDeck(...) : null` (`main.ts:560`) —
+  the null branch has no test and isn't unit-testable as-is. **Fix:** extract
+  the category resolution into a pure helper and unit-test it, or e2e a
+  synthetic unknown shuffle id → picker fallback. (Testing review, v1.2, conf 5.)
 
-### Figurative image coverage — remaining (from user request + /design-review 2026-07-04)
-- **Done (2026-07-05):** `chin` (face + arrow to chin) and `shin` (leg + arrow to shin) — previously rejected as ambiguous — are now hand-drawn **annotated** art, plus `shut` (closed door). `chip` redrawn as a potato chip. New decks (CVC, Blends) authored at ~100% coverage. Overall ~83%.
-- **Still image-free by design:** `whiz` (no reliable glyph), `thud` (no glyph evokes a dull impact), `thin`/`chat`, and the pure function/sight words `much, such, that, this, them, with, when, rich`. The image-free one-beat is the honest card, not a gap to fill.
-- **Rule (updated):** add art only where the image reliably evokes the word for a 3–5yo — a plain OpenMoji glyph OR, where none reads, a hand-drawn figurative drawing (an ink arrow may point at the named part; see DESIGN.md). Palette-remapped muted warm (no blues), CC BY-SA where OpenMoji-derived, via the `fetch-art` + `validate` pipeline. Figurative annotation lifts the old ~60% ceiling.
-- **Impact:** Feature/polish. **Category:** content/art.
+### 14. v1.1 coverage gaps (S each, direct; still open)
+- `gatherPresentUrls` untested branches: `!('caches' in window)` and the
+  `caches.match` throw/catch (`main.ts:859–873`).
+- `onPointerCancel` release path (iOS pointer-steal) has no e2e (`main.ts:706`).
+- `resetPointerTracking()` on `visibilitychange`→hidden has no e2e
+  (`main.ts:744–755`).
+- Natural ride-alongs: the pointer ones with any gesture work; the caches ones
+  with P1.2.
 
-### Picker footer gesture-hint mismatch — FIXED by /design-review on v1.2/cvc-blends-category-shuffle, 2026-07-05
-- **What:** The deck-picker footer showed `two-finger tap: back · hold: exit` (`GESTURE_LINES.slice(1)`), but the picker is the root screen: there's no beat to go "back" to, and a long-press there opens the About overlay, not an "exit".
-- **Resolution:** Footer now reads `hold for about` (commit 87f7a8a) — the picker's one non-obvious gesture. The in-deck legend (`GESTURE_LINES`) still renders in full on the about overlay; the footer no longer derives from it. DESIGN.md updated to match.
-- **Impact:** Polish. **Category:** content/microcopy.
+---
 
-## v1.1 (already in design doc, tracked here for visibility)
-- Sentence-finale cards + composed scene illustrations (`sentence` type already schema-valid, warned-and-skipped in v1).
-- Mixed "review" deck with cross-digraph word ladders (chip → ship → shop → chop).
-- Decision: `th` deck — order unvoiced-first vs split into two passes (decide after one real session).
+## P5 — Waiting on the real world (batch each list into one session)
+
+### Device-session checklist (real iPhone, one sitting)
+- **VoiceOver pass** (held since 2026-07-05) — **Path: plan first**: the
+  announcement copy and politeness semantics (what the live region says on
+  WORD→IMAGE→next, and how it stays out of the calm ethos' way) are a design
+  decision before code; implementation follows directly, and on-device
+  VoiceOver verification is the acceptance gate. Do the **heading-outline
+  fix** with it (picker `.cat` headers are `<h2>` with no `<h1>` anywhere —
+  add a visually-hidden `<h1>`), not before — partial a11y would be
+  inconsistent. (Design review D5 + v1.2 review.)
+- **Restore reload behavior** — P1.2(c), investigation (part of the P1.2
+  plan): does `location.reload()` re-precache after a real iOS cache
+  eviction, or does restore re-fire offline?
+- **Wide-reveal eyeball** — verification only, no code planned: `whip`
+  (~4.42:1) hits the 82vw width cap, sits ~40vh tall and centered (top edge
+  ~18vh vs 6vh for square art). Inherent to a wide subject; judge whether it
+  reads as intended. (v1.5 review, design note.)
+
+### Child-session checklist (real reader — decisions only, no code)
+- `th` ordering decision (P2.6): unvoiced-first vs two passes.
+- Sanity-check the review-deck ladders (P2.4) once drafted.
+
+---
+
+## Ideas (new in the 2026-07-25 triage — unvalidated, need design sign-off)
+
+### Long Vowels / Magic-E as a fourth category
+- **Path: plan first** — full spec + pedagogy sign-off; gated on the grapheme
+  convention below.
+- Magic-e words already ship scattered through the blends decks (grape, snake,
+  slide, skate, plate, flute, plane); a dedicated category is the natural
+  pedagogy step after blends. Pure data + one `src/categories.ts` entry.
+
+---
+
+## Conditional / parked
+
+- **Split-digraph grapheme convention** (only if graphemes ever render) —
+  **plan first if triggered** (needs design approval by its own terms):
+  silent-e words segment as consonant+e chunks (`["sn","a","ke"]`); if the UI
+  ever renders graphemes this teaches the wrong vowel sound. An `a_e`-style
+  convention is the candidate. Also gates the Magic-E category idea above.
+- **rowEl()/shuffleRowEl() extract** (only if touched again) — **direct if
+  triggered**: the two picker row builders share an ~8-line skeleton; extract
+  `makeRow({cls,label,count,aria,startId})` next time either changes. (v1.2
+  review, conf 5.)
+
+---
+
+## Proposed drops (delete on confirmation — flagged 2026-07-25)
+
+- **Type-scale token** (design review 2026-07-04): tokenize font sizes into a
+  `--step-*` scale. Already assessed "likely skip" on 2026-07-05 — no
+  user-visible gain, real indirection risk in a hand-tuned file. Recommend
+  deleting.
+
+---
+
+## Shipped history
+
+One line per release; details in CHANGELOG.md and this file's git history.
+
+- **v1.5.0** (2026-07-22) — reveal art fills the frame (definite height +
+  object-fit); 7 SVGs made viewBox-only; sizing drift guards.
+- **v1.4.0** (2026-07-08) — taxonomy consistency (ng/ck lowercase, CVC Mix /
+  Mixed Blends, grape, spider dropped, wh +3 → 182 words); docs/MAP drift guards.
+- **v1.3.0** (2026-07-07) — 11 new decks (17/180), art swaps to ~85% new-word
+  coverage, red KEEP_COLORS exception, SHA-pinned art pipeline, palette +
+  graphemes build gates.
+- **v1.2.0** (2026-07-05) — CVC + Blends decks, category grouping, opt-in
+  per-category shuffle, figurative/annotated art (~83% coverage); picker footer
+  hint fixed (commit 87f7a8a).
+- **v1.1.0** (2026-07-05) — offline cache-eviction restore card, icon font
+  fidelity, gesture-scoped long-press timer, figurative coverage to 53%.
