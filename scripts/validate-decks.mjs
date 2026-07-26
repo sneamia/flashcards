@@ -32,6 +32,13 @@ const errors = [];
 const warnings = [];
 const orders = new Map(); // `${category}:${order}` -> deckFile (order is unique WITHIN a category)
 const ids = new Map(); // id -> deckFile (duplicate id = second deck silently unreachable)
+// `${category}:${text}` -> deckFile, for renderable "word" cards only (sentence
+// cards are skipped by the v1 loader and never enter a shuffle pool). Scoped to
+// category, not global: two decks in the SAME category sharing a word means
+// that word appears twice in that category's "shuffle all" pool — a single
+// deck repeating a word hits the same key twice, so this also catches
+// within-deck duplicates with no extra code.
+const cardTextsByCategory = new Map();
 
 if (CATEGORY_IDS.size === 0) {
   errors.push('src/categories.ts: parsed zero category ids (manifest moved or regex drift?)');
@@ -143,6 +150,19 @@ for (const file of files) {
     }
     if (card.type === 'sentence') {
       warnings.push(`${where}: "sentence" card present — v1 loader SKIPS it (author-ahead forward-compat)`);
+    }
+    // Duplicate word text within a category means the word appears twice in
+    // that category's "shuffle all" pool — silently, since nothing else
+    // de-dupes by text. Scoped to card.type === 'word': sentence cards never
+    // reach the loader's shuffle pools, so a repeated sentence text is harmless.
+    if (card.type === 'word' && typeof card.text === 'string' && card.text.length > 0
+        && typeof deck.category === 'string' && deck.category.length > 0) {
+      const key = `${deck.category}:${card.text}`;
+      if (cardTextsByCategory.has(key)) {
+        errors.push(`${where}: duplicate word "${card.text}" in category "${deck.category}" (also in ${cardTextsByCategory.get(key)}) — this word would appear twice in the category's "shuffle all" pool`);
+      } else {
+        cardTextsByCategory.set(key, where);
+      }
     }
     // graphemes is unused at runtime today (forward-compat, src/types.ts), but
     // a split that doesn't join back to the word is an authoring error that
