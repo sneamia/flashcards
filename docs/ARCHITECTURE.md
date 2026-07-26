@@ -164,13 +164,24 @@ export function groupByCategory(decks: Deck[], categories?): CategoryGroup[];
 // Builds the synthetic "shuffle all <category>" deck: every card in the group,
 // concatenated and shuffled with the injected rng. id = `shuffle:<catId>`.
 export function buildShuffledDeck(group: CategoryGroup, rng: () => number): Deck;
+// Resolves a picker row's `start` id to the shuffle deck it names, or null when
+// it names none: not a `shuffle:` id at all, or a category that's no longer in
+// `groups` (a stale persisted id, or a category dropped between releases).
+// Total over any string — never throws. Pure, so that vanished-category branch
+// is unit-testable; it wasn't when it lived inside main.ts's async dispatch().
+export function resolveShuffleDeck(
+  groups: CategoryGroup[],
+  startId: string,
+  rng: () => number,
+): Deck | null;
 export const SHUFFLE_PREFIX = 'shuffle:'; // reserved deck-id namespace
 ```
 
 The shuffle pool keeps randomness OUT of machine.ts: `shuffle()` (src/shuffle.ts)
 is a pure Fisher–Yates with an injected rng; main.ts builds `activeShuffleDeck`
-with `Math.random` on the shuffle-row tap, resolves the `shuffle:` id to it in
-`findDeck`, and the reducer walks it by index like any deck. A shuffle run is
+via `resolveShuffleDeck(groups, action.start, Math.random)` on the shuffle-row
+tap, resolves the `shuffle:` id to it in `findDeck`, and the reducer walks it by
+index like any deck. A shuffle run is
 never persisted (a reshuffle-on-reload would move the saved index onto a
 different card) — see main.ts `persist()`.
 
@@ -192,7 +203,15 @@ deck rows, word-as-text, `aria-hidden` art, accessible tap-stage name).
 (plus `boot`, the pre-first-render shell value in index.html, replaced once
 fonts settle — e2e tests key off its disappearance). Like `rotate`, `restore`
 is a live boot overlay owned by main.ts, not a machine.ts state; it takes
-precedence over `rotate` (evicted art is still broken in landscape).
+precedence over `rotate` (evicted art is still broken in landscape). A shown
+`restore` card is not terminal — it reloads on the first of three signals: the
+`online` event (`once`), a return to the foreground while `navigator.onLine`
+(`visibilitychange`, deliberately NOT `once` — an offline return must be a no-op
+and a later online one must still recover), and one final `navigator.onLine`
+re-check immediately after both listeners attach, since the integrity probes are
+async and connectivity can come back while boot is still awaiting them, with
+nothing yet listening. The reload can't loop: its `boot()` sees
+`navigator.onLine` and takes the normal path.
 
 ## Deck JSON shape (Deck-data + Build-scripts + Tests all rely on this)
 
@@ -214,6 +233,14 @@ precedence over `rotate` (evicted art is still broken in landscape).
 - `img` paths are relative (`art/xxx.svg`) and MUST resolve to a real file in `public/art/`.
   Art is either OpenMoji-derived (fetch-art.mjs MAP) or hand-drawn in the warm palette
   (e.g. the figurative `chin`/`shin` arrows, the potato-chip `chip`).
+- WITHIN one category, no two `word` cards may share a `text` or an `img` — either puts the
+  same word, or the same drawing, twice in that category's "shuffle all" pool, and the
+  identical picture on two different words reads as the app having lost its place (v1.6:
+  `jog` and `run` both resolved to OpenMoji `1F3C3`, so `jog` went image-free).
+  validate-decks.mjs fails the build on both, scoped per category and to `word` cards only
+  (sentence cards never reach a pool). ACROSS categories the reuse is deliberate and stays
+  legal — a pool never spans categories — so the byte-identical pairs (`jet`/`plane`,
+  `dish`/`plate`, `bath`/`tub`, `hut`/`shed`, `drip`/`wet`) must keep passing.
 - `graphemes`, when present, must be a non-empty array of non-empty strings that joins
   back to `text` exactly — validate-decks.mjs enforces it (forward-compat data; nothing
   renders it yet).
