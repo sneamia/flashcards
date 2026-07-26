@@ -469,6 +469,12 @@ function render(): void {
       const deck = findDeck(state.deckId);
       if (!deck) {
         // Corrupt/stale deckId — recover to the picker rather than a blank screen.
+        // Reset state itself, not just the paint: startFromRow() guards on
+        // `state.screen !== 'deck_pick'`, so leaving state.screen === 'card'
+        // here would repaint live-looking rows that are actually dead — every
+        // tap a no-op until a long-press EXIT. initialState() puts the picker
+        // back in charge of its own rows.
+        state = initialState();
         stage.setAttribute('data-state', 'deck_pick');
         stage.append(renderPicker());
         return;
