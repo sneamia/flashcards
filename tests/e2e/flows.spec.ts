@@ -202,6 +202,107 @@ test.describe('gesture-on-touch', () => {
   });
 });
 
+test.describe('pointer-cancel release path (iOS pointer-steal)', () => {
+  test('a pointercancel releases the gesture session; the next tap still advances exactly one beat', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await waitForBoot(page);
+    await openFirstDeck(page);
+    await page.waitForTimeout(SAFE_WAIT_MS);
+
+    const stage = page.locator('#stage');
+    // iOS can steal an in-progress touch for a system gesture (e.g. Control
+    // Center) and deliver pointercancel instead of pointerup. onPointerCancel
+    // (main.ts:710-713) must feed the recognizer a 'cancel' (which clears its
+    // internal down-pointer bookkeeping) AND call releasePointer() (which
+    // clears main.ts's own downPointerIds/exit-timer bookkeeping) — otherwise
+    // the cancelled pointer lingers in the recognizer's session forever (its
+    // real up/cancel already happened; nothing will ever arrive to complete
+    // it), and every later tap's own down+up can never bring the tracked
+    // pointer count back to zero. Verified experimentally: gating off the
+    // recognizer.handle('cancel')/releasePointer() calls made the following
+    // tap silently do nothing (stage stuck on 'word') instead of advancing.
+    // Dispatch the cancel PROMPTLY: LONG_PRESS_MS is 800ms (gestures.ts:33) —
+    // a bare pointerdown held that long fires EXIT to the picker regardless
+    // of what happens next.
+    await stage.dispatchEvent('pointerdown', { pointerId: 111, isPrimary: true });
+    await stage.dispatchEvent('pointercancel', { pointerId: 111 });
+
+    // Still mid-deck, still on the word beat — the cancel itself must not
+    // have been misread as ADVANCE, BACK, or a (stale-timer) EXIT.
+    await expect(stage).toHaveAttribute('data-state', 'word');
+    await expect(page.locator('#stage .corner')).toHaveText('sh · 1 of 10');
+
+    // A fresh, ordinary tap afterward must read as a clean single-pointer
+    // gesture and advance exactly one beat — not get silently swallowed by
+    // a leftover multi-pointer session from the cancelled one.
+    await stage.tap();
+    await expect(stage).toHaveAttribute('data-state', 'image');
+    await expect(page.locator('#stage .word')).toHaveText('ship');
+  });
+});
+
+test.describe('visibilitychange resets stale pointer tracking', () => {
+  test('going hidden mid-gesture resets pointer tracking; the next tap still advances (not stuck)', async ({
+    page,
+  }) => {
+    // Override document.visibilityState with a configurable getter BEFORE
+    // main.ts loads (page.addInitScript runs ahead of any page script), so
+    // flipping "hidden" later is a single fast page.evaluate rather than
+    // something dependent on a real OS-level backgrounding event (which
+    // Playwright cannot simulate) or a slow real timer.
+    await page.addInitScript(() => {
+      (window as unknown as { __hidden: boolean }).__hidden = false;
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get(): string {
+          return (window as unknown as { __hidden: boolean }).__hidden ? 'hidden' : 'visible';
+        },
+      });
+    });
+
+    await page.goto('/');
+    await waitForBoot(page);
+    await openFirstDeck(page);
+    await page.waitForTimeout(SAFE_WAIT_MS);
+
+    const stage = page.locator('#stage');
+    // A pointer goes down but never lifts — iOS may never deliver the
+    // terminating pointerup/pointercancel for a gesture interrupted by the
+    // app being backgrounded (main.ts:750-760's comment). Dispatch PROMPTLY:
+    // LONG_PRESS_MS is 800ms (gestures.ts:33) — left down that long it would
+    // fire EXIT to the picker regardless of what happens next.
+    await stage.dispatchEvent('pointerdown', { pointerId: 211, isPrimary: true });
+
+    // Flip the flag and fire the real event setupWakeLockReacquire
+    // (main.ts:750) is listening for. Without its `recognizer.reset()` +
+    // `resetPointerTracking()` calls, pointerId 211 lingers forever in both
+    // the recognizer's own pointer bookkeeping and main.ts's downPointerIds
+    // map — its terminating pointerup/cancel never arrives in this
+    // scenario, exactly like a real backgrounded gesture.
+    await page.evaluate(() => {
+      (window as unknown as { __hidden: boolean }).__hidden = true;
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    // The visibilitychange handling itself dispatches nothing to the
+    // reducer — still mid-deck, still on the word beat.
+    await expect(stage).toHaveAttribute('data-state', 'word');
+
+    // A fresh, ordinary tap must now read as a clean single-pointer gesture.
+    // Without the reset, the stale pointerId 211 entry means this tap's own
+    // pointerdown/up can never bring the tracked-pointer count back to zero,
+    // so the gesture never resolves to ADVANCE. Verified experimentally:
+    // gating off the two reset calls made this tap silently do nothing
+    // (stage stuck on 'word') instead of the plain single-tap advance a
+    // parent expects.
+    await stage.tap();
+    await expect(stage).toHaveAttribute('data-state', 'image');
+    await expect(page.locator('#stage .word')).toHaveText('ship');
+  });
+});
+
 test.describe('long-press timer scoping (battery)', () => {
   test('no always-on poll interval, and the long-press timer is cleared once a quick tap releases', async ({
     page,
@@ -449,6 +550,58 @@ test.describe('image (reveal) sizing', () => {
     });
   }
 
+  // Regression guard for a DIFFERENT failure mode than the box-size one
+  // above (P4.12, adversarial review of v1.5): getBoundingClientRect() only
+  // proves the CSS BOX is sized right — it says nothing about whether the
+  // SVG actually PAINTS anything inside that box. An SVG whose viewBox gets
+  // edited to crop out the artwork (or one accidentally emptied) would still
+  // report a correctly-sized box and pass every assertion above it.
+  //
+  // Two candidate fixes were spiked against a deliberately blanked SVG
+  // (viewBox-only, zero drawn content — see git history of this file for
+  // the spike) before picking one:
+  //   (a) canvas alpha sample: draw the rendered <img> into an offscreen
+  //       canvas AT ITS RENDERED BOX SIZE (drawImage scales regardless of
+  //       the source's intrinsic size, so this works even for the app's
+  //       seven viewBox-only hand-drawn SVGs), then count pixels whose
+  //       alpha channel is above a small anti-aliasing-noise threshold.
+  //       Observed: real ship art -> ~45.5% ink; blanked art -> exactly 0%.
+  //       Same-origin img (this app's own /art/*.svg) never taints the
+  //       canvas, so getImageData() is safe to read.
+  //   (b) img.naturalWidth/naturalHeight > 0: observed TRUE for both the
+  //       real ship art AND the blanked SVG — a viewBox-only SVG resolves
+  //       to a nonzero intrinsic size purely from the viewBox, regardless
+  //       of whether anything is drawn inside it. This cannot distinguish
+  //       "painted" from "blank" and would stay green through the exact
+  //       regression this test exists to catch.
+  // (a) is the one kept below; (b) is dropped as unreliable for this job.
+  async function paintedInkFraction(page: Page): Promise<number> {
+    return page.evaluate(() => {
+      const img = document.querySelector<HTMLImageElement>('#stage .reveal .art');
+      if (!img) return -1;
+      const rect = img.getBoundingClientRect();
+      const w = Math.max(1, Math.round(rect.width));
+      const h = Math.max(1, Math.round(rect.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return -1;
+      ctx.drawImage(img, 0, 0, w, h);
+      const { data } = ctx.getImageData(0, 0, w, h);
+      let ink = 0;
+      // Alpha is every 4th byte (R,G,B,A). >10/255 clears any stray
+      // decode/antialiasing noise without hiding a real blanking regression
+      // (a blanked SVG rasterizes to alpha 0 everywhere, not near-zero).
+      for (let i = 3; i < data.length; i += 4) if (data[i] > 10) ink++;
+      return ink / (w * h);
+    });
+  }
+  // Well below either card's observed real-art fraction (~0.45 for ship,
+  // see below) — proves SOME meaningful painted area without pinning to a
+  // fragile exact percentage that would drift with any legitimate art edit.
+  const MIN_INK_FRACTION = 0.05;
+
   test('an OpenMoji card (ship) reveals a large illustration, not its intrinsic size', async ({
     page,
   }) => {
@@ -462,6 +615,12 @@ test.describe('image (reveal) sizing', () => {
     const frac = await artHeightFraction(page);
     expect(frac).toBeGreaterThanOrEqual(MIN_ART_FRACTION);
     expect(frac).toBeLessThanOrEqual(MAX_ART_FRACTION);
+
+    // The box-size assertion above would stay green even if ship.svg's
+    // viewBox were edited to crop out the hull — assert the box is actually
+    // painted, not just correctly sized.
+    const ink = await paintedInkFraction(page);
+    expect(ink).toBeGreaterThanOrEqual(MIN_INK_FRACTION);
   });
 
   test('the reported hand-drawn card (shut, was pinned at 100px) also reveals large', async ({
@@ -488,6 +647,11 @@ test.describe('image (reveal) sizing', () => {
     const frac = await artHeightFraction(page);
     expect(frac).toBeGreaterThanOrEqual(MIN_ART_FRACTION);
     expect(frac).toBeLessThanOrEqual(MAX_ART_FRACTION);
+
+    // Same painted-ink guard as the OpenMoji case above, exercised against a
+    // hand-drawn (also viewBox-only, per art-svg-sizing.test.ts) SVG.
+    const ink = await paintedInkFraction(page);
+    expect(ink).toBeGreaterThanOrEqual(MIN_INK_FRACTION);
   });
 
   test('a wide illustration (whip, ~4.4:1) fills the width via the max-width cap', async ({
