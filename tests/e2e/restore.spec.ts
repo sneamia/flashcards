@@ -11,24 +11,38 @@
    flakiness risk.
 
    Instead, an addInitScript stubs `navigator.onLine` and `window.caches`
-   (the two real browser primitives main.ts reads), driven by two
-   localStorage flags the test flips across reloads. This exercises the
-   EXACT same main.ts code path a real iOS eviction would hit — only the
-   inputs to checkPrecacheIntegrity() are synthetic; the decision logic
-   itself (isPrecacheComplete) is covered directly and unconditionally by
-   tests/unit/integrity.test.ts.
+   (the two real browser primitives main.ts reads), driven by localStorage
+   flags the test flips across reloads (and, for onLine, live mid-page — see
+   below). This exercises the EXACT same main.ts code path a real iOS
+   eviction would hit — only the inputs to checkPrecacheIntegrity() are
+   synthetic; the decision logic itself (isPrecacheComplete) is covered
+   directly and unconditionally by tests/unit/integrity.test.ts.
+
+   The caches stub has three modes (a `cachesMode` flag, not just the
+   boolean `cacheComplete`), because gatherPresentUrls (main.ts) has three
+   distinct code paths worth exercising independently: the ordinary
+   present/absent probe ('stub'), the Cache API being genuinely unavailable
+   ('absent' — a real WebIDL prototype deletion, not just an empty stub, so
+   `'caches' in window` is actually false), and every probe throwing
+   ('throw' — the private-mode-quirk catch branch). Each new test asserts
+   its precondition directly (`'caches' in window` / a probe actually
+   throwing) so a broken stub can't let a test pass through the ordinary
+   incomplete-precache path and prove nothing about the branch it targets.
    ========================================================================= */
 
 import { test, expect, type Page } from '@playwright/test';
 
 const OFFLINE_KEY = 'e2e-restore-offline';
 const CACHE_COMPLETE_KEY = 'e2e-restore-cache-complete';
+const CACHES_MODE_KEY = 'e2e-restore-caches-mode';
+
+type CachesMode = 'stub' | 'absent' | 'throw';
 
 // Installed before EVERY navigation on this page (including the reloads
 // main.ts itself triggers), so it re-reads the flags fresh each time.
 async function installStub(page: Page): Promise<void> {
   await page.addInitScript(
-    ({ offlineKey, cacheCompleteKey }) => {
+    ({ offlineKey, cacheCompleteKey, cachesModeKey }) => {
       // Read LIVE on every access (not captured once at init): the
       // visibilitychange-recovery test flips this flag mid-page, with no
       // reload, and expects main.ts's live `navigator.onLine` read inside
@@ -38,6 +52,28 @@ async function installStub(page: Page): Promise<void> {
         get: () => localStorage.getItem(offlineKey) !== '1',
       });
 
+      const cachesMode = (localStorage.getItem(cachesModeKey) as 'stub' | 'absent' | 'throw' | null) ?? 'stub';
+
+      if (cachesMode === 'absent') {
+        // Spiked against both engines this suite runs under (webkit and
+        // chromium, via a throwaway script launching each against this app's
+        // preview server): on a secure-context origin (localhost or https —
+        // the Cache API is unavailable at all on insecure origins, which is
+        // NOT the "absent" case this models), `caches` turns out to be a
+        // configurable OWN property of the `window` instance here, not a
+        // shared WebIDL prototype accessor — so a plain `delete` actually
+        // works, verified via `Object.getOwnPropertyDescriptor(window,
+        // 'caches').configurable === true` and `'caches' in window === false`
+        // afterward in that spike. (A prototype-chain deletion — e.g.
+        // `Reflect.deleteProperty(Object.getPrototypeOf(window), 'caches')`
+        // — does NOT work here: `caches` isn't on the prototype at all, so
+        // that call is a silent no-op and `'caches' in window` stays true.)
+        // The test itself still asserts the precondition rather than trust
+        // this comment, in case that ever drifts with a browser update.
+        delete (window as unknown as { caches?: unknown }).caches;
+        return;
+      }
+
       // Only main.ts's `caches.match(url)` calls are stubbed; real cache
       // methods pass through untouched in case anything else needs them.
       const cacheComplete = localStorage.getItem(cacheCompleteKey) === '1';
@@ -45,16 +81,24 @@ async function installStub(page: Page): Promise<void> {
       Object.defineProperty(window, 'caches', {
         configurable: true,
         value: {
-          // Models Workbox faithfully: every precached font/art SVG is stored
-          // under a cache key carrying a `?__WB_REVISION__=<hash>` query param
-          // the app's requested URL lacks. So an intact precache is only
-          // discoverable with { ignoreSearch: true } — a query-exact
-          // `caches.match(url)` (the pre-fix bug) misses those entries and
-          // reports the precache incomplete even when it's whole. This guards
-          // the fix: drop ignoreSearch and the "intact precache" case below
-          // regresses to the restore card.
-          match: async (_req: RequestInfo | URL, opts?: CacheQueryOptions) =>
-            cacheComplete && opts?.ignoreSearch ? new Response('') : undefined,
+          match: async (_req: RequestInfo | URL, opts?: CacheQueryOptions) => {
+            if (cachesMode === 'throw') {
+              // Models a private-mode-style quirk where Cache Storage reads
+              // reject instead of resolving. gatherPresentUrls' try/catch
+              // around this call must leave the URL unmarked rather than
+              // propagate, so the precache correctly reads as incomplete.
+              throw new Error('e2e-restore stub: caches.match throws');
+            }
+            // Models Workbox faithfully: every precached font/art SVG is
+            // stored under a cache key carrying a `?__WB_REVISION__=<hash>`
+            // query param the app's requested URL lacks. So an intact
+            // precache is only discoverable with { ignoreSearch: true } — a
+            // query-exact `caches.match(url)` (the pre-fix bug) misses those
+            // entries and reports the precache incomplete even when it's
+            // whole. This guards the fix: drop ignoreSearch and the "intact
+            // precache" case regresses to the restore card.
+            return cacheComplete && opts?.ignoreSearch ? new Response('') : undefined;
+          },
           keys: realCaches.keys.bind(realCaches),
           open: realCaches.open.bind(realCaches),
           has: realCaches.has.bind(realCaches),
@@ -62,17 +106,30 @@ async function installStub(page: Page): Promise<void> {
         },
       });
     },
-    { offlineKey: OFFLINE_KEY, cacheCompleteKey: CACHE_COMPLETE_KEY },
+    { offlineKey: OFFLINE_KEY, cacheCompleteKey: CACHE_COMPLETE_KEY, cachesModeKey: CACHES_MODE_KEY },
   );
 }
 
-async function setFlags(page: Page, offline: boolean, cacheComplete: boolean): Promise<void> {
+async function setFlags(
+  page: Page,
+  offline: boolean,
+  cacheComplete: boolean,
+  cachesMode: CachesMode = 'stub',
+): Promise<void> {
   await page.evaluate(
-    ({ offlineKey, cacheCompleteKey, offline, cacheComplete }) => {
+    ({ offlineKey, cacheCompleteKey, cachesModeKey, offline, cacheComplete, cachesMode }) => {
       localStorage.setItem(offlineKey, offline ? '1' : '0');
       localStorage.setItem(cacheCompleteKey, cacheComplete ? '1' : '0');
+      localStorage.setItem(cachesModeKey, cachesMode);
     },
-    { offlineKey: OFFLINE_KEY, cacheCompleteKey: CACHE_COMPLETE_KEY, offline, cacheComplete },
+    {
+      offlineKey: OFFLINE_KEY,
+      cacheCompleteKey: CACHE_COMPLETE_KEY,
+      cachesModeKey: CACHES_MODE_KEY,
+      offline,
+      cacheComplete,
+      cachesMode,
+    },
   );
 }
 
@@ -177,5 +234,58 @@ test.describe('restore card (precache integrity)', () => {
     // The reload lands back on the picker — proving visibilitychange alone
     // (with online never firing) recovers the restore card.
     await expect(stage).toHaveAttribute('data-state', 'deck_pick', { timeout: 10_000 });
+  });
+
+  test("offline boot with the Cache API genuinely absent shows the restore card (P4.14, gatherPresentUrls' !('caches' in window) branch)", async ({
+    page,
+  }) => {
+    await installStub(page);
+    await page.goto('/');
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-state', 'boot');
+
+    await setFlags(page, /* offline */ true, /* cacheComplete */ false, 'absent');
+    await page.reload();
+
+    // Precondition: prove the Cache API is actually gone, not merely a stub
+    // reporting nothing present. Without this, a broken 'absent' stub could
+    // fall through to the ordinary incomplete-precache path and this test
+    // would pass without ever exercising gatherPresentUrls' early-return
+    // branch.
+    expect(await page.evaluate(() => 'caches' in window)).toBe(false);
+
+    const stage = page.locator('#stage');
+    await expect(stage).toHaveAttribute('data-state', 'restore');
+    await expect(stage).toContainText('reconnect once to restore');
+  });
+
+  test('offline boot where caches.match throws on every probe shows the restore card (P4.14, the private-mode-quirk catch branch)', async ({
+    page,
+  }) => {
+    await installStub(page);
+    await page.goto('/');
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-state', 'boot');
+
+    // cacheComplete=true deliberately: if the throw/catch in gatherPresentUrls
+    // ever regressed to swallowing the throw AND reporting present, this
+    // would be the combination that would let it slip through unnoticed.
+    await setFlags(page, /* offline */ true, /* cacheComplete */ true, 'throw');
+    await page.reload();
+
+    // Precondition: prove the probe actually throws rather than assuming the
+    // stub wiring did what it claims — otherwise this test could pass
+    // vacuously through some other path.
+    const probeThrew = await page.evaluate(async () => {
+      try {
+        await caches.match('/');
+        return false;
+      } catch {
+        return true;
+      }
+    });
+    expect(probeThrew).toBe(true);
+
+    const stage = page.locator('#stage');
+    await expect(stage).toHaveAttribute('data-state', 'restore');
+    await expect(stage).toContainText('reconnect once to restore');
   });
 });
