@@ -48,7 +48,7 @@ Then `/ship` ran its own gates, which found more:
 | `73846f3` | **red team** | The most important finding of the whole branch. `b41a9ba`'s guard keys on the fetch-art MAP, so it is blind to the likelier reintroduction: pointing a card's `img` straight at another word's file. Proven by execution — `jog` → `art/run.svg` left validate PASSING and 98/98 unit tests green. Closed with a `cardImgsByCategory` guard in the validator, which checks the rendered artifact. Both checks are needed; neither subsumes the other. |
 | `dfb1f00` | red team | `paintedInkFraction()` rasterized the reveal `<img>` without waiting for `img.complete`; `drawImage` on an incomplete image is a silent no-op, so the failure mode was a false RED. Now gated on `complete`. |
 
-Docs (final commit): `package.json` 1.5.0 → 1.6.0, `CHANGELOG.md` 1.6.0 entry, `TODOS.md`, `CLAUDE.md`, `handoff.md`.
+Docs (`3be5724`): `package.json` 1.5.0 → 1.6.0, `CHANGELOG.md` 1.6.0 entry, `TODOS.md`, `CLAUDE.md`, `handoff.md`. Then `/document-release` (`3e491c2`, `5035505`) synced the two docs that commit missed: `docs/ARCHITECTURE.md` (the new `resolveShuffleDeck` export, the three restore-recovery signals, the per-category `text`/`img` rule) and `.claude/skills/add-deck/SKILL.md` (the same rule at the point an author picks art, with each of the two reintroduction paths attributed to the gate that actually catches it — `npm test` for a reused MAP hexcode, `npm run validate` for a reused `img` path).
 
 ## Verification (all run on the final tree)
 

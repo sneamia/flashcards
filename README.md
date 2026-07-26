@@ -70,7 +70,11 @@ and the Vite production build into `dist/`. Deck validation also gates the
 art: every shipped SVG must stay within the six-hex warm palette (the
 `KEEP_COLORS` color-word exception in `scripts/fetch-art.mjs` is the only
 sanctioned deviation), and every card's `graphemes` split must join back to
-its word.
+its word. It also rejects two cards in the same category that share a word or
+an illustration — either one would appear twice in that category's shuffle
+pool, and the same drawing on two different words defeats the point of the
+reveal. (Reuse *across* categories is deliberate and stays allowed; a shuffle
+pool never spans categories.)
 
 ## Refresh art
 
@@ -90,7 +94,8 @@ for success.
 
 Add a new JSON file to `decks/` following the existing schema (include a
 `category` of `cvc`, `digraphs`, or `blends`, and an `order` unique within that
-category) and run the art pipeline for any new illustrations. Decks are
+category; no word and no `img` may repeat one already used by another deck in
+the same category) and run the art pipeline for any new illustrations. Decks are
 auto-discovered, grouped under their category, and sorted by `order` — **no
 app-logic changes required.** (Per Eng Decision #11: this is *not* "zero code
 changes" in general — a new deck still needs an art-pipeline run and passes

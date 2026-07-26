@@ -243,7 +243,8 @@ One line per release; details in CHANGELOG.md and this file's git history.
 
 - **v1.6.0** (2026-07-26) — backlog sweep: `jog`'s colliding art dropped
   (151/182), restore recovery re-checks on `visibilitychange` + post-listener,
-  validator duplicate-word + comment-proof CATEGORIES guards, `resolveShuffleDeck`
+  validator per-category duplicate-word + duplicate-`img` + comment-proof
+  CATEGORIES guards, `resolveShuffleDeck`
   extracted, painted-ink + pointer-release + caches-branch e2e coverage
   (items 1, 7, 8, 9, 10, 12, 13, 14, P1.2(a)).
 - **v1.5.0** (2026-07-22) — reveal art fills the frame (definite height +
