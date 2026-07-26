@@ -951,6 +951,17 @@ async function boot(): Promise<void> {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && navigator.onLine) recoverFromRestore();
     });
+    // Closes the window BEFORE those listeners existed: the checks above are
+    // async (a Cache API probe per critical asset, then the font pre-warm), so
+    // connectivity can return while boot is still awaiting them — firing an
+    // `online` event with nothing listening yet, with no guarantee a visibility
+    // change ever follows. Without this one re-check the restore card strands
+    // for the whole session on a device that is already back online. Cannot
+    // loop: the resulting reload's boot() sees navigator.onLine === true and
+    // takes the normal path, never re-entering this branch. No new exposure
+    // either — the `online` listener above already recovers on this same
+    // signal; this only catches the signal that arrived too early to be heard.
+    if (navigator.onLine) recoverFromRestore();
     return;
   }
 

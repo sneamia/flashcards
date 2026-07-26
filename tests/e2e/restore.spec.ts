@@ -35,6 +35,7 @@ import { test, expect, type Page } from '@playwright/test';
 const OFFLINE_KEY = 'e2e-restore-offline';
 const CACHE_COMPLETE_KEY = 'e2e-restore-cache-complete';
 const CACHES_MODE_KEY = 'e2e-restore-caches-mode';
+const SLOW_PROBE_KEY = 'e2e-restore-slow-probe';
 
 type CachesMode = 'stub' | 'absent' | 'throw';
 
@@ -42,7 +43,7 @@ type CachesMode = 'stub' | 'absent' | 'throw';
 // main.ts itself triggers), so it re-reads the flags fresh each time.
 async function installStub(page: Page): Promise<void> {
   await page.addInitScript(
-    ({ offlineKey, cacheCompleteKey, cachesModeKey }) => {
+    ({ offlineKey, cacheCompleteKey, cachesModeKey, slowProbeKey }) => {
       // Read LIVE on every access (not captured once at init): the
       // visibilitychange-recovery test flips this flag mid-page, with no
       // reload, and expects main.ts's live `navigator.onLine` read inside
@@ -77,11 +78,36 @@ async function installStub(page: Page): Promise<void> {
       // Only main.ts's `caches.match(url)` calls are stubbed; real cache
       // methods pass through untouched in case anything else needs them.
       const cacheComplete = localStorage.getItem(cacheCompleteKey) === '1';
+
+      // Probe gate ('slowProbe' flag): park EVERY caches.match() on one
+      // SHARED promise until the test releases it, and flag that it parked.
+      // That gives a test a way to act while boot is provably still inside
+      // checkPrecacheIntegrity()'s await — no sleeps, no timing race. One
+      // shared gate, not a per-call one: gatherPresentUrls awaits
+      // Promise.all over every probe, so a single release has to unblock all
+      // of them or boot would hang. (A parked probe is also realistic: Cache
+      // Storage reads on the thrashing/half-evicted iOS cache this whole
+      // suite models are not instant.)
+      const slowProbe = localStorage.getItem(slowProbeKey) === '1';
+      const probeSignals = window as unknown as {
+        __probeParked?: boolean;
+        __releaseProbe?: () => void;
+      };
+      let releaseGate = (): void => {};
+      const gate = new Promise<void>((resolve) => {
+        releaseGate = resolve;
+      });
+      probeSignals.__releaseProbe = () => releaseGate();
+
       const realCaches = window.caches;
       Object.defineProperty(window, 'caches', {
         configurable: true,
         value: {
           match: async (_req: RequestInfo | URL, opts?: CacheQueryOptions) => {
+            if (slowProbe) {
+              probeSignals.__probeParked = true;
+              await gate;
+            }
             if (cachesMode === 'throw') {
               // Models a private-mode-style quirk where Cache Storage reads
               // reject instead of resolving. gatherPresentUrls' try/catch
@@ -106,7 +132,12 @@ async function installStub(page: Page): Promise<void> {
         },
       });
     },
-    { offlineKey: OFFLINE_KEY, cacheCompleteKey: CACHE_COMPLETE_KEY, cachesModeKey: CACHES_MODE_KEY },
+    {
+      offlineKey: OFFLINE_KEY,
+      cacheCompleteKey: CACHE_COMPLETE_KEY,
+      cachesModeKey: CACHES_MODE_KEY,
+      slowProbeKey: SLOW_PROBE_KEY,
+    },
   );
 }
 
@@ -115,20 +146,33 @@ async function setFlags(
   offline: boolean,
   cacheComplete: boolean,
   cachesMode: CachesMode = 'stub',
+  slowProbe = false,
 ): Promise<void> {
   await page.evaluate(
-    ({ offlineKey, cacheCompleteKey, cachesModeKey, offline, cacheComplete, cachesMode }) => {
+    ({
+      offlineKey,
+      cacheCompleteKey,
+      cachesModeKey,
+      slowProbeKey,
+      offline,
+      cacheComplete,
+      cachesMode,
+      slowProbe,
+    }) => {
       localStorage.setItem(offlineKey, offline ? '1' : '0');
       localStorage.setItem(cacheCompleteKey, cacheComplete ? '1' : '0');
       localStorage.setItem(cachesModeKey, cachesMode);
+      localStorage.setItem(slowProbeKey, slowProbe ? '1' : '0');
     },
     {
       offlineKey: OFFLINE_KEY,
       cacheCompleteKey: CACHE_COMPLETE_KEY,
       cachesModeKey: CACHES_MODE_KEY,
+      slowProbeKey: SLOW_PROBE_KEY,
       offline,
       cacheComplete,
       cachesMode,
+      slowProbe,
     },
   );
 }
@@ -234,6 +278,51 @@ test.describe('restore card (precache integrity)', () => {
     // The reload lands back on the picker — proving visibilitychange alone
     // (with online never firing) recovers the restore card.
     await expect(stage).toHaveAttribute('data-state', 'deck_pick', { timeout: 10_000 });
+  });
+
+  test('connectivity returning DURING boot\'s own await still recovers (no listener exists yet)', async ({
+    page,
+  }) => {
+    await installStub(page);
+    await page.goto('/');
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-state', 'boot');
+
+    // The window this covers: boot() reads `!navigator.onLine`, then awaits
+    // checkPrecacheIntegrity() + fontsReadyOrTimeout() BEFORE either recovery
+    // listener is attached. Connectivity returning inside that window fires an
+    // `online` event with nobody listening, and no visibility change need ever
+    // follow — so without a re-check after attaching, the restore card strands
+    // for the rest of the session on a device that is already back online.
+    await setFlags(page, /* offline */ true, /* cacheComplete */ false, 'stub', /* slowProbe */ true);
+    await page.reload({ waitUntil: 'commit' });
+
+    // Precondition (and the whole point of the gate): a parked probe proves
+    // boot is INSIDE that await right now — gatherPresentUrls only runs as the
+    // second operand of `!navigator.onLine && !(await ...)`, so reaching it
+    // means the offline read already happened and the restore branch is
+    // committed. Without this the flip below could land before boot even
+    // started and the test would pass vacuously as an ordinary online boot.
+    await page.waitForFunction(
+      () => (window as unknown as { __probeParked?: boolean }).__probeParked === true,
+    );
+
+    // Connectivity returns HERE — mid-await, before any listener exists. The
+    // test deliberately fires NEITHER `online` nor `visibilitychange`: both
+    // recovery listeners are attached after this moment, so a real `online`
+    // event at this instant would be heard by nothing. Only boot's own
+    // post-attach re-check can catch it.
+    await setFlags(page, /* offline */ false, /* cacheComplete */ true, 'stub', /* slowProbe */ false);
+    await page.evaluate(() =>
+      (window as unknown as { __releaseProbe: () => void }).__releaseProbe(),
+    );
+
+    // The re-check reloads and the reload boots normally to the picker. (The
+    // restore card is never asserted here: the re-check runs synchronously
+    // after render(), so that paint is not reliably observable — and the
+    // parked-probe precondition above already proves the restore branch ran.)
+    await expect(page.locator('#stage')).toHaveAttribute('data-state', 'deck_pick', {
+      timeout: 10_000,
+    });
   });
 
   test("offline boot with the Cache API genuinely absent shows the restore card (P4.14, gatherPresentUrls' !('caches' in window) branch)", async ({
