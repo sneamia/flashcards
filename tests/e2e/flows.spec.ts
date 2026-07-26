@@ -613,6 +613,18 @@ test.describe('image (reveal) sizing', () => {
   //       regression this test exists to catch.
   // (a) is the one kept below; (b) is dropped as unreliable for this job.
   async function paintedInkFraction(page: Page): Promise<number> {
+    // MUST wait for the element to finish loading before rasterizing. Per spec,
+    // drawImage() with an image that is not "completely available" is a silent
+    // no-op: no throw, the canvas stays fully transparent, and this helper
+    // returns 0 — a FALSE RED indistinguishable from the blanked-art regression
+    // it exists to catch. renderImageBeat() builds a fresh <img> and assigns
+    // .src on every reveal, so even a memory-cached SVG completes
+    // asynchronously. Today the intervening CDP round-trips usually cover the
+    // gap, but "usually" plus fullyParallel with 8 workers and retries: 0 is a
+    // flake waiting for a loaded CI machine.
+    await page.waitForFunction(
+      () => document.querySelector<HTMLImageElement>('#stage .reveal .art')?.complete === true,
+    );
     return page.evaluate(() => {
       const img = document.querySelector<HTMLImageElement>('#stage .reveal .art');
       if (!img) return -1;
