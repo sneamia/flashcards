@@ -22,9 +22,14 @@ const CATEGORIES_SRC = readFileSync(join(ROOT, 'src', 'categories.ts'), 'utf8');
 // entry (e.g. `// { id: 'zzz', ... },` left behind during editing), which is
 // false-permissive: a stale/retired id would keep validating as real forever.
 const CATEGORIES_BLOCK = CATEGORIES_SRC.match(/const CATEGORIES\b[\s\S]*?=\s*\[([\s\S]*?)\];/)?.[1] ?? '';
-// Strip line comments within the block so a commented-out entry's `id:` can't
-// leak into the harvest below.
-const CATEGORIES_BLOCK_CLEAN = CATEGORIES_BLOCK.replace(/\/\/.*$/gm, '');
+// Strip comments within the block so a commented-out entry's `id:` can't leak
+// into the harvest below. BOTH comment forms, in this order: block comments
+// first (they can span lines and can wrap a whole entry), then line comments.
+// Stripping only `//` would still let `/* { id: 'zzz', ... }, */` through.
+const CATEGORIES_BLOCK_CLEAN = CATEGORIES_BLOCK.replace(/\/\*[\s\S]*?\*\//g, '').replace(
+  /\/\/.*$/gm,
+  '',
+);
 const CATEGORY_IDS = new Set(
   [...CATEGORIES_BLOCK_CLEAN.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1]),
 );
