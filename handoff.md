@@ -1,53 +1,65 @@
-# Handoff — v1.6 backlog quick-wins sweep (mid-flight)
+# Handoff — v1.6 backlog quick-wins sweep (COMPLETE, awaiting `/ship`)
 
-**Branch:** `v1.6/backlog-quick-wins` (base `main` @ `3324acc`, 5 commits ahead, tree clean at handoff)
-**Date:** 2026-07-25 · **Status:** wave 1 of 3 FULLY LANDED and unit-verified; waves 2–3 planned below but NOT dispatched; e2e/build gate not yet run on the branch.
-**Source docs:** `TODOS.md` (triaged backlog, the source of truth for every item below), repo `DESIGN.md`, `CLAUDE.md` conventions.
+**Branch:** `v1.6/backlog-quick-wins` (base `main` @ `3324acc`, tree clean)
+**Date:** 2026-07-26 · **Status:** all three waves landed, full gate green, adversarial review done and its findings fixed. The only thing left is `/ship` → `/land-and-deploy`.
+**Source docs:** `TODOS.md` (updated to match — the shipped items are out of the backlog and in its Shipped history), repo `DESIGN.md`, `CLAUDE.md` conventions.
 
-## What this is
+## What this was
 
-Autonomous execution of the independently-completable TODOS.md items (James's directive: tackle direct-path items via Sonnet subagents, leave anything needing his input). Work was decomposed into 3 waves of file-disjoint subagents. This handoff freezes the plan so a fresh session can finish it.
+Autonomous execution of the independently-completable TODOS.md items (James's directive: tackle direct-path items via Sonnet subagents, leave anything needing his input). Decomposed into 3 waves of file-disjoint subagents, then a fresh adversarial review on the full diff.
 
 ## Scope decisions made (do not re-litigate)
 
-- **Doing:** P1.1 (jog art, option (a) per TODOS recommendation), P1.2(a) ONLY (visibilitychange restore re-check — pure hardening, no product call), P3.7, P3.8, P3.9, P3.10, P4.12, P4.13, P4.14.
+- **Did:** P1.1 (jog art, option (a)), P1.2(a) ONLY, P3.7, P3.8, P3.9, P3.10, P4.12, P4.13, P4.14.
 - **Left for James (do NOT start):** P1.2(b)/(d) (product decisions: captive-portal boot behavior, required-set contents), P1.2(c) (needs real iOS device), P1.3 Mulberry (design sign-off gate), P2.4/2.5/2.6 (content design / child session), P3.11 (parked, accepted risk), P5 lists (device/child sessions), Long Vowels idea (pedagogy sign-off), type-scale proposed drop (needs his delete confirmation).
 
-## Done (commits on this branch — verify with `git log --oneline main..`)
+## Done (`git log --oneline main..`)
+
+Waves 1–3 — the backlog items:
 
 | Commit | Item | What |
 |---|---|---|
-| `deaf3e0` | P1.1 | jog's img dropped (deck edit + MAP removal + `git rm public/art/jog.svg`). Art coverage now **151/182 by design**. art-map test red→green sequence verified. |
-| `588e7ad` | P3.7 | `state = initialState()` added to render()'s null-deck recovery branch (defense-in-depth; branch provably unreachable today — no new test, rationale in commit body). |
-| `18f2429` | P3.10 | `ART_SAMPLE_COUNT = 2` named constant; cap derived from pre-loop url count, decoupled from built/font probe count. |
-| `d9dca2d` | P3.8 | validate-decks: per-category duplicate-word guard across `type === 'word'` cards (negative-fixture verified: injected duplicate "chip" → FAIL with pool-collision message). |
-| `46a6eaa` | P3.9 | validate-decks: CATEGORY_IDS parse anchored to the `CATEGORIES` array literal, line-comments stripped (negative-fixture verified: commented-out id no longer accepted; zero-ids drift guard still trips). |
+| `deaf3e0` | P1.1 | jog's img dropped (deck edit + MAP removal + `git rm public/art/jog.svg`). Art coverage now **151/182 by design**. |
+| `588e7ad` | P3.7 | `state = initialState()` in render()'s null-deck recovery branch (defense-in-depth; branch provably unreachable today). |
+| `18f2429` | P3.10 | `ART_SAMPLE_COUNT = 2` named constant; cap derived from pre-loop url count. |
+| `d9dca2d` | P3.8 | validate-decks: per-category duplicate-word guard (negative-fixture verified). |
+| `46a6eaa` | P3.9 | validate-decks: CATEGORY_IDS parse anchored to the `CATEGORIES` literal (negative-fixture verified). |
+| `9c26d00` | P4.13 | `resolveShuffleDeck(groups, startId, rng)` extracted to `src/decks.ts`; unknown-category → null now unit-tested. 94 → 97 unit tests. |
+| `0d39e0d` | P4.12 + P4.14 | Painted-ink canvas-alpha guard on the reveal art; e2e for the pointercancel release path and visibilitychange→hidden pointer reset. |
+| `b695c77` | P1.2(a) | Restore recovery also re-checks on `visibilitychange`→visible + `navigator.onLine` (a backgrounded PWA can coalesce/drop the `online` event). |
+| `08dbcce` | P4.14 | e2e for `gatherPresentUrls`' two untested branches (`!('caches' in window)`, `caches.match` throwing). |
 
-## Remaining plan (waves NOT yet dispatched)
+Review follow-ups (from the fresh adversarial pass on `git diff main...HEAD`):
 
-Subagent ground rules that applied to wave 1 and must apply again: Sonnet subagents, file-disjoint per wave, shared working tree (never `git add .`; commit with explicit pathspec `git commit -m "..." -- <files>`), TDD, one commit per task, commit trailer `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`, never touch TODOS.md/CLAUDE.md. **Port/build constraint:** playwright e2e builds and serves `dist/` on port 4173 (`playwright.config.ts` webServer) — only ONE agent per wave may run e2e or `npm run build`.
+| Commit | Finding | What |
+|---|---|---|
+| `a2a537a` | F5 | validate-decks also strips `/* … */` from the CATEGORIES block — 46a6eaa stripped only `//`, so a block-commented id still leaked. Red-then-green proven. |
+| `5b74f5a` | nit | Stale "~152 files at v1.5" comment in `art-svg-sizing.test.ts` → 151. |
+| `134bbb3` | F8 | Restore recovery re-checks once right after attaching both listeners — connectivity returning during boot's own `await`s fired `online` with nothing listening yet. Has a real (non-vacuous) test via a parked-probe caches stub. |
+| `1b2b138` | F2 + F4 | **The important one.** The two new pointer tests asserted only that a later tap still ADVANCES — which the recognizer guarantees regardless, so they passed even with main.ts's own `releasePointer`/`resetPointerTracking` calls gated off. They now also assert long-press EXIT still arms (the thing a stale `downPointerIds` entry actually breaks: no way out of a deck for 10s after an iOS pointer-steal). Both mutation-verified red→green. Also ink-guards `whip`, P4.12's motivating card. |
+| `559b1a7` | F1 + F6 + F7 | The no-Cache-API test no longer overclaims (deleting that `if` makes the call throw into the catch below for an identical outcome, so no test can distinguish them); restore.spec header corrected; missing `.catch()` on the reload-triggering evaluate. |
 
-- **Wave 2 (two parallel agents):**
-  - **D (P4.12 + P4.14 pointer items; file scope `tests/e2e/flows.spec.ts` only; the only wave-2 agent allowed to run e2e, scoped `npx playwright test tests/e2e/flows.spec.ts`):** (1) reveal-sizing e2e currently asserts only `getBoundingClientRect()` — add a painted-ink assertion (canvas alpha sample of the rendered `.reveal .art`, or equivalent proving nonzero painted pixels; spike both, keep the reliable one). (2) e2e for `onPointerCancel` release path: pointerdown → pointercancel → verify next single tap still advances normally (no stuck session / stale EXIT timer). (3) e2e for `resetPointerTracking()` on visibilitychange→hidden: pointerdown, stub `document.visibilityState` to 'hidden' + dispatch visibilitychange, verify next gesture reads fresh (advances, not misread as multi-touch).
-  - **F (P4.13; file scope `src/decks.ts` + `tests/unit/decks.test.ts` + one-line call-site swap in `src/main.ts` dispatch()):** extract the shuffle category-resolution (`SHUFFLE_PREFIX` slice → `groups.find` → `buildShuffledDeck(...) : null`) into a pure exported helper in decks.ts; unit-test the unknown-category → null branch. ORDER EDITS so every intermediate tree state compiles (helper added first, call site swapped second) — agent D's e2e may build mid-wave.
-- **Wave 3 (single agent E; P1.2(a) + P4.14 caches items; file scope `src/main.ts` boot/restore section + `tests/e2e/restore.spec.ts`):** in boot()'s restore branch, alongside the one-shot `online` listener, add a `visibilitychange`→visible re-check that calls `recoverFromRestore()` when `navigator.onLine` (backgrounded-PWA Wi-Fi-toggle can coalesce/drop the `online` event). E2E: make restore.spec's stubbed `onLine` getter read its localStorage flag LIVE (currently captured at init) — existing tests keep passing; add (1) restore card recovers on visibilitychange-while-online, (2) `!('caches' in window)` offline boot → restore card, (3) `caches.match` throwing → restore card. May run `npx playwright test tests/e2e/restore.spec.ts`.
-- **Then, in order:**
-  1. Full gate: `npm run validate` && `npx vitest run` && `npm run test:e2e` && `npm run build`.
-  2. Fresh adversarial-review subagent (no implementation memory) on `git diff main...HEAD`; fix findings as small commits.
-  3. Update `TODOS.md` (mark items 1, 7, 8, 9, 10, 12, 13, 14 done / P1.2 sub-item (a) done; note coverage 151/182 in P1.3) — **leave it unstaged / commit separately as docs, never bundled into implementation commits**.
-  4. `/ship` (bumps version, CHANGELOG, PR) — suggested v1.6.0. Post-merge docs sync updates CLAUDE.md's shipped-state line (art coverage 152→151/182). Then `/land-and-deploy` (merge pre-approved per James's standing preference).
+Docs (this commit): `TODOS.md`, `CLAUDE.md`, `handoff.md` brought in line with the above.
 
-## Verification done
+## Verification (all run on the final tree)
 
-- Baseline before wave 1: `npm run validate` (17 decks, 0 warnings) + `npx vitest run` (94/94) green on `main` @ `3324acc`.
-- Per-agent: P1.1 ran validate + full vitest green (151 art files); P3.7/P3.10 ran `tsc --noEmit` + full vitest green after each commit; the P3.8/P3.9 agent finished LAST and ran validate + full vitest (94/94) green with all 5 wave-1 commits landed — so the combined branch is unit/validate green.
-- NOT yet run on the branch: `npm run test:e2e`, `npm run build`.
+- `npm run validate` → 17 decks, 0 warnings
+- `npx vitest run` → **97 passed** (was 94 on `main`)
+- `npm run test:e2e` → **32 passed** (was 26 on `main`)
+- `npm run build` → green (`tsc --noEmit` + vite, 166 precache entries)
+
+Also confirmed by the reviewer, independently: `src/machine.ts` untouched (Eng #11); nothing from the deferred P1.2(b)/(c)/(d) leaked in; DESIGN.md intact (no motion/sound/gamification); the art set is internally consistent (144 MAP entries, 182 word cards, 151 with `img`, 151 files in `public/art/`, zero orphans, zero missing); and **zero same-hexcode collisions remain within any single category** — the five byte-identical art pairs (tub/bath, dish/plate, drip/wet, hut/shed, jet/plane) are all cross-category, so no shuffle pool can show one drawing for two words. That closes P1.1's "one eyeball pass, then accept" note.
 
 ## Next
 
-1. `/clear`, then resume with: **read `handoff.md` and continue the v1.6 backlog sweep** (the `implement` skill picks this file up).
-2. Sanity-check `git log --oneline main..` shows the 5 commits above and a clean tree, then dispatch waves 2–3 exactly as specced, gate, adversarial review, ship.
+1. `/ship` — suggested **v1.6.0**. Bumps VERSION, writes the CHANGELOG entry, opens the PR.
+2. `/land-and-deploy` (merge pre-approved per James's standing preference).
+3. Post-merge docs sync: update `CLAUDE.md`'s shipped-state line to v1.6.0 (**art coverage 152 → 151/182**) and its active-branch line.
+
+For the PR body, two things worth surfacing to James:
+- **P1.2(a) widens the funnel into the deliberately-deferred P1.2(b) hole.** Recovery now triggers on every foreground return while `onLine`, not just a one-shot event, so a captive-portal reload (connected, no internet → degraded cards with no guidance, which TODOS itself calls "worse than the restore card") is reachable more often. Exposure class is unchanged — the existing `online` listener already reached the same code — but it raises P1.2(b)'s priority. Noted in TODOS.md.
+- **The direct-path backlog is now exhausted.** Everything left is `plan first` / `decision only` / device-or-child-session. The next PR needs his input first; leading candidate is the P1.2(b)+(d) offline spec.
 
 ## Deferred / follow-ups
 
-See "Left for James" above and `TODOS.md` P1.2(b–d), P1.3, P2, P5, Ideas, Conditional/parked, Proposed drops. The v1.3 historical handoff this file replaced is preserved at git `2985084:handoff.md`.
+See "Left for James" above and `TODOS.md` P1.2(b–d), P1.3, P2, P3.11, P5, Ideas, Conditional/parked, Proposed drops. The v1.3 historical handoff this file replaced is preserved at git `2985084:handoff.md`.

@@ -5,6 +5,11 @@ reference below was re-verified against `main` that day. Release history lives
 in CHANGELOG.md; the detailed "shipped in vX" notes this file used to carry are
 preserved in its git history (see the Shipped history section at the bottom).
 
+The v1.6 sweep (2026-07-26) cleared items 1, 7, 8, 9, 10, 12, 13, 14 and
+P1.2 sub-item (a). Their numbers are **deliberately not reused** — commit
+messages and CHANGELOG entries reference them (`P3.9`, `P4.13`, …), so the
+gaps below are traceability, not omissions.
+
 Effort: **S** = under an hour, **M** = a focused session, **L** = multi-session.
 Path: **direct** = go straight to implementation (TDD, no spec needed);
 **plan first** = write a short spec / get a design or product decision before
@@ -14,55 +19,44 @@ any code; **decision only** = no code — the deliverable is the call itself.
 
 ## P1 — Next up (visible in a real session)
 
-### 1. run/jog show the identical picture inside one CVC shuffle run (S)
-- **Path: direct.** The only decision — (a) vs (b) below — is a micro-call to
-  make in the PR itself; recommend (a).
-- **What:** `run` (cvc-u) and `jog` (cvc-o) both map to OpenMoji `1F3C3`
-  (`scripts/fetch-art.mjs:170` and `:194`), and both live in the **same
-  category**, so a single "shuffle all CVC" session can reveal the same
-  drawing for two different words — actively confusing for a child using the
-  picture to confirm the read. (Adversarial review, v1.3; still live.)
-- **Fix:** decide — (a) drop `jog`'s `img` (the image-free one-beat is the
-  honest card), or (b) source/draw visibly distinct art. (a) is a one-line
-  deck edit + MAP removal.
-- **Note:** the other shared-glyph pairs — hut/shed `1F6D6`, drip/wet `1F4A7`,
-  plane/jet `2708`, plate/dish `1F37D` — are all **cross-category**, so they
-  can't collide in one shuffle pool. One eyeball pass, then accept.
-- **Impact:** pedagogy. **Category:** content/art.
-
 ### 2. Offline restore recovery hardening (M; one sub-item needs a device)
-- **Path: plan first.** Four sub-items interact (the recovery-signal matrix,
-  what an online-but-broken boot should show, whether art leaves the required
-  set) and (b) is a real product decision — a half-page spec settling those,
-  then (a)+(b)+(d) implement directly with headless e2e.
+- **Path: plan first.** The three remaining sub-items interact (what an
+  online-but-broken boot should show, whether art leaves the required set) and
+  (b) is a real product decision — a half-page spec settling those, then
+  (b)+(d) implement directly with headless e2e.
 - The family's real iOS failure mode: cache eviction → restore card → recovery
-  depends on fragile signals. From the v1.1 adversarial review; all four
-  sub-items re-verified still live in `main.ts` today.
-- **(a) Backgrounded reconnect can strand the restore card** (conf 8): recovery
-  is a single one-shot `online` listener (`main.ts:925`). Backgrounding the PWA
-  to toggle Wi-Fi — the natural fix action — can coalesce/drop that event on a
-  thawed page. **Fix:** also re-check on `visibilitychange`→visible +
-  `navigator.onLine`.
+  depends on fragile signals. From the v1.1 adversarial review.
+- **(a) Backgrounded reconnect can strand the restore card** — **SHIPPED
+  v1.6.0.** Recovery now re-checks on `visibilitychange`→visible +
+  `navigator.onLine` alongside the one-shot `online` listener, plus a single
+  re-check right after both listeners attach (connectivity returning during
+  boot's own `await`s used to fire `online` with nothing listening yet).
 - **(b) Captive-portal over-trust** (conf 7): boot skips the integrity check
-  entirely when `navigator.onLine` (`main.ts:917`), so a
+  entirely when `navigator.onLine` (`main.ts:933`), so a
   connected-but-no-internet reconnect reloads into degraded cards with **no**
   guidance — worse than the restore card. **Fix:** run
   `checkPrecacheIntegrity()` even when online, or verify reachability before
-  dismissing restore.
+  dismissing restore. **Note (v1.6):** (a) widened the funnel into this hole —
+  recovery now triggers on *every* foreground return while `onLine`, not just
+  a one-shot event, so a captive-portal reload is reachable more often. Still
+  gated on a real offline boot, and the exposure class is unchanged, but this
+  raises (b)'s priority relative to the 2026-07-25 triage.
 - **(c) Reload may not actually re-precache** (INVESTIGATE, needs real iOS):
   Workbox fills the precache on SW *install*; `recoverFromRestore()` is a bare
-  `location.reload()` (`main.ts:886`), which with the same activated SW may
+  `location.reload()` (`main.ts:902`), which with the same activated SW may
   serve evicted entries from network without repopulating — next offline
   launch shows restore again. **Fix:** force `registration.update()` /
   reinstall on recovery; confirm against real iOS eviction (→ device-session
   checklist, P5).
 - **(d) Restore over-blocks on art-only eviction:** art has a graceful
-  image-free fallback (D2), yet `criticalAssetUrls()` (`main.ts:832`) puts two
+  image-free fallback (D2), yet `criticalAssetUrls()` (`main.ts:844`) puts two
   art samples in the *required* set — a single evicted SVG blocks the whole
   app offline. **Consider:** restrict the required set to assets without a
-  runtime fallback (built JS/CSS + fonts).
-- **Suggested shape:** ship (a)+(b)+(d) with headless e2e coverage as one
-  release; fold (c)'s verification into the next device session.
+  runtime fallback (built JS/CSS + fonts). **Note:** doing this deletes the
+  `ART_SAMPLE_COUNT` constant (`main.ts:836`) that shipped ex-P3.10 — expect
+  to remove it, not preserve it.
+- **Suggested shape:** ship (b)+(d) with headless e2e coverage as one release;
+  fold (c)'s verification into the next device session.
 - **Impact:** offline reliability. **Category:** PWA/robustness.
 
 ### 3. Mulberry Symbols as a second art source (M)
@@ -74,9 +68,12 @@ any code; **decision only** = no code — the deliverable is the call itself.
   "reliably evokes the word" eyeball. The spec is a curated word→glyph list +
   attribution wording; the pipeline change itself is then direct.
 - **What:** ~3,400 child-focused AAC SVGs, CC BY-SA 4.0 (same license as
-  OpenMoji). Coverage today is **152/182 (~84%)**; the reachable image-free
-  tail is 17 words: kick, neck, back, tick, pet, peg, bib, hit, top, mud, rug,
-  gum, glue, long, hang, fang, gong — potentially lifting coverage to ~93%.
+  OpenMoji). Coverage today is **151/182 (~83%)**; the reachable image-free
+  tail is 18 words: kick, neck, back, tick, pet, peg, bib, hit, top, mud, rug,
+  gum, glue, long, hang, fang, gong, **jog** — potentially lifting coverage to
+  ~93%. `jog` joined the tail in v1.6 (ex-P1.1 dropped its OpenMoji art for
+  colliding with `run`'s inside the CVC shuffle pool); a *visibly distinct*
+  Mulberry drawing is exactly what would earn it back.
 - **Stays image-free by design** (do NOT chase art for these 13): the
   function/sight words much, such, that, this, them, with, when, rich, plus
   whiz, thud, thin, chat, whisk (no glyph reliably reads for a 3–5yo).
@@ -114,37 +111,9 @@ any code; **decision only** = no code — the deliverable is the call itself.
 
 ---
 
-## P3 — Robustness quick wins (bundle as one small chore PR)
+## P3 — Robustness quick wins
 
-All small, all verified still-present, **all Path: direct** — acceptance is
-unambiguous and each is a contained TDD change. Good rainy-day bundle or
-ride-along with the next feature branch.
-
-### 7. render() null-deck recovery leaves dead picker rows (S, direct)
-- `render()` on `screen==='card'` with `findDeck()===null` repaints the picker
-  but leaves `state.screen==='card'` (`main.ts:468–474`); `startFromRow` guards
-  on `screen==='deck_pick'` (`main.ts:257`), so every row would be dead — only
-  a long-press EXIT recovers. Provably unreachable today; the defense-in-depth
-  is incomplete if a future change reaches it. **Fix:** also reset
-  `state = initialState()` in that branch. One line. (Adversarial review, v1.2.)
-
-### 8. Cross-deck duplicate-word guard in validate-decks (S, direct)
-- `validate-decks.mjs` checks id/order uniqueness but not card `text` across
-  decks; a future duplicate would silently appear twice in that category's
-  shuffle pool. All 182 current words verified unique. **Fix:** per-category
-  (or global) duplicate-text check. (Adversarial review, v1.4.)
-
-### 9. Anchor the CATEGORY_IDS parse to the CATEGORIES literal (S, direct)
-- The regex harvests every `id: '...'` in `src/categories.ts`
-  (`validate-decks.mjs:20`), including any future commented-out ones —
-  theoretically false-permissive. **Fix:** scope the parse to the `CATEGORIES`
-  array literal. (v1.3 review.)
-
-### 10. Name the art-sample cap in criticalAssetUrls (S, direct)
-- `urls.size >= 6` magic number (`main.ts:845`) couples the art-sample cap to
-  the built/font asset count. **Fix:** derive from a named `ART_SAMPLE_COUNT`.
-  (v1.1 review. Note: doing P1.2(d) first may remove art from the required set
-  and moot this — sequence after that decision.)
+Items 7–10 shipped in v1.6.0. Only the parked one is left.
 
 ### 11. Resume-by-identity instead of index (parked — accepted risk; direct if unparked)
 - `rehydrate()` bounds-checks `cardIndex` but stores no card identity
@@ -156,31 +125,14 @@ ride-along with the next feature branch.
 
 ---
 
-## P4 — Test fidelity (all Path: direct — test-only changes)
+## P4 — Test fidelity
 
-### 12. Reveal-sizing e2e asserts the box, not painted ink (S/M, direct)
-- The "image (reveal) sizing" e2e reads `getBoundingClientRect()`
-  (`flows.spec.ts:440–448`) — CSS-box geometry, independent of whether the SVG
-  paints a pixel. A future viewBox/art edit that blanks a drawing would pass
-  green. `whip`'s tightened viewBox runs near the ink edge (verified not
-  clipped today). **Fix:** add a pixel/visibility assertion (canvas alpha
-  sample, or `naturalWidth>0` + rendered-content check — pick whichever proves
-  ink in the spike). (v1.5 review.)
-
-### 13. dispatch() unknown-category shuffle null path untested (S, direct)
-- `activeShuffleDeck = group ? buildShuffledDeck(...) : null` (`main.ts:560`) —
-  the null branch has no test and isn't unit-testable as-is. **Fix:** extract
-  the category resolution into a pure helper and unit-test it, or e2e a
-  synthetic unknown shuffle id → picker fallback. (Testing review, v1.2, conf 5.)
-
-### 14. v1.1 coverage gaps (S each, direct; still open)
-- `gatherPresentUrls` untested branches: `!('caches' in window)` and the
-  `caches.match` throw/catch (`main.ts:859–873`).
-- `onPointerCancel` release path (iOS pointer-steal) has no e2e (`main.ts:706`).
-- `resetPointerTracking()` on `visibilitychange`→hidden has no e2e
-  (`main.ts:744–755`).
-- Natural ride-alongs: the pointer ones with any gesture work; the caches ones
-  with P1.2.
+Items 12, 13, 14 all shipped in v1.6.0 — the section is empty and kept only so
+the numbering above stays legible. One caveat worth carrying forward: the
+no-Cache-API restore test guards the *outcome* (offline + no Cache API →
+restore card), not that one `if` — deleting the guard makes the `caches.match`
+call throw into the catch immediately below it for the same result, so no test
+can distinguish them. Documented in `restore.spec.ts`; not a gap to re-open.
 
 ---
 
@@ -247,6 +199,11 @@ ride-along with the next feature branch.
 
 One line per release; details in CHANGELOG.md and this file's git history.
 
+- **v1.6.0** (2026-07-26) — backlog sweep: `jog`'s colliding art dropped
+  (151/182), restore recovery re-checks on `visibilitychange` + post-listener,
+  validator duplicate-word + comment-proof CATEGORIES guards, `resolveShuffleDeck`
+  extracted, painted-ink + pointer-release + caches-branch e2e coverage
+  (items 1, 7, 8, 9, 10, 12, 13, 14, P1.2(a)).
 - **v1.5.0** (2026-07-22) — reveal art fills the frame (definite height +
   object-fit); 7 SVGs made viewBox-only; sizing drift guards.
 - **v1.4.0** (2026-07-08) — taxonomy consistency (ng/ck lowercase, CVC Mix /
