@@ -191,12 +191,16 @@ const MAP = {
   log: '1FAB5',       // wood (log)
   cob: '1F33D',       // ear of corn (~ cob; corn on the cob)
   pod: '1FADB',       // pea pod
-  jog: '1F3C3',       // person running (~ jog)
   hot: '1F975',       // hot face
   cop: '1F46E',       // police officer (~ cop)
   bot: '1F916',       // robot
   // top: no OpenMoji glyph reliably reads for a preschooler — left unmapped
   // (image-free card).
+  // jog: unlike top, a glyph exists (1F3C3 person running) — but it's the
+  // same glyph already mapped to `run` (cvc-u), and run/jog both live in
+  // the CVC category, so a single "shuffle all CVC" session could show the
+  // identical picture for two different words. Deliberately left unmapped
+  // (image-free card) rather than reused — see TODOS.md P1.1.
 
   // --- Blends: L-Blends (l-blends) ---
   clap: '1F44F',      // clapping hands
