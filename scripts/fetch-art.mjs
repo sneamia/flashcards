@@ -227,6 +227,25 @@ const MAP = {
   bread: '1F35E',     // bread
   brush: '1F58C',     // lower left paintbrush (~ brush)
 
+  // --- Magic E (magic-e) ---
+  cake: 'E0C7',       // cake (extras-openmoji; plain cake, no candles)
+  wave: '1F30A',      // water wave
+  kite: '1FA81',      // kite
+  bike: '1F6B2',      // bicycle (~ bike)
+  five: '0035-FE0F-20E3', // keycap 5 (numeral reads as "five")
+  nine: '0039-FE0F-20E3', // keycap 9 (numeral reads as "nine")
+  smile: '1F642',     // slightly smiling face (~ smile)
+  pine: '1F332',      // evergreen tree (~ pine)
+  bone: '1F9B4',      // bone
+  stone: '1FAA8',     // rock (~ stone) — reuses `rock`'s hex (digraphs);
+                      // legal, since a shuffle pool never spans categories
+  globe: '1F30D',     // globe showing Europe-Africa (~ globe)
+  home: '1F3E0',      // house (~ home)
+  cone: '1F366',      // soft ice cream (~ cone; the cone shape)
+  rope: '1FAA2',      // knot (~ rope)
+  cube: '1F9CA',      // ice (~ cube; ice cube)
+  mule: '1FACF',      // donkey (~ mule)
+
   // --- Hand-drawn placeholders (leave UNMAPPED so fetch-art never overwrites) ---
   // whip, chip, chin, shin, shut, mop, block: no OpenMoji glyph plausibly
   // reads as these for a preschooler (chin/shin need a figurative arrow to a
