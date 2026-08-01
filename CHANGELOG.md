@@ -6,6 +6,38 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-08-01
+
+### Added
+- A fourth group of cards, **Long Vowels**, holding one deck called **Magic E**:
+  28 words where a final silent `e` makes the earlier vowel say its name — cake,
+  kite, bone, cube. It's the natural step after blends, and it's the first new
+  group since the app shipped with three. 22 of the 28 words have a drawing;
+  cape, tape, gate, tube, mule and stone are word-only cards on purpose.
+- Eight silent-`e` words that were already in the app — snake, grape, plate,
+  plane, skate, whale, slide, flute — now appear in Magic E as well as in the
+  blends and `wh` decks they already lived in. Each one teaches its blend or
+  digraph where it was, and the silent-`e` rule here. They are the only words in
+  the app that appear in two groups, and the build now fails if a ninth ever
+  shows up by accident.
+- 16 new drawings, so the app's art goes from 151 of 182 cards to 173 of 210
+  (82%).
+
+### Changed
+- The picker's fourth group reads **LONG VOWELS** with a **Magic E** deck inside
+  it, rather than both being called the same thing. A group with only one deck
+  also gets a plain **shuffle** row instead of "shuffle all" — nothing is being
+  combined. That distinction had been written into the code since v1.2 but had
+  never actually been used, because until now every group had more than one deck.
+- The u_e sound is described honestly in the README: it says its name in **cube**
+  but not in **flute**, and the deck contains both.
+
+### Fixed
+- **mule** and **stone** shipped mid-review with drawings that named something
+  else — a donkey (a different animal) and a picture identical to **rock**'s. A
+  child who reads the word correctly and then sees the wrong picture concludes
+  they misread, so both are now word-only cards. Same call as run/jog in v1.6.
+
 ## [1.6.0] - 2026-07-26
 
 ### Fixed
