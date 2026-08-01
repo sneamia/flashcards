@@ -7,3 +7,6 @@ test-results/
 playwright-report/
 .vite/
 .gstack/
+
+# /implement wave-state bookkeeping — never part of a diff
+.claude/state/
