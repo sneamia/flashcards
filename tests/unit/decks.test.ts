@@ -34,13 +34,14 @@ import {
 describe('loadDecks() against the real decks/*.json fixtures', () => {
   const decks = loadDecks();
 
-  it('resolves import.meta.glob and returns all seventeen decks', () => {
-    expect(decks).toHaveLength(17);
+  it('resolves import.meta.glob and returns all eighteen decks', () => {
+    expect(decks).toHaveLength(18);
     expect(new Set(decks.map((d) => d.id))).toEqual(
       new Set([
         'cvc', 'cvc-a', 'cvc-e', 'cvc-i', 'cvc-o', 'cvc-u',
         'sh', 'ch', 'th', 'wh', 'ng', 'ck',
         'blends', 'l-blends', 'r-blends', 's-blends', 'end-blends',
+        'magic-e',
       ]),
     );
   });
@@ -51,6 +52,7 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
       cvc: 20, 'cvc-a': 10, 'cvc-e': 10, 'cvc-i': 10, 'cvc-o': 10, 'cvc-u': 10,
       sh: 10, ch: 9, th: 9, wh: 7, ng: 10, ck: 10,
       blends: 18, 'l-blends': 10, 'r-blends': 10, 's-blends': 9, 'end-blends': 10,
+      'magic-e': 28,
     });
   });
 
@@ -59,7 +61,7 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
     // (`${deck.title} · 1 of N`, src/main.ts). v1.4 retitled four decks —
     // digraph decks are lowercase like their sound (ck, ng), and the two
     // starter decks no longer collide with their category headers
-    // (CVC Mix ≠ CVC, Mixed Blends ≠ Blends). Pin all seventeen so a retitle
+    // (CVC Mix ≠ CVC, Mixed Blends ≠ Blends). Pin all eighteen so a retitle
     // is always a deliberate, test-visible change.
     const titles = Object.fromEntries(decks.map((d) => [d.id, d.title]));
     expect(titles).toEqual({
@@ -68,6 +70,7 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
       sh: 'sh', ch: 'ch', th: 'th', wh: 'wh', ng: 'ng', ck: 'ck',
       blends: 'Mixed Blends', 'l-blends': 'L-Blends', 'r-blends': 'R-Blends',
       's-blends': 'S-Blends', 'end-blends': 'Ending Blends',
+      'magic-e': 'Magic E',
     });
   });
 
@@ -81,7 +84,7 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
 
   it('every deck carries a known category', () => {
     for (const deck of decks) {
-      expect(['cvc', 'digraphs', 'blends']).toContain(deck.category);
+      expect(['cvc', 'digraphs', 'blends', 'magic-e']).toContain(deck.category);
     }
   });
 });
@@ -89,9 +92,9 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
 describe('groupByCategory() against the real fixtures', () => {
   const groups = groupByCategory(loadDecks());
 
-  it('returns the three categories in display order: CVC, Digraphs, Blends', () => {
-    expect(groups.map((g) => g.id)).toEqual(['cvc', 'digraphs', 'blends']);
-    expect(groups.map((g) => g.title)).toEqual(['CVC', 'Digraphs', 'Blends']);
+  it('returns the four categories in display order: CVC, Digraphs, Blends, Magic E', () => {
+    expect(groups.map((g) => g.id)).toEqual(['cvc', 'digraphs', 'blends', 'magic-e']);
+    expect(groups.map((g) => g.title)).toEqual(['CVC', 'Digraphs', 'Blends', 'Magic E']);
   });
 
   it('orders the digraph decks by their intra-category `order`: sh, ch, th, wh, ng, ck', () => {
@@ -106,6 +109,10 @@ describe('groupByCategory() against the real fixtures', () => {
     expect(groups.find((g) => g.id === 'blends')?.decks.map((d) => d.id)).toEqual([
       'blends', 'l-blends', 'r-blends', 's-blends', 'end-blends',
     ]);
+  });
+
+  it('the Magic E category contains exactly its one deck', () => {
+    expect(groups.find((g) => g.id === 'magic-e')?.decks.map((d) => d.id)).toEqual(['magic-e']);
   });
 });
 
