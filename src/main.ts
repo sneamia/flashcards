@@ -280,9 +280,11 @@ function shuffleRowEl(group: CategoryGroup): HTMLButtonElement {
   const total = group.decks.reduce((n, d) => n + d.cards.length, 0);
   const startId = `${SHUFFLE_PREFIX}${group.id}`;
   // "all" only reads true when the run spans more than one deck (e.g. DIGRAPHS
-  // = sh+ch+th+wh+ng+ck). A single-deck category (none currently — all three
-  // are multi-deck as of v1.3) would just shuffle its one deck, so drop "all"
-  // there — nothing is being combined.
+  // = sh+ch+th+wh+ng+ck). A single-deck category just shuffles its one deck, so
+  // drop "all" there — nothing is being combined. Magic E (v1.7) is the first
+  // single-deck category to ship, so this branch went live with it; both sides
+  // are pinned by e2e (exact-match on .dg, since a substring check would pass
+  // for either label).
   const label = group.decks.length > 1 ? 'shuffle all' : 'shuffle';
   const btn = el('button', 'row shuffle');
   btn.type = 'button';
