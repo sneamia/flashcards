@@ -68,12 +68,15 @@ any code; **decision only** = no code — the deliverable is the call itself.
   "reliably evokes the word" eyeball. The spec is a curated word→glyph list +
   attribution wording; the pipeline change itself is then direct.
 - **What:** ~3,400 child-focused AAC SVGs, CC BY-SA 4.0 (same license as
-  OpenMoji). Coverage today is **151/182 (~83%)**; the reachable image-free
-  tail is 18 words: kick, neck, back, tick, pet, peg, bib, hit, top, mud, rug,
-  gum, glue, long, hang, fang, gong, **jog** — potentially lifting coverage to
-  ~93%. `jog` joined the tail in v1.6 (ex-P1.1 dropped its OpenMoji art for
-  colliding with `run`'s inside the CVC shuffle pool); a *visibly distinct*
-  Mulberry drawing is exactly what would earn it back.
+  OpenMoji). Coverage today is **173/210 (~82%)**; the reachable image-free
+  tail is 24 words: kick, neck, back, tick, pet, peg, bib, hit, top, mud, rug,
+  gum, glue, long, hang, fang, gong, **jog**, plus v1.7's **cape, tape, gate,
+  tube, mule, stone** — potentially lifting coverage to ~93%. `jog` joined the
+  tail in v1.6 (ex-P1.1 dropped its OpenMoji art for colliding with `run`'s
+  inside the CVC shuffle pool); `stone` joined in v1.7 for the same reason
+  (byte-identical to `rock`'s) and `mule` because OpenMoji's only candidate is
+  a donkey. A *visibly distinct* Mulberry drawing is exactly what would earn all
+  three back — `mule` and `stone` are the strongest candidates in the tail.
 - **Stays image-free by design** (do NOT chase art for these 13): the
   function/sight words much, such, that, this, them, with, when, rich, plus
   whiz, thud, thin, chat, whisk (no glyph reliably reads for a 3–5yo).
@@ -192,6 +195,21 @@ can distinguish them. Documented in `restore.spec.ts`; not a gap to re-open.
 - **Restore reload behavior** — P1.2(c), investigation (part of the P1.2
   plan): does `location.reload()` re-precache after a real iOS cache
   eviction, or does restore re-fire offline?
+- **Long Vowels figurative-art eyeball** (v1.7) — verification only: four cards
+  keep art whose glyph a child might name with a *different word they already
+  know*. `home` → house glyph (conf 9 it reads "house"), `cone` → soft-ice-cream
+  (reads "ice cream"), `pine` → evergreen (reads "tree"), `globe` → Earth (reads
+  "earth"/"ball"). `mule` and `stone` were already cut to image-free for the same
+  reason. Judge whether these four confirm the read or contradict it; cutting any
+  is a one-line `img` removal plus a MAP comment. (v1.7 review H3.)
+- **Long Vowels scroll reachability** (v1.7) — the picker is now 4 categories /
+  18 decks / 4 shuffle rows, and Long Vowels sits last. The v1.7 review probed
+  iPhone-13-landscape in Chromium: the list does scroll (`.decks` 275px tall vs
+  ~1112px content) and the last row lands flush at max scroll, but the e2e test
+  uses `.tap()`, which auto-scrolls programmatically and so proves nothing about
+  a real finger. iOS Safari's `touch-action` intersection differs from
+  Chromium's — confirm a thumb can actually reach the bottom row. (v1.7 review
+  L6, conf 6.)
 - **Wide-reveal eyeball** — verification only, no code planned: `whip`
   (~4.42:1) hits the 82vw width cap, sits ~40vh tall and centered (top edge
   ~18vh vs 6vh for square art). Inherent to a wide subject; judge whether it
@@ -205,26 +223,53 @@ can distinguish them. Documented in `restore.spec.ts`; not a gap to re-open.
 
 ## Ideas (new in the 2026-07-25 triage — unvalidated, need design sign-off)
 
-### Long Vowels / Magic-E as a fourth category
-- **Path: plan first** — full spec + pedagogy sign-off; gated on the grapheme
-  convention below.
-- Magic-e words already ship scattered through the blends decks (grape, snake,
-  slide, skate, plate, flute, plane); a dedicated category is the natural
-  pedagogy step after blends. Pure data + one `src/categories.ts` entry.
+### ~~Long Vowels / Magic-E as a fourth category~~ — SHIPPED v1.7.0
+Delivered as the **Long Vowels** category (id `magic-e`) with one 28-card
+**Magic E** deck. Decisions taken: one deck rather than per-vowel; the 8
+already-shipped magic-e words duplicated in rather than moved; `graphemes`
+omitted; soft-c/g + s=/z/ + `ph` words held back (see the follow-on below).
+
+### Soft C / Soft G / s=/z/ / ph as a follow-on deck (M)
+- **Path: plan first** — pedagogy call, then pure data.
+- **What:** 8 words researched and art-verified during the v1.7 spec but
+  deliberately held back, because each smuggles in a rule the app has never
+  taught: `face`, `page`, `race`, `space` (soft c/g), `rice`, `mice` (soft c),
+  `nose`, `rose` (s saying /z/), `phone` (`ph`). All 9 have strong direct-match
+  OpenMoji glyphs — better art than most of what shipped in Magic E — so the
+  only open question is whether they form one deck or split by rule.
+- **Impact:** content. **Category:** content/pedagogy.
 
 ---
 
 ## Conditional / parked
 
-- **Split-digraph grapheme convention** (only if graphemes ever render) —
-  **plan first if triggered** (needs design approval by its own terms):
-  silent-e words segment as consonant+e chunks (`["sn","a","ke"]`); if the UI
-  ever renders graphemes this teaches the wrong vowel sound. An `a_e`-style
-  convention is the candidate. Also gates the Magic-E category idea above.
-- **rowEl()/shuffleRowEl() extract** (only if touched again) — **direct if
-  triggered**: the two picker row builders share an ~8-line skeleton; extract
-  `makeRow({cls,label,count,aria,startId})` next time either changes. (v1.2
-  review, conf 5.)
+- **Split-digraph grapheme convention** — **PARTLY DECIDED in v1.7, one real
+  inconsistency now shipped.** Decided: the `a_e` notation is **rejected** — it
+  is illegal under `validate-decks.mjs:200`, which requires
+  `graphemes.join('') === card.text`, so adopting it means weakening a build
+  gate for a field with no runtime consumer (`src/types.ts:16`). The Magic E
+  deck therefore ships with **no `graphemes` key at all**, the only deck of 18
+  without one.
+  **The inconsistency (found by the v1.7 adversarial review, conf 9):** the 8
+  words Magic E duplicates already carry the consonant+e split in their original
+  decks — `plate ["pl","a","te"]`, `snake ["sn","a","ke"]`, `whale
+  ["wh","a","le"]`, and so on; v1.4 shipped `grape` as `gr·a·pe` on purpose. So
+  the *same word* now has phonics data in one deck and none in the other, and
+  nothing catches it: the validator only checks graphemes *when present*, and no
+  test asserts coverage. **Decide one of:** (a) omit `graphemes` on the 8
+  originals too, accepting that magic-e words carry no split anywhere; (b) add
+  the consonant+e split to Magic E, matching the shipped originals and
+  accepting the wrong-vowel-sound risk if graphemes ever render; (c) keep the
+  split as-is and add a test pinning that Magic E is intentionally at 0/28, so
+  the next `/add-deck` run can't "helpfully" fill it in. **(c) is the cheapest
+  and stops the drift; (a) is the most consistent.** Until then, do NOT let a
+  tool add graphemes to `decks/magic-e.json`.
+- **rowEl()/shuffleRowEl() extract** — **TRIGGERED in v1.7, not done.**
+  **Path: direct.** The parked condition was "next time either changes";
+  `shuffleRowEl` changed in v1.7 (its single-deck label branch went live). The
+  two picker row builders still share an ~8-line skeleton; extract
+  `makeRow({cls,label,count,aria,startId})`. (v1.2 review, conf 5; re-flagged
+  by the v1.7 review.)
 
 ---
 
@@ -241,6 +286,12 @@ can distinguish them. Documented in `restore.spec.ts`; not a gap to re-open.
 
 One line per release; details in CHANGELOG.md and this file's git history.
 
+- **v1.7.0** (2026-08-01) — **Long Vowels** category (id `magic-e`) with one
+  28-card **Magic E** deck; 16 new glyphs (art 173/210); first cross-category
+  duplicate words (8, allowlist-guarded); first single-deck category, taking the
+  plain-`shuffle` label branch live after 5 releases dormant; `mule`/`stone` art
+  cut on review; new guards for deck-vs-category title collision and accidental
+  cross-category duplicates (101 unit / 35 e2e).
 - **v1.6.0** (2026-07-26) — backlog sweep: `jog`'s colliding art dropped
   (151/182), restore recovery re-checks on `visibilitychange` + post-listener,
   validator per-category duplicate-word + duplicate-`img` + comment-proof
