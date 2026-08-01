@@ -237,14 +237,21 @@ const MAP = {
   smile: '1F642',     // slightly smiling face (~ smile)
   pine: '1F332',      // evergreen tree (~ pine)
   bone: '1F9B4',      // bone
-  stone: '1FAA8',     // rock (~ stone) — reuses `rock`'s hex (digraphs);
-                      // legal, since a shuffle pool never spans categories
+  // stone: public/art/stone.svg was byte-identical to `rock`'s (1FAA8,
+  // digraphs) — reusing a hex across categories is normally legal (a
+  // shuffle pool never spans categories), but a child's memory does span
+  // categories, so the identical picture for two different words reads as
+  // the app having lost its place (same reasoning that dropped `jog`'s art
+  // in favor of `run`'s — see above). Left unmapped — image-free card.
   globe: '1F30D',     // globe showing Europe-Africa (~ globe)
   home: '1F3E0',      // house (~ home)
   cone: '1F366',      // soft ice cream (~ cone; the cone shape)
   rope: '1FAA2',      // knot (~ rope)
   cube: '1F9CA',      // ice (~ cube; ice cube)
-  mule: '1FACF',      // donkey (~ mule)
+  // mule: the only candidate glyph (1FACF) is a donkey — a different
+  // animal — so a preschooler names the picture "donkey" or "horse",
+  // contradicting the read instead of confirming it. Left unmapped —
+  // image-free card.
 
   // --- Hand-drawn placeholders (leave UNMAPPED so fetch-art never overwrites) ---
   // whip, chip, chin, shin, shut, mop, block: no OpenMoji glyph plausibly

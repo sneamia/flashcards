@@ -24,14 +24,14 @@
     { "type": "word", "text": "smile", "img": "art/smile.svg" },
     { "type": "word", "text": "pine", "img": "art/pine.svg" },
     { "type": "word", "text": "bone", "img": "art/bone.svg" },
-    { "type": "word", "text": "stone", "img": "art/stone.svg" },
+    { "type": "word", "text": "stone" },
     { "type": "word", "text": "globe", "img": "art/globe.svg" },
     { "type": "word", "text": "home", "img": "art/home.svg" },
     { "type": "word", "text": "cone", "img": "art/cone.svg" },
     { "type": "word", "text": "rope", "img": "art/rope.svg" },
     { "type": "word", "text": "flute", "img": "art/flute.svg" },
     { "type": "word", "text": "cube", "img": "art/cube.svg" },
-    { "type": "word", "text": "mule", "img": "art/mule.svg" },
+    { "type": "word", "text": "mule" },
     { "type": "word", "text": "tube" }
   ]
 }

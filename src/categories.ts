@@ -29,5 +29,5 @@ export const CATEGORIES: CategoryMeta[] = [
   { id: 'cvc', title: 'CVC', order: 0 },
   { id: 'digraphs', title: 'Digraphs', order: 1 },
   { id: 'blends', title: 'Blends', order: 2 },
-  { id: 'magic-e', title: 'Magic E', order: 3 },
+  { id: 'magic-e', title: 'Long Vowels', order: 3 },
 ];
