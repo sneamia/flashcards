@@ -6,7 +6,7 @@ screen. That inversion is the whole point: no menus, no mascots, no reward
 loops, nothing competing for the child's attention. Just a word, then an
 illustration that confirms the read, then the next word.
 
-Three phonics categories, shown grouped in the deck picker:
+Four phonics categories, shown grouped in the deck picker:
 
 - **CVC** — a starter deck of short-vowel three-letter words (cat, hen, pig,
   dog, bus…) plus one deck per short vowel (Short A/E/I/O/U): six decks, 70 words.
@@ -15,11 +15,16 @@ Three phonics categories, shown grouped in the deck picker:
 - **Blends** — a starter deck of initial/final consonant blends (flag, frog,
   star, nest…) plus L-Blends, R-Blends, S-Blends, and Ending Blends: five
   decks, 57 words.
+- **Magic E** — silent-e long vowels, the pattern where a final `e` makes the
+  earlier vowel say its name (cake, kite, bone, cube); covers a_e, i_e, o_e,
+  and u_e: one deck, 28 words.
 
-Each category also offers an optional **"shuffle all"** entry that mixes every
-card in the category into a random order for review. The authored per-deck order
-is the default and stays the primary path — shuffle is an extra, opt-in row, and
-a shuffle run is deliberately not resumable across a relaunch.
+Each category also offers an optional **shuffle** entry that mixes every
+card in the category into a random order for review — labeled "shuffle all"
+for a multi-deck category, or plain "shuffle" for a single-deck one. The
+authored per-deck order is the default and stays the primary path — shuffle is
+an extra, opt-in row, and a shuffle run is deliberately not resumable across a
+relaunch.
 
 Words are chosen for high illustration coverage (>75%); where a plain glyph
 won't read, the art is figurative — e.g. `chin` is a face with an arrow to the

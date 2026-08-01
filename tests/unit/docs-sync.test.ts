@@ -30,14 +30,18 @@ const real = groupByCategory(loadDecks()).map((g) => ({
 }));
 
 const NUMBER_WORDS: Record<string, number> = {
-  two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
 };
 
 describe('README.md category counts stay in sync with decks/*.json', () => {
   // One "<word> decks, <M> words" phrase per category bullet, in the
   // README's (= picker's) display order. \s+ tolerates the wrapped lines
-  // ("six\n  decks, 55 words").
-  const documented = [...README.matchAll(/(\w+)\s+decks,\s+(\d+)\s+words/g)]
+  // ("six\n  decks, 55 words"). `decks?` (not just `decks`) because a
+  // single-deck category (Magic E) must read "one deck, 28 words" in
+  // correct English, not "one decks" — the parser has to accept the
+  // singular, not just the plural. This widens what the guard can *parse*;
+  // the two assertions below stay exactly as strict as before.
+  const documented = [...README.matchAll(/(\w+)\s+decks?,\s+(\d+)\s+words/g)]
     .map((m) => ({ decks: NUMBER_WORDS[m[1]], words: Number(m[2]) }));
 
   it('finds exactly one "N decks, M words" phrase per category', () => {
