@@ -28,7 +28,8 @@ const ART = import.meta.glob('../../public/art/*.svg', {
 
 describe('art SVG root dimensions', () => {
   it('loads the full art set (anti-vacuous guard)', () => {
-    // 151 files at v1.6 (jog's art was dropped in v1.6 — see TODOS P1.1); a
+    // 165 files at v1.7 (up from 151 at v1.6 — jog's art was dropped in v1.6,
+    // see TODOS P1.1 — then the Long Vowels deck's art landed in v1.7); a
     // collapsed glob means the path moved — fail loudly rather than pass on an
     // empty set.
     expect(Object.keys(ART).length).toBeGreaterThan(100);

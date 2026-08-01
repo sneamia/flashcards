@@ -462,8 +462,8 @@ test.describe('categories + shuffle-all', () => {
     await waitForBoot(page);
 
     const stage = page.locator('#stage');
-    // Category headers (CVC, Digraphs, Blends, Magic E).
-    await expect(stage.locator('.cat')).toHaveText(['CVC', 'Digraphs', 'Blends', 'Magic E']);
+    // Category headers (CVC, Digraphs, Blends, Long Vowels).
+    await expect(stage.locator('.cat')).toHaveText(['CVC', 'Digraphs', 'Blends', 'Long Vowels']);
     // One shuffle row per category (4 categories as of v1.7's Magic E addition).
     await expect(stage.locator('.row.shuffle')).toHaveCount(4);
     await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"]')).toHaveCount(1);
@@ -491,7 +491,7 @@ test.describe('categories + shuffle-all', () => {
     await expect(stage.locator('.row.shuffle[data-shuffle="magic-e"] .ct')).toHaveText('28 words');
     await expect(stage.locator('.row.shuffle[data-shuffle="magic-e"]')).toHaveAttribute(
       'aria-label',
-      'Shuffle Magic E, 28 words',
+      'Shuffle Long Vowels, 28 words',
     );
     // Contrast case: a multi-deck category still gets the "all" form.
     await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"] .dg')).toHaveText('shuffle all');
@@ -506,6 +506,29 @@ test.describe('categories + shuffle-all', () => {
     await expect(stage).toHaveAttribute('data-state', 'word');
     // Corner shows the category title, not a single digraph id.
     await expect(page.locator('#stage .corner')).toContainText('Digraphs · 1 of 55');
+  });
+
+  test('the Long Vowels shuffle row starts a run with the CATEGORY title in the corner', async ({
+    page,
+  }) => {
+    // Before the v1.7 rename, the Long Vowels category and its one deck were
+    // BOTH titled "Magic E" — so a shuffle-run corner and a deck-run corner
+    // would have rendered byte-identical text ("Magic E · 1 of 28" either
+    // way), even though the shuffle-run corner is built from the CATEGORY
+    // title (buildShuffledDeck(), src/decks.ts) and the deck-run corner from
+    // the DECK title (src/main.ts) — two different fields that happened to
+    // collide. This pins that, post-rename, the two are visibly distinct:
+    // the deck-run corner still reads "Magic E · 1 of 28" (see 'the Magic E
+    // deck itself opens and reveals its first card' above, deliberately left
+    // unchanged), while THIS shuffle-run corner must read
+    // "Long Vowels · 1 of 28".
+    await page.goto('/');
+    await waitForBoot(page);
+
+    const stage = page.locator('#stage');
+    await stage.locator('.row.shuffle[data-shuffle="magic-e"]').tap();
+    await expect(stage).toHaveAttribute('data-state', 'word');
+    await expect(page.locator('#stage .corner')).toContainText('Long Vowels · 1 of 28');
   });
 
   test('a shuffle run is NOT resumable: reloading mid-run lands on the picker', async ({ page }) => {

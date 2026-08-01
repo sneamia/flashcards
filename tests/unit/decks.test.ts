@@ -92,9 +92,9 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
 describe('groupByCategory() against the real fixtures', () => {
   const groups = groupByCategory(loadDecks());
 
-  it('returns the four categories in display order: CVC, Digraphs, Blends, Magic E', () => {
+  it('returns the four categories in display order: CVC, Digraphs, Blends, Long Vowels', () => {
     expect(groups.map((g) => g.id)).toEqual(['cvc', 'digraphs', 'blends', 'magic-e']);
-    expect(groups.map((g) => g.title)).toEqual(['CVC', 'Digraphs', 'Blends', 'Magic E']);
+    expect(groups.map((g) => g.title)).toEqual(['CVC', 'Digraphs', 'Blends', 'Long Vowels']);
   });
 
   it('orders the digraph decks by their intra-category `order`: sh, ch, th, wh, ng, ck', () => {
@@ -113,6 +113,70 @@ describe('groupByCategory() against the real fixtures', () => {
 
   it('the Magic E category contains exactly its one deck', () => {
     expect(groups.find((g) => g.id === 'magic-e')?.decks.map((d) => d.id)).toEqual(['magic-e']);
+  });
+
+  // GUARD A — a deck's title must never equal its own category's title.
+  // v1.4 deliberately retitled two starter decks for exactly this reason
+  // (`CVC Mix` for the `cvc` deck under the `CVC` header, `Mixed Blends` for
+  // the `blends` deck under the `Blends` header) — but the convention was
+  // never encoded as a test, which is exactly how this v1.7 branch shipped a
+  // `Magic E` DECK under a `Magic E` CATEGORY header and nobody caught it
+  // until an adversarial review renamed the category to `Long Vowels`. A
+  // collision is worse than a cosmetic echo: the picker renders
+  // `HEADER -> identical-text row` right under itself, AND — more
+  // dangerously — a deck run and that category's shuffle-all run produce the
+  // EXACT SAME in-run corner text (`${deck.title} · 1 of N` for the deck run,
+  // `${category.title} · 1 of N` for the shuffle run, src/main.ts), even
+  // though only the deck run is resumable across a reload (the shuffle run
+  // is deliberately not — see the e2e 'a shuffle run is NOT resumable'
+  // test). A parent glancing at the corner mid-session has no way to tell
+  // which one they're in if the two titles match. Assert over every real
+  // category/deck pair so a future retitle of either side that reintroduces
+  // the collision fails here immediately, not in a live user's hands.
+  it('no deck title collides with its own category title', () => {
+    for (const group of groups) {
+      for (const deck of group.decks) {
+        expect(deck.title).not.toBe(group.title);
+      }
+    }
+  });
+
+  // GUARD B — cross-category duplicate words are restricted to a pinned
+  // allowlist.
+  // Before v1.7 the app had 182 cards and 182 distinct words: no word
+  // appeared in more than one category. The Long Vowels deck deliberately
+  // reuses 8 words that already live in a blends deck or in `wh` — each word
+  // teaches its ORIGINAL pattern (a blend, or the `wh` digraph) in its first
+  // deck, and the silent-e pattern in Long Vowels — so the app is now 210
+  // cards / 202 distinct words. scripts/validate-decks.mjs's duplicate-word
+  // guard is deliberately scoped PER CATEGORY (a word repeated within one
+  // category's shuffle pool is the bug that guards against), so an
+  // ACCIDENTAL cross-category duplicate — e.g. a future deck copy-pasting a
+  // word that already lives in some other category, with nobody noticing —
+  // is completely invisible to every existing gate. This test computes every
+  // word that appears in more than one category and pins the result to
+  // EXACTLY these 8 intentional duplicates. The assertion is exact (sorted
+  // array equality) so it fails loudly in BOTH directions: adding a new
+  // accidental cross-category duplicate, or removing/renaming one of the 8
+  // pinned words out of a deck, each requires a deliberate update to this
+  // allowlist rather than shipping silently.
+  it('cross-category duplicate words are restricted to the pinned allowlist', () => {
+    const categoriesByWord = new Map<string, Set<string>>();
+    for (const group of groups) {
+      for (const deck of group.decks) {
+        for (const card of deck.cards) {
+          if (!categoriesByWord.has(card.text)) categoriesByWord.set(card.text, new Set());
+          categoriesByWord.get(card.text)!.add(group.id);
+        }
+      }
+    }
+    const crossCategoryDuplicates = [...categoriesByWord.entries()]
+      .filter(([, categoryIds]) => categoryIds.size > 1)
+      .map(([word]) => word)
+      .sort();
+    expect(crossCategoryDuplicates).toEqual(
+      ['snake', 'grape', 'plate', 'plane', 'skate', 'whale', 'slide', 'flute'].sort(),
+    );
   });
 });
 
@@ -202,9 +266,12 @@ describe('buildShuffledDeck()', () => {
 });
 
 describe('buildShuffledDeck() — single-deck category', () => {
-  // No production category is single-deck anymore, but the suite above only
-  // exercises a multi-deck group. This pins the one-deck pooling path:
-  // the pool is just that deck's cards, under the reserved shuffle id.
+  // The Long Vowels category (id 'magic-e') IS single-deck in production as
+  // of v1.7 — it holds exactly the one 'magic-e' deck. This synthetic
+  // fixture still pins the one-deck pooling path directly (rather than
+  // depending on that production category's exact contents staying
+  // single-deck forever): the pool is just that deck's cards, under the
+  // reserved shuffle id.
   const group = {
     id: 'cvc',
     title: 'CVC',
