@@ -15,7 +15,7 @@ Turns a phonics word list (e.g. "bl blends") into a shipped deck: schema-correct
 
 ## Process
 
-1. **Read a sibling deck** in `decks/*.json` for the target `category` (`cvc`, `digraphs`, `blends` — see `src/categories.ts`) to find the next free `order`; unique **within** a category, not globally.
+1. **Read a sibling deck** in `decks/*.json` for the target `category` (`cvc`, `digraphs`, `blends`, `magic-e` — see `src/categories.ts`; note `magic-e`'s display title is "Long Vowels", so the id and the title differ) to find the next free `order`; unique **within** a category, not globally.
 2. **Draft the deck JSON** (schema below). One `type:"word"` card per word; `graphemes` documents the phonics split; omit `img` entirely for image-free cards (never `null`/`""`).
 3. **Find art per word.** Pick an OpenMoji hexcode and verify it resolves at the pinned ref (`OPENMOJI_REF` in `scripts/fetch-art.mjs` — a commit SHA equal to release 15.1.0, see Quick Reference). No literal glyph? Think figuratively before giving up (e.g. `shed` → hut `1F6D6`); an ink-arrow to a body part (`chin`, `shin`) is allowed per DESIGN.md. Nothing reliably reads for a 3–5-year-old? Leave it image-free (see `whiz`, `thud`) — wrong art is worse than none. Also never reuse a hexcode already mapped to another word **in the same category** (see Common Mistakes) — that's why `jog` is image-free even though `1F3C3` exists.
 4. **Add verified entries to `MAP`** in `scripts/fetch-art.mjs` (match its comment style), then `npm run fetch-art -- word1 word2 ...` to fetch, palette-remap, and SVGO-optimize into `public/art/`.

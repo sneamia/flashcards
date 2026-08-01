@@ -15,9 +15,9 @@ Four phonics categories, shown grouped in the deck picker:
 - **Blends** — a starter deck of initial/final consonant blends (flag, frog,
   star, nest…) plus L-Blends, R-Blends, S-Blends, and Ending Blends: five
   decks, 57 words.
-- **Magic E** — silent-e long vowels, the pattern where a final `e` makes the
-  earlier vowel say its name (cake, kite, bone, cube); covers a_e, i_e, o_e,
-  and u_e: one deck, 28 words.
+- **Long Vowels** — the Magic E deck: a final `e` makes the earlier vowel say
+  its name (cake, kite, bone); u_e has two sounds, as in cube and as in flute.
+  Covers a_e, i_e, o_e, and u_e: one deck, 28 words.
 
 Each category also offers an optional **shuffle** entry that mixes every
 card in the category into a random order for review — labeled "shuffle all"
@@ -98,9 +98,11 @@ for success.
 ## Adding a deck
 
 Add a new JSON file to `decks/` following the existing schema (include a
-`category` of `cvc`, `digraphs`, or `blends`, and an `order` unique within that
-category; no word and no `img` may repeat one already used by another deck in
-the same category) and run the art pipeline for any new illustrations. Decks are
+`category` of `cvc`, `digraphs`, `blends`, or `magic-e` — note `magic-e`'s
+display title is "Long Vowels", so the id and the title differ — and an
+`order` unique within that category; no word and no `img` may repeat one
+already used by another deck in the same category) and run the art pipeline
+for any new illustrations. Decks are
 auto-discovered, grouped under their category, and sorted by `order` — **no
 app-logic changes required.** (Per Eng Decision #11: this is *not* "zero code
 changes" in general — a new deck still needs an art-pipeline run and passes

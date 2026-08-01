@@ -222,7 +222,7 @@ nothing yet listening. The reload can't loop: its `boot()` sees
     { "type": "word", "text": "this", "graphemes": ["th","i","s"] }
   ] }
 ```
-- `category`: `"cvc" | "digraphs" | "blends"` — must match an id in `src/categories.ts`
+- `category`: `"cvc" | "digraphs" | "blends" | "magic-e"` — must match an id in `src/categories.ts`
   (the picker groups decks under their category header). validate-decks.mjs enforces it.
 - `order`: the sort key WITHIN its category, unique per category (digraphs: sh=1, ch=2,
   th=3, wh=4, ng=5, ck=6; cvc: cvc=1 then cvc-a…cvc-u=2…6; blends: blends=1 then
