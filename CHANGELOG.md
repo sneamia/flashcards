@@ -12,16 +12,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A fourth group of cards, **Long Vowels**, holding one deck called **Magic E**:
   28 words where a final silent `e` makes the earlier vowel say its name — cake,
   kite, bone, cube. It's the natural step after blends, and it's the first new
-  group since the app shipped with three. 22 of the 28 words have a drawing;
-  cape, tape, gate, tube, mule and stone are word-only cards on purpose.
+  group since the app shipped with three. 20 of the 28 words have a drawing;
+  cape, tape, gate, tube, mule, stone, cube and smile are word-only cards on
+  purpose.
 - Eight silent-`e` words that were already in the app — snake, grape, plate,
   plane, skate, whale, slide, flute — now appear in Magic E as well as in the
   blends and `wh` decks they already lived in. Each one teaches its blend or
   digraph where it was, and the silent-`e` rule here. They are the only words in
-  the app that appear in two groups, and the build now fails if a ninth ever
-  shows up by accident.
-- 16 new drawings, so the app's art goes from 151 of 182 cards to 173 of 210
-  (82%).
+  the app that appear in two groups, and `npm test` now fails if a ninth ever
+  shows up by accident. (Not `npm run build` — that runs the deck validator,
+  the contrast gate and `tsc`, none of which see across categories. The deploy
+  job runs the tests, so a slip blocks the deploy rather than the merge.)
+- 12 new drawings — 20 of the 28 cards are illustrated, the other 8 reusing art
+  the duplicated words already had — so the app's art goes from 151 of 182
+  cards to 171 of 210 (81%).
 
 ### Changed
 - The picker's fourth group reads **LONG VOWELS** with a **Magic E** deck inside
@@ -33,10 +37,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   but not in **flute**, and the deck contains both.
 
 ### Fixed
-- **mule** and **stone** shipped mid-review with drawings that named something
-  else — a donkey (a different animal) and a picture identical to **rock**'s. A
-  child who reads the word correctly and then sees the wrong picture concludes
-  they misread, so both are now word-only cards. Same call as run/jog in v1.6.
+- Four cards shipped mid-development with drawings that named something else,
+  and are now word-only: **mule** (a donkey — a different animal), **stone** (a
+  picture identical to **rock**'s), **cube** (the same tan box a child already
+  meets as **block** and **box**) and **smile** (the same face as **grin**). A
+  child who reads the word correctly and then sees a picture they'd call
+  something else concludes they misread. Same call as run/jog in v1.6.
+- The deck picker no longer jumps back to the top every time you return to it.
+  It rebuilds itself on every screen change, which reset the scroll — barely
+  noticeable with three groups, but Long Vowels sits last in a list about three
+  screens tall on a phone in landscape, so reaching it again after each run
+  meant scrolling the whole way down from scratch.
+- **bike**'s wheels were drawn in pure black rather than the warm ink every
+  other line in the app uses. The palette check couldn't catch it: it only
+  looks at colours a file actually names, and these shapes named none, so they
+  silently fell back to black. Sixteen older drawings have the same problem and
+  are queued behind a fix to the check itself.
 
 ## [1.6.0] - 2026-07-26
 
