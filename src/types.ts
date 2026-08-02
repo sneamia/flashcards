@@ -32,7 +32,8 @@ export interface Deck {
   /**
    * The category this deck belongs to, e.g. "cvc" | "digraphs" | "blends" | "magic-e".
    * Must match an id in src/categories.ts CATEGORIES. The picker groups decks
-   * under their category header and offers a per-category "shuffle all".
+   * under their category header and offers a per-category shuffle row
+   * ("shuffle all" when the category spans more than one deck).
    */
   category: string;
   /**

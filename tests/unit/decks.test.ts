@@ -87,6 +87,23 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
       expect(['cvc', 'digraphs', 'blends', 'magic-e']).toContain(deck.category);
     }
   });
+
+  // Magic E ships with NO `graphemes` key on any of its 28 cards — the only
+  // deck of 18 without one (see TODOS.md's split-digraph convention item).
+  // This is a deliberate, still-undecided gap: 8 of these cards are the SAME
+  // words as in blends/wh, and those originals DO carry a consonant+e split
+  // (e.g. s-blends' snake is ["sn","a","ke"]). Pinning 0/28 here means a
+  // future automated edit can't "helpfully" fill the field in with a value
+  // that would read the wrong vowel sound — this test must be updated
+  // deliberately, alongside whichever option TODOS.md's convention item
+  // eventually picks, not by a tool acting on its own.
+  it('the Magic E deck intentionally carries no graphemes key on any card', () => {
+    const magicE = decks.find((d) => d.id === 'magic-e');
+    expect(magicE?.cards).toHaveLength(28);
+    for (const card of magicE?.cards ?? []) {
+      expect(card.graphemes).toBeUndefined();
+    }
+  });
 });
 
 describe('groupByCategory() against the real fixtures', () => {
@@ -133,12 +150,20 @@ describe('groupByCategory() against the real fixtures', () => {
   // which one they're in if the two titles match. Assert over every real
   // category/deck pair so a future retitle of either side that reintroduces
   // the collision fails here immediately, not in a live user's hands.
-  it('no deck title collides with its own category title', () => {
-    for (const group of groups) {
-      for (const deck of group.decks) {
-        expect(deck.title).not.toBe(group.title);
-      }
+  // The same corner-text ambiguity applies to two DECKS sharing a title, and
+  // nothing else in the repo forbids it: validate-decks.mjs checks that a
+  // `title` exists, never that it is unique. The exhaustive title map above is
+  // a value pin, not an invariant — it is the thing you edit when adding a
+  // deck, which is exactly how the Magic E / Magic E collision shipped green.
+  // So assert the invariant on both axes: against every category title (not
+  // just its own), and against every other deck.
+  it('no deck title collides with any category title or with another deck title', () => {
+    const categoryTitles = new Set(groups.map((g) => g.title));
+    const deckTitles = groups.flatMap((g) => g.decks).map((d) => d.title);
+    for (const title of deckTitles) {
+      expect(categoryTitles.has(title)).toBe(false);
     }
+    expect(new Set(deckTitles).size).toBe(deckTitles.length);
   });
 
   // GUARD B — cross-category duplicate words are restricted to a pinned
@@ -155,11 +180,16 @@ describe('groupByCategory() against the real fixtures', () => {
   // word that already lives in some other category, with nobody noticing —
   // is completely invisible to every existing gate. This test computes every
   // word that appears in more than one category and pins the result to
-  // EXACTLY these 8 intentional duplicates. The assertion is exact (sorted
-  // array equality) so it fails loudly in BOTH directions: adding a new
-  // accidental cross-category duplicate, or removing/renaming one of the 8
-  // pinned words out of a deck, each requires a deliberate update to this
-  // allowlist rather than shipping silently.
+  // EXACTLY these 8 intentional duplicates.
+  // Pin the full word -> categories MAPPING, not just the set of words. An
+  // earlier version of this guard collected only the word list, which threw
+  // `categoryIds` away — so a word escalating from two categories to three
+  // produced a byte-identical array and passed green. The 8 pinned words are
+  // precisely the ones a future long-vowel or blends expansion would
+  // copy-paste again, so that was the likeliest way to breach it. Pinning the
+  // span makes the assertion exact in BOTH directions: a new accidental
+  // duplicate, a removed/renamed pinned word, OR an existing duplicate
+  // spreading to a third category each require a deliberate update here.
   it('cross-category duplicate words are restricted to the pinned allowlist', () => {
     const categoriesByWord = new Map<string, Set<string>>();
     for (const group of groups) {
@@ -170,13 +200,63 @@ describe('groupByCategory() against the real fixtures', () => {
         }
       }
     }
-    const crossCategoryDuplicates = [...categoriesByWord.entries()]
-      .filter(([, categoryIds]) => categoryIds.size > 1)
-      .map(([word]) => word)
-      .sort();
-    expect(crossCategoryDuplicates).toEqual(
-      ['snake', 'grape', 'plate', 'plane', 'skate', 'whale', 'slide', 'flute'].sort(),
+    const spans = Object.fromEntries(
+      [...categoriesByWord.entries()]
+        .filter(([, categoryIds]) => categoryIds.size > 1)
+        .map(([word, categoryIds]) => [word, [...categoryIds].sort()]),
     );
+    expect(spans).toEqual({
+      flute: ['blends', 'magic-e'],
+      grape: ['blends', 'magic-e'],
+      plane: ['blends', 'magic-e'],
+      plate: ['blends', 'magic-e'],
+      skate: ['blends', 'magic-e'],
+      slide: ['blends', 'magic-e'],
+      snake: ['blends', 'magic-e'],
+      whale: ['digraphs', 'magic-e'],
+    });
+  });
+
+  // GUARD C — the same allowlist discipline for `img` PATHS across categories.
+  // validate-decks.mjs's duplicate-`img` guard is scoped per category, exactly
+  // like the duplicate-word one, and art-map.test.ts keys on category + MAP
+  // hexcode. So an accidental cross-category shared drawing slips all three
+  // gates, each for a different reason. Demonstrated during the v1.7 review:
+  // pointing `jog` (cvc, deliberately image-free) at `art/globe.svg`
+  // (magic-e) passed `npm run validate`, the full unit suite AND `npm run
+  // build`, all green.
+  // Sharing a path across categories is legal by convention — a shuffle pool
+  // never spans categories, so the identical picture can't surface twice in
+  // one run — and today it happens only for the 8 duplicated words, which are
+  // the SAME word and so genuinely want the same drawing. Pinning the map
+  // keeps that true by construction: a future deck reusing another category's
+  // drawing for a DIFFERENT word has to come here and say so.
+  it('cross-category shared art paths are restricted to the duplicated words', () => {
+    const categoriesByImg = new Map<string, Set<string>>();
+    for (const group of groups) {
+      for (const deck of group.decks) {
+        for (const card of deck.cards) {
+          if (card.img == null) continue;
+          if (!categoriesByImg.has(card.img)) categoriesByImg.set(card.img, new Set());
+          categoriesByImg.get(card.img)!.add(group.id);
+        }
+      }
+    }
+    const shared = Object.fromEntries(
+      [...categoriesByImg.entries()]
+        .filter(([, categoryIds]) => categoryIds.size > 1)
+        .map(([img, categoryIds]) => [img, [...categoryIds].sort()]),
+    );
+    expect(shared).toEqual({
+      'art/flute.svg': ['blends', 'magic-e'],
+      'art/grape.svg': ['blends', 'magic-e'],
+      'art/plane.svg': ['blends', 'magic-e'],
+      'art/plate.svg': ['blends', 'magic-e'],
+      'art/skate.svg': ['blends', 'magic-e'],
+      'art/slide.svg': ['blends', 'magic-e'],
+      'art/snake.svg': ['blends', 'magic-e'],
+      'art/whale.svg': ['digraphs', 'magic-e'],
+    });
   });
 });
 

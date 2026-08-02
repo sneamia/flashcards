@@ -55,9 +55,12 @@ b80c462 docs: document the Magic E category and the single-deck shuffle label
 - Category id `magic-e`, **title "Long Vowels"** — id and title differ on
   purpose. The deck inside is titled "Magic E". They must not match; there is now
   a guard for it.
-- 28 cards, 22 illustrated, 6 word-only (cape, tape, gate, tube, mule, stone).
-- 16 new OpenMoji glyphs, every hexcode verified HTTP 200 at the pinned ref
-  `005bf5b` (OpenMoji 15.1.0) before it went into MAP.
+- 28 cards, 20 illustrated, 8 word-only (cape, tape, gate, tube, mule, stone,
+  cube, smile).
+- 12 new OpenMoji glyphs shipped (16 were verified HTTP 200 at the pinned ref
+  `005bf5b`, OpenMoji 15.1.0, before going into MAP; `mule` and `stone` were
+  cut mid-implementation and `cube` and `smile` cut in `/review` — see Fixed
+  in CHANGELOG).
 - **First single-deck category in the app's history.** `shuffleRowEl`'s
   `decks.length > 1` branch (`src/main.ts:288`, `:294`) had been dead code since
   v1.2; it now renders plain `shuffle` instead of `shuffle all`, because nothing
@@ -71,12 +74,12 @@ b80c462 docs: document the Magic E category and the single-deck shuffle label
 | Gate | Result |
 |---|---|
 | `npm run validate` | PASSED — 18 decks, 0 warnings |
-| `npx vitest run` | 101 passed (9 files) |
-| `npm run test:e2e` | 35 passed |
-| `npm run build` | clean; `tsc --noEmit` clean; precache 180 entries / 364.75 KiB |
+| `npx vitest run` | 104 passed (9 files) |
+| `npm run test:e2e` | 36 passed |
+| `npm run build` | clean; `tsc --noEmit` clean; precache 178 entries / 363.25 KiB |
 
-Totals: 18 decks / 210 cards / 202 distinct words / 173 illustrated (82%) /
-165 art SVGs / 158 MAP entries. Pools 70 / 55 / 57 / 28.
+Totals: 18 decks / 210 cards / 202 distinct words / 171 illustrated (81%) /
+163 art SVGs / 156 MAP entries. Pools 70 / 55 / 57 / 28.
 
 ## Two new guards worth knowing about
 
@@ -105,6 +108,42 @@ before being committed green:
 - It listed one stale assertion site in `decks.test.ts`; there were four, plus
   two test names carrying the old counts in prose.
 
+## What `/review` changed (2026-08-01, after the record above)
+
+Seven reviewers (5 specialists + red team + adversarial). Decisions D1–D4 taken
+by James; everything else was mechanical and auto-applied.
+
+- **Cut `cube` and `smile` art** (D2) — `cube` renders as the same tan box as
+  `block`/`box`, `smile` as the same face as `grin`. Same call as `stone`. Deck
+  is now 20 illustrated / 8 word-only; app art 171/210.
+- **Pinned cross-category art sharing** (D1) — two new guards: shared `img`
+  paths (GUARD C, `decks.test.ts`) and byte-identical files
+  (`art-svg-sizing.test.ts`, the 5 grandfathered pairs). A reviewer proved the
+  hole live: `jog` → `art/globe.svg` passed validate + unit + build green. The
+  `stone` MAP comment was narrowed from "new rule" to the judgment call it is.
+- **GUARD B strengthened** (was vacuous) — it pinned the *set* of duplicate
+  words and discarded the span, so escalating `whale` to a third category
+  passed 101/101. Now pins the full word → categories map. GUARD A extended to
+  cover deck-vs-deck title collisions.
+- **Picker keeps its scroll position** (D4) — `render()` rebuilt `.decks` every
+  time, so returning to the picker reset a ~3-viewport list to the top, with
+  Long Vowels last. ~6 lines in `src/main.ts`, pinned by e2e.
+- **`bike.svg` black fill fixed** (D3) — two fill-less `<path>`s defaulted to
+  `#000000`. The palette gate structurally cannot see a *missing* `fill`, so
+  `DESIGN.md`'s "the build fails" claim is false; 16 files on `main` leak the
+  same way. Now **TODOS P3.17**.
+- **Counts corrected** — "16 new glyphs" was 14 (now 12 after the cuts), in
+  three docs. CHANGELOG's "the build now fails if a ninth shows up" was false:
+  only `npm test` catches it, and there is no PR-triggered CI.
+- **Doc drift swept** — stale 3-category enumerations in `styles.css`,
+  `categories.ts`, `types.ts`, `ARCHITECTURE.md`, `docs-sync.test.ts`, e2e test
+  names; `README`'s "add a category = categories.ts only" corrected (this
+  branch disproved it); `add-deck` SKILL.md gained a new-category step and the
+  `graphemes` carve-out; `package-lock.json` synced 1.4.0 → 1.7.0.
+
+Both strengthened guards and the new e2e were verified **red** against real
+mutations before being accepted green.
+
 ## Open — needs James
 
 1. **The `graphemes` inconsistency (review H1, conf 9).** The 8 duplicated words
@@ -120,8 +159,11 @@ before being committed green:
 2. **Four figurative art cards to eyeball** — `home`→house glyph, `cone`→soft ice
    cream, `pine`→evergreen, `globe`→Earth. The risk is a child naming the picture
    with a word they already know, which contradicts the read instead of
-   confirming it. `mule` (donkey — wrong animal) and `stone` (byte-identical to
-   `rock`) were already cut to word-only for exactly this. → P5 device checklist.
+   confirming it. `mule` (donkey — wrong animal), `stone` (byte-identical to
+   `rock`), `cube` (reads as `block`/`box`) and `smile` (reads as `grin`) were
+   all cut to word-only for exactly this — the last two in `/review`. These
+   four survive because the risk is a *naming* call a real child has to settle,
+   not a duplicate-drawing call with an existing precedent. → P5 device checklist.
 3. **`rowEl`/`shuffleRowEl` extract is now triggered** — the parked condition was
    "next time either changes", and `shuffleRowEl` changed here.
 

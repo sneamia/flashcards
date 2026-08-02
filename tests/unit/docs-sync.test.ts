@@ -22,7 +22,7 @@ import README from '../../README.md?raw';
 import { groupByCategory, loadDecks } from '../../src/decks';
 
 // Display-ordered real totals, derived exactly the way the picker derives
-// them (CVC, Digraphs, Blends at v1.4).
+// them (CVC, Digraphs, Blends, Long Vowels as of v1.7).
 const real = groupByCategory(loadDecks()).map((g) => ({
   id: g.id,
   decks: g.decks.length,
@@ -50,6 +50,17 @@ describe('README.md category counts stay in sync with decks/*.json', () => {
 
   it('deck and word counts match the loaded deck data, in display order', () => {
     expect(documented).toEqual(real.map(({ decks, words }) => ({ decks, words })));
+  });
+
+  // The bullet list above is guarded (one bullet per category, counts pinned),
+  // but the sentence that INTRODUCES it — "Four phonics categories" — was not
+  // parsed by anything, so a fifth category could ship with five correct
+  // bullets under a header still reading "Four". v1.7 had to hand-edit
+  // Three -> Four, which is precisely the drift this file exists to stop.
+  it('the "N phonics categories" lead-in matches the real category count', () => {
+    const m = README.match(/(\w+) phonics categories/);
+    expect(m).not.toBeNull();
+    expect(NUMBER_WORDS[m![1].toLowerCase()]).toBe(real.length);
   });
 });
 

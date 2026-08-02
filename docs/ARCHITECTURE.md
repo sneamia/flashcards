@@ -23,8 +23,8 @@ src/
   decks.ts       # deck loader + category grouping + shuffle-pool builder (skip sentence) — Core-logic agent
   main.ts        # DOM wiring: renders screens, owns timers/wakelock/persistence — Core-logic agent
 decks/
-  17 deck JSONs — cvc + cvc-{a,e,i,o,u} · sh ch th wh ng ck ·
-  blends + {l,r,s,end}-blends                            # Deck-data agent
+  18 deck JSONs — cvc + cvc-{a,e,i,o,u} · sh ch th wh ng ck ·
+  blends + {l,r,s,end}-blends · magic-e                  # Deck-data agent
 public/
   art/*.svg      # placeholder + pipeline art — Build-scripts agent
   fonts/*.woff2  # Andika — PWA/fonts agent
@@ -157,7 +157,7 @@ import type { CategoryGroup, Deck } from './types';
 // JSON file" holds. Strips sentence cards (v1 skip) so the corner counter
 // counts renderable cards. Returns renderable decks (flat).
 export function loadDecks(): Deck[];
-// Groups decks under their category (CVC, Digraphs, Blends) in category
+// Groups decks under their category (CVC, Digraphs, Blends, Long Vowels) in category
 // display order, decks sorted by intra-category `order`, empty categories
 // dropped. Pure (takes the manifest as an arg). Drives the grouped picker.
 export function groupByCategory(decks: Deck[], categories?): CategoryGroup[];
@@ -226,7 +226,7 @@ nothing yet listening. The reload can't loop: its `boot()` sees
   (the picker groups decks under their category header). validate-decks.mjs enforces it.
 - `order`: the sort key WITHIN its category, unique per category (digraphs: sh=1, ch=2,
   th=3, wh=4, ng=5, ck=6; cvc: cvc=1 then cvc-a…cvc-u=2…6; blends: blends=1 then
-  l/r/s/end-blends=2…5).
+  l/r/s/end-blends=2…5; magic-e: magic-e=1).
 - `id` must NOT start with `shuffle:` — that namespace is reserved for the synthetic
   per-category "shuffle all" decks built at runtime.
 - A word WITH `img` is a two-beat reveal card; WITHOUT `img` it's a one-beat card.

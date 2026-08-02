@@ -8,8 +8,8 @@
    deck `order` field. Pure data, no DOM.
 
    The `order` field is the PICKER display order of the categories themselves
-   (CVC first, then Digraphs, then Blends) — distinct from a deck's `order`,
-   which sorts decks WITHIN a category.
+   (CVC first, then Digraphs, then Blends, then Long Vowels) — distinct from a
+   deck's `order`, which sorts decks WITHIN a category.
 
    validate-decks.mjs can't import this .ts, so it derives the id set by
    regex-parsing the `id:` literals out of this file at runtime — the two

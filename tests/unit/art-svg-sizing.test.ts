@@ -26,10 +26,46 @@ const ART = import.meta.glob('../../public/art/*.svg', {
   eager: true,
 }) as Record<string, string>;
 
+/* Byte-identical art files. Two words legitimately share a drawing when
+   OpenMoji has one glyph for both concepts (bath/tub, hut/shed) — legal
+   because a shuffle pool never spans categories, so the same picture can
+   never surface twice inside one run. But "legal" has been doing a lot of
+   unexamined work: v1.6 cut `jog`'s art for colliding with `run`'s, and v1.7
+   cut `stone`'s for being byte-identical to `rock`'s, both on the reasoning
+   that a child's memory spans categories even though a shuffle pool doesn't.
+   Nothing enforced either call, so the set of identical pairs could grow
+   silently. This pins it: adding a sixth pair is now a deliberate edit here,
+   where the jog/stone precedent is written down and can be applied or
+   consciously waived. Lives in this file because it already globs the raw
+   art bytes (see APPROACH above). */
+describe('byte-identical art files', () => {
+  it('duplicate drawings are restricted to the pinned pairs', () => {
+    const byContent = new Map<string, string[]>();
+    for (const [path, src] of Object.entries(ART)) {
+      const name = path.replace(/^.*\//, '').replace(/\.svg$/, '');
+      if (!byContent.has(src)) byContent.set(src, []);
+      byContent.get(src)!.push(name);
+    }
+    const duplicateGroups = [...byContent.values()]
+      .filter((names) => names.length > 1)
+      .map((names) => [...names].sort())
+      .sort((a, b) => a[0].localeCompare(b[0]));
+    expect(duplicateGroups).toEqual([
+      ['bath', 'tub'],
+      ['dish', 'plate'],
+      ['drip', 'wet'],
+      ['hut', 'shed'],
+      ['jet', 'plane'],
+    ]);
+  });
+});
+
 describe('art SVG root dimensions', () => {
   it('loads the full art set (anti-vacuous guard)', () => {
-    // 165 files at v1.7 (up from 151 at v1.6 — jog's art was dropped in v1.6,
-    // see TODOS P1.1 — then the Long Vowels deck's art landed in v1.7); a
+    // 163 files at v1.7 (up from 151 at v1.6 — jog's art was dropped in v1.6,
+    // see TODOS P1.1 — then the Long Vowels deck's art landed in v1.7, 12 net
+    // after cube and smile were cut in review for reading as block/box and
+    // grin); a
     // collapsed glob means the path moved — fail loudly rather than pass on an
     // empty set.
     expect(Object.keys(ART).length).toBeGreaterThan(100);

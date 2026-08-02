@@ -106,10 +106,17 @@ for any new illustrations. Decks are
 auto-discovered, grouped under their category, and sorted by `order` — **no
 app-logic changes required.** (Per Eng Decision #11: this is *not* "zero code
 changes" in general — a new deck still needs an art-pipeline run and passes
-through build-time validation — but it never touches `src/`.) To add a *new
-category*, add it to `src/categories.ts` only — `scripts/validate-decks.mjs`
-derives the valid category id set from that file at build time, so the two can't
-drift.
+through build-time validation — but it never touches `src/`.)
+
+To add a *new category*, the only `src/` change is a `{ id, title, order }`
+entry in `src/categories.ts` — `scripts/validate-decks.mjs` regex-derives the
+valid category id set from that file, so a deck can never name a category that
+doesn't exist. Note that guard runs in one direction only: a category with no
+decks passes every gate and simply never renders (`groupByCategory()` drops
+empty groups), so ship the category together with at least one deck. Beyond
+those two files you also owe a README bullet here (pinned by
+`tests/unit/docs-sync.test.ts`) and the pinned id/title/count arrays in
+`tests/unit/decks.test.ts` and `tests/e2e/flows.spec.ts`.
 
 ## Deploy
 

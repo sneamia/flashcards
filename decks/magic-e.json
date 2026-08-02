@@ -21,7 +21,7 @@
     { "type": "word", "text": "five", "img": "art/five.svg" },
     { "type": "word", "text": "nine", "img": "art/nine.svg" },
     { "type": "word", "text": "slide", "img": "art/slide.svg" },
-    { "type": "word", "text": "smile", "img": "art/smile.svg" },
+    { "type": "word", "text": "smile" },
     { "type": "word", "text": "pine", "img": "art/pine.svg" },
     { "type": "word", "text": "bone", "img": "art/bone.svg" },
     { "type": "word", "text": "stone" },
@@ -30,7 +30,7 @@
     { "type": "word", "text": "cone", "img": "art/cone.svg" },
     { "type": "word", "text": "rope", "img": "art/rope.svg" },
     { "type": "word", "text": "flute", "img": "art/flute.svg" },
-    { "type": "word", "text": "cube", "img": "art/cube.svg" },
+    { "type": "word", "text": "cube" },
     { "type": "word", "text": "mule" },
     { "type": "word", "text": "tube" }
   ]
