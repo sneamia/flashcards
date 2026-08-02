@@ -8,8 +8,8 @@
    deck `order` field. Pure data, no DOM.
 
    The `order` field is the PICKER display order of the categories themselves
-   (CVC first, then Digraphs, then Blends) — distinct from a deck's `order`,
-   which sorts decks WITHIN a category.
+   (CVC first, then Digraphs, then Blends, then Long Vowels) — distinct from a
+   deck's `order`, which sorts decks WITHIN a category.
 
    validate-decks.mjs can't import this .ts, so it derives the id set by
    regex-parsing the `id:` literals out of this file at runtime — the two
@@ -29,4 +29,5 @@ export const CATEGORIES: CategoryMeta[] = [
   { id: 'cvc', title: 'CVC', order: 0 },
   { id: 'digraphs', title: 'Digraphs', order: 1 },
   { id: 'blends', title: 'Blends', order: 2 },
+  { id: 'magic-e', title: 'Long Vowels', order: 3 },
 ];

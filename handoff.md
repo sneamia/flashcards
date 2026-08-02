@@ -1,107 +1,176 @@
-# Handoff — v1.6 backlog quick-wins sweep (MERGED + DEPLOYED as v1.6.0)
+# Handoff — v1.7 Long Vowels category (BRANCH, not yet reviewed or shipped)
 
-**Branch:** `v1.6/backlog-quick-wins` — squash-merged as `c0652c6` (PR #9), remote branch deleted. Base was `main` @ `3324acc`.
-**Date:** 2026-07-26 · **Status:** DONE. All three waves landed; full gate green (validate / 98 unit / 33 e2e / build); adversarial review, coverage audit, 4 review specialists and a red team all done, findings fixed or backlogged; shipped as v1.6.0, merged, deployed to GitHub Pages, and canary-verified live (200, 0 console errors, 2.42s load).
-**Source docs:** `TODOS.md` (updated to match — the shipped items are out of the backlog and in its Shipped history), repo `DESIGN.md`, `CLAUDE.md` conventions.
+**Branch:** `v1.7/magic-e-category` — 16 commits ahead of `main` @ `1783040` (13 as of this record's original write-up, plus 3 more from the review pass — see "What `/review` changed" below). Not squashed, not PR'd, not merged, not deployed.
+**Date:** 2026-08-01 · **Status:** implementation complete, all four gates green, `/review`'s adversarial pass done and its findings fixed or backlogged (see below). **Next step is opening the PR, then `/ship`.**
+**Source docs:** the spec authored in-session via `/spec` (archived under `~/.gstack/projects/flashcards/specs/`), `TODOS.md` (updated), repo `DESIGN.md`, `CLAUDE.md` conventions. The v1.6 record this replaced lives at git `1783040:handoff.md`.
 
 ## What this was
 
-Autonomous execution of the independently-completable TODOS.md items (James's directive: tackle direct-path items via Sonnet subagents, leave anything needing his input). Decomposed into 3 waves of file-disjoint subagents, then a fresh adversarial review on the full diff.
+Add silent-e / CVCe as a fourth category — the natural pedagogy step after
+blends, and the first new category since the app shipped with three. Specced
+first (it was a `plan first` backlog item), then implemented in three
+file-disjoint waves plus a review-fix pass.
+
+Two things worth carrying forward: the spec's own "what breaks" table was wrong
+in two places, and the adversarial review found three HIGH findings. Both are
+recorded here rather than quietly corrected.
 
 ## Scope decisions made (do not re-litigate)
 
-- **Did:** P1.1 (jog art, option (a)), P1.2(a) ONLY, P3.7, P3.8, P3.9, P3.10, P4.12, P4.13, P4.14.
-- **Left for James (do NOT start):** P1.2(b)/(d) (product decisions: captive-portal boot behavior, required-set contents), P1.2(c) (needs real iOS device), P1.3 Mulberry (design sign-off gate), P2.4/2.5/2.6 (content design / child session), P3.11 (parked, accepted risk), P5 lists (device/child sessions), Long Vowels idea (pedagogy sign-off), type-scale proposed drop (needs his delete confirmation).
+James decided these explicitly during the spec (D1–D5):
+
+- **One deck, not per-vowel.** Word supply is lopsided — u_e yields only 3 usable
+  words, so per-vowel decks would ship a visible runt.
+- **No `graphemes` key** on any Magic E card. **This one needs revisiting — see
+  Open below.**
+- **Soft c/g, s=/z/, `ph` words held back** (face, page, race, space, rice, mice,
+  nose, rose, phone). Each smuggles in a rule the app has never taught. Now its
+  own TODOS item, with art already researched and verified.
+- **The 8 existing magic-e words duplicated in, not moved.** Moving them would
+  reorder cards mid-deck in 5 shipped decks — the exact trigger condition TODOS
+  item 11 names for revisiting the resume-by-index bug.
+- **28 cards**, longest deck in the app (previous max 20, `cvc`). I raised the
+  session-length concern; James reaffirmed. A chosen trade, not a defect.
 
 ## Done (`git log --oneline main..`)
 
-Waves 1–3 — the backlog items:
-
-| Commit | Item | What |
-|---|---|---|
-| `deaf3e0` | P1.1 | jog's img dropped (deck edit + MAP removal + `git rm public/art/jog.svg`). Art coverage now **151/182 by design**. |
-| `588e7ad` | P3.7 | `state = initialState()` in render()'s null-deck recovery branch (defense-in-depth; branch provably unreachable today). |
-| `18f2429` | P3.10 | `ART_SAMPLE_COUNT = 2` named constant; cap derived from pre-loop url count. |
-| `d9dca2d` | P3.8 | validate-decks: per-category duplicate-word guard (negative-fixture verified). |
-| `46a6eaa` | P3.9 | validate-decks: CATEGORY_IDS parse anchored to the `CATEGORIES` literal (negative-fixture verified). |
-| `9c26d00` | P4.13 | `resolveShuffleDeck(groups, startId, rng)` extracted to `src/decks.ts`; unknown-category → null now unit-tested. 94 → 97 unit tests. |
-| `0d39e0d` | P4.12 + P4.14 | Painted-ink canvas-alpha guard on the reveal art; e2e for the pointercancel release path and visibilitychange→hidden pointer reset. |
-| `b695c77` | P1.2(a) | Restore recovery also re-checks on `visibilitychange`→visible + `navigator.onLine` (a backgrounded PWA can coalesce/drop the `online` event). |
-| `08dbcce` | P4.14 | e2e for `gatherPresentUrls`' two untested branches (`!('caches' in window)`, `caches.match` throwing). |
-
-Review follow-ups (from the fresh adversarial pass on `git diff main...HEAD`):
-
-| Commit | Finding | What |
-|---|---|---|
-| `a2a537a` | F5 | validate-decks also strips `/* … */` from the CATEGORIES block — 46a6eaa stripped only `//`, so a block-commented id still leaked. Red-then-green proven. |
-| `5b74f5a` | nit | Stale "~152 files at v1.5" comment in `art-svg-sizing.test.ts` → 151. |
-| `134bbb3` | F8 | Restore recovery re-checks once right after attaching both listeners — connectivity returning during boot's own `await`s fired `online` with nothing listening yet. Has a real (non-vacuous) test via a parked-probe caches stub. |
-| `1b2b138` | F2 + F4 | **The important one.** The two new pointer tests asserted only that a later tap still ADVANCES — which the recognizer guarantees regardless, so they passed even with main.ts's own `releasePointer`/`resetPointerTracking` calls gated off. They now also assert long-press EXIT still arms (the thing a stale `downPointerIds` entry actually breaks: no way out of a deck for 10s after an iOS pointer-steal). Both mutation-verified red→green. Also ink-guards `whip`, P4.12's motivating card. |
-| `559b1a7` | F1 + F6 + F7 | The no-Cache-API test no longer overclaims (deleting that `if` makes the call throw into the catch below for an identical outcome, so no test can distinguish them); restore.spec header corrected; missing `.catch()` on the reload-triggering evaluate. |
-
-Then `/ship` ran its own gates, which found more:
-
-| Commit | Source | What |
-|---|---|---|
-| `b41a9ba` | coverage audit | The P1.1 fix had **no enforcement** — only a human eyeball pass. Added a per-category shared-glyph invariant test (mutation-verified: `pan`→`map`'s hex trips it, precisely, with no collateral failures). |
-| `382a6d7` | coverage audit | The last untested recovery branch: a foreground return while STILL offline must be a no-op *and* must leave recovery armed. Needed a boot counter, a document sentinel, and a bounded settle — the first version of this test passed with the guard deleted because its assertions raced the navigation. |
-| `73846f3` | **red team** | The most important finding of the whole branch. `b41a9ba`'s guard keys on the fetch-art MAP, so it is blind to the likelier reintroduction: pointing a card's `img` straight at another word's file. Proven by execution — `jog` → `art/run.svg` left validate PASSING and 98/98 unit tests green. Closed with a `cardImgsByCategory` guard in the validator, which checks the rendered artifact. Both checks are needed; neither subsumes the other. |
-| `dfb1f00` | red team | `paintedInkFraction()` rasterized the reveal `<img>` without waiting for `img.complete`; `drawImage` on an incomplete image is a silent no-op, so the failure mode was a false RED. Now gated on `complete`. |
-
-Docs (`3be5724`): `package.json` 1.5.0 → 1.6.0, `CHANGELOG.md` 1.6.0 entry, `TODOS.md`, `CLAUDE.md`, `handoff.md`. Then `/document-release` (`3e491c2`, `5035505`) synced the two docs that commit missed: `docs/ARCHITECTURE.md` (the new `resolveShuffleDeck` export, the three restore-recovery signals, the per-category `text`/`img` rule) and `.claude/skills/add-deck/SKILL.md` (the same rule at the point an author picks art, with each of the two reintroduction paths attributed to the gate that actually catches it — `npm test` for a reused MAP hexcode, `npm run validate` for a reused `img` path).
-
-## Verification (all run on the final tree)
-
-- `npm run validate` → 17 decks, 0 warnings
-- `npx vitest run` → **98 passed** (was 94 on `main`)
-- `npm run test:e2e` → **33 passed** (was 26 on `main`)
-- `npm run build` → green (`tsc --noEmit` + vite, 166 precache entries)
-
-Reviews run: the original adversarial pass, then `/ship`'s coverage audit, four
-review specialists (testing / maintainability / **security: no findings** /
-performance), and a red team. 13 findings total; 1 critical (fixed), 5 fixed,
-2 backlogged as new **P3.15** (no persistent test harness for `scripts/*.mjs` —
-the CATEGORIES anchor already regressed once inside this branch) and **P3.16**
-(gesture EXIT dead ≤10s after a lost pointer terminator, pre-existing v1.1), and
-5 skipped with rationale recorded in the PR body.
-
-**A methodology note worth carrying forward** (logged as a project learning):
-`playwright.config.ts` sets `reuseExistingServer: !CI` and its webServer runs
-`npm run build && npm run preview`. Mutation-testing a `src/` change therefore
-requires an explicit `npm run build` first — otherwise the suite is served a
-stale `dist/`, **every mutation appears survivable, and red-then-green evidence
-is worthless**. This bit twice during this branch.
-
-Also confirmed by the reviewer, independently: `src/machine.ts` untouched (Eng #11); nothing from the deferred P1.2(b)/(c)/(d) leaked in; DESIGN.md intact (no motion/sound/gamification); the art set is internally consistent (144 MAP entries, 182 word cards, 151 with `img`, 151 files in `public/art/`, zero orphans, zero missing); and **zero same-hexcode collisions remain within any single category** — the five byte-identical art pairs (tub/bath, dish/plate, drip/wet, hut/shed, jet/plane) are all cross-category, so no shuffle pool can show one drawing for two words. That closes P1.1's "one eyeball pass, then accept" note.
+```
+874a302 docs: close the Magic-E backlog item and record what v1.7 review left open
+07d126a docs: sync CLAUDE.md current state to the in-flight v1.7 branch
+c2d6c08 v1.7.0: Long Vowels category with the 28-card Magic E deck
+186d058 docs: add the Long Vowels category to the doc enumerations and fix the u_e rule
+1fd6cf1 test: guard deck-vs-category titles and cross-category duplicate words
+7151781 fix: rename the category to Long Vowels and drop misleading mule/stone art
+70ab071 chore: gitignore the /implement wave-state directory
+971c0d5 docs: correct the stale single-deck shuffle comment in shuffleRowEl
+5d8bda0 test: cover the four-category picker and the single-deck shuffle label
+b80c462 docs: document the Magic E category and the single-deck shuffle label
+47cea1a test: pin deck and category totals to 18 decks / 4 categories
+0b8636f feat: add the Magic E deck as a fourth category (28 cards)
+84ba0d9 feat: add OpenMoji art for the Magic E deck (16 glyphs)
+```
 
 ## Shipped
 
-Squash-merged as `c0652c6` (PR #9, the convention every release since #2 has
-used), GitHub Pages deploy run `30213826580` succeeded in 44s, and the live site
-canary-verified: 200, zero console errors, 2.42s load, full picker rendering all
-17 decks with pools 70/55/57. Report: `.gstack/deploy-reports/2026-07-26-pr9-deploy.md`.
+- Category id `magic-e`, **title "Long Vowels"** — id and title differ on
+  purpose. The deck inside is titled "Magic E". They must not match; there is now
+  a guard for it.
+- 28 cards, 20 illustrated, 8 word-only (cape, tape, gate, tube, mule, stone,
+  cube, smile).
+- 12 new OpenMoji glyphs shipped (16 were verified HTTP 200 at the pinned ref
+  `005bf5b`, OpenMoji 15.1.0, before going into MAP; `mule` and `stone` were
+  cut mid-implementation and `cube` and `smile` cut in `/review` — see Fixed
+  in CHANGELOG).
+- **First single-deck category in the app's history.** `shuffleRowEl`'s
+  `decks.length > 1` branch (`src/main.ts:288`, `:294`) had been dead code since
+  v1.2; it now renders plain `shuffle` instead of `shuffle all`, because nothing
+  is being combined. Pinned by e2e in *both* directions with exact-match
+  assertions — `toContainText('shuffle')` passes for either label and would
+  prove nothing.
+- **First cross-category duplicate words**: 210 cards, 202 distinct.
 
-One correction landed after the merge, in the post-merge docs sync: CHANGELOG's
-"The build now refuses to ship either bug above" over-claimed. `npm run build` is
-`prebuild` (validate + check-contrast) then `tsc --noEmit && vite build` — it
-never invokes vitest or playwright, so the restore-card fix has no build-time
-gate (e2e only) and the shared-drawing fix is only half build-gated (the
-MAP-hexcode route is caught by `npm test`). Caught by the `/document-release`
-pass, which escalated it rather than silently rewording a shipped CHANGELOG
-entry. That was the right call.
+## Verification (final tree)
 
-Note on versioning: this repo keeps its version in `package.json` as 3-digit
-semver (`1.6.0`) with a Keep-a-Changelog `CHANGELOG.md`. gstack's
-`gstack-version-bump` CLI assumes a 4-digit `VERSION` file and reports
-`DRIFT_UNEXPECTED` here — that is the scheme mismatch, not real drift
-(`baseVersion`/`currentVersion` both read `0.0.0.0` because no `VERSION` file
-exists). The bump was done by hand to stay consistent with the repo's own
-convention and docs rather than inventing a `VERSION` file to satisfy the tool.
+| Gate | Result |
+|---|---|
+| `npm run validate` | PASSED — 18 decks, 0 warnings |
+| `npx vitest run` | 105 passed (9 files) |
+| `npm run test:e2e` | 36 passed |
+| `npm run build` | clean; `tsc --noEmit` clean; precache 178 entries / 363.25 KiB |
 
-For the PR body, two things worth surfacing to James:
-- **P1.2(a) widens the funnel into the deliberately-deferred P1.2(b) hole.** Recovery now triggers on every foreground return while `onLine`, not just a one-shot event, so a captive-portal reload (connected, no internet → degraded cards with no guidance, which TODOS itself calls "worse than the restore card") is reachable more often. Exposure class is unchanged — the existing `online` listener already reached the same code — but it raises P1.2(b)'s priority. Noted in TODOS.md.
-- **The direct-path backlog is now exhausted.** Everything left is `plan first` / `decision only` / device-or-child-session. The next PR needs his input first; leading candidate is the P1.2(b)+(d) offline spec.
+Totals: 18 decks / 210 cards / 202 distinct words / 171 illustrated (81%) /
+163 art SVGs / 156 MAP entries. Pools 70 / 55 / 57 / 28.
 
-## Deferred / follow-ups
+## Two new guards worth knowing about
 
-See "Left for James" above and `TODOS.md` P1.2(b–d), P1.3, P2, P3.11, P5, Ideas, Conditional/parked, Proposed drops. The v1.3 historical handoff this file replaced is preserved at git `2985084:handoff.md`.
+Both in `tests/unit/decks.test.ts`, both deliberately broken and re-verified red
+before being committed green:
+
+- **A deck title never equals its own category title.** v1.4 retitled `CVC Mix`
+  and `Mixed Blends` precisely to stop them echoing their headers, but that rule
+  lived *only* as a prose comment in a test — which is why this branch first
+  shipped a `Magic E` deck under a `Magic E` header with the whole suite green.
+  A collision also makes a deck run and a category shuffle run render an
+  identical in-run corner (`${title} · 1 of 28` either way) even though only the
+  deck run is resumable.
+- **Cross-category duplicate words restricted to a pinned 8-word allowlist.**
+  `validate-decks.mjs`'s duplicate-word guard is scoped per category, so the
+  moment intentional duplicates existed, an *accidental* one became invisible to
+  every gate in the repo.
+
+## Where the spec was wrong (for calibration)
+
+- It named `NUMBER_WORDS` in `docs-sync.test.ts` as the fix for documenting a
+  single-deck category, but missed that the regex on the next line hardcodes the
+  plural `decks,`. A subagent caught it and correctly refused to force the suite
+  green. Fix was widening the pattern to `decks?,`, which changes what the guard
+  *parses*, not what it *asserts*.
+- It listed one stale assertion site in `decks.test.ts`; there were four, plus
+  two test names carrying the old counts in prose.
+
+## What `/review` changed (2026-08-01, after the record above)
+
+Seven reviewers (5 specialists + red team + adversarial). Decisions D1–D4 taken
+by James; everything else was mechanical and auto-applied.
+
+- **Cut `cube` and `smile` art** (D2) — `cube` renders as the same tan box as
+  `block`/`box`, `smile` as the same face as `grin`. Same call as `stone`. Deck
+  is now 20 illustrated / 8 word-only; app art 171/210.
+- **Pinned cross-category art sharing** (D1) — two new guards: shared `img`
+  paths (GUARD C, `decks.test.ts`) and byte-identical files
+  (`art-svg-sizing.test.ts`, the 5 grandfathered pairs). A reviewer proved the
+  hole live: `jog` → `art/globe.svg` passed validate + unit + build green. The
+  `stone` MAP comment was narrowed from "new rule" to the judgment call it is.
+- **GUARD B strengthened** (was vacuous) — it pinned the *set* of duplicate
+  words and discarded the span, so escalating `whale` to a third category
+  passed 101/101. Now pins the full word → categories map. GUARD A extended to
+  cover deck-vs-deck title collisions.
+- **Picker keeps its scroll position** (D4) — `render()` rebuilt `.decks` every
+  time, so returning to the picker reset a ~3-viewport list to the top, with
+  Long Vowels last. ~6 lines in `src/main.ts`, pinned by e2e.
+- **`bike.svg` black fill fixed** (D3) — two fill-less `<path>`s defaulted to
+  `#000000`. The palette gate structurally cannot see a *missing* `fill`, so
+  `DESIGN.md`'s "the build fails" claim is false; 16 files on `main` leak the
+  same way. Now **TODOS P3.17**.
+- **Counts corrected** — "16 new glyphs" was 14 (now 12 after the cuts), in
+  three docs. CHANGELOG's "the build now fails if a ninth shows up" was false:
+  only `npm test` catches it, and there is no PR-triggered CI.
+- **Doc drift swept** — stale 3-category enumerations in `styles.css`,
+  `categories.ts`, `types.ts`, `ARCHITECTURE.md`, `docs-sync.test.ts`, e2e test
+  names; `README`'s "add a category = categories.ts only" corrected (this
+  branch disproved it); `add-deck` SKILL.md gained a new-category step and the
+  `graphemes` carve-out; `package-lock.json` synced 1.4.0 → 1.7.0.
+
+Both strengthened guards and the new e2e were verified **red** against real
+mutations before being accepted green.
+
+## Open — needs James
+
+1. **The `graphemes` inconsistency (review H1, conf 9).** The 8 duplicated words
+   already carry consonant+e splits in their original decks — `snake` is
+   `["sn","a","ke"]` in s-blends, and v1.4 shipped `grape` as `gr·a·pe`
+   deliberately. So the same word now has phonics data in one deck and none in
+   the other, and nothing catches it: the validator only checks `graphemes` when
+   present, and no test asserts coverage. Decision D2 was taken without this fact
+   on the table. Three options are written up in `TODOS.md` under the parked
+   convention item; **(c) pin 0/28 as intentional with a test** is cheapest,
+   **(a) strip graphemes from the 8 originals** is most consistent. Until it is
+   settled, do not let a tool fill that field in.
+2. **Four figurative art cards to eyeball** — `home`→house glyph, `cone`→soft ice
+   cream, `pine`→evergreen, `globe`→Earth. The risk is a child naming the picture
+   with a word they already know, which contradicts the read instead of
+   confirming it. `mule` (donkey — wrong animal), `stone` (byte-identical to
+   `rock`), `cube` (reads as `block`/`box`) and `smile` (reads as `grin`) were
+   all cut to word-only for exactly this — the last two in `/review`. These
+   four survive because the risk is a *naming* call a real child has to settle,
+   not a duplicate-drawing call with an existing precedent. → P5 device checklist.
+3. **`rowEl`/`shuffleRowEl` extract is now triggered** — the parked condition was
+   "next time either changes", and `shuffleRowEl` changed here.
+
+## Known gap (non-blocking)
+
+The adversarial review ran **Claude-only** — no independent cross-model check.
+Codex is disabled on this account (`codex_reviews: disabled`), and `/implement`
+has no `codex exec` dispatch wired regardless. Recorded, not a blocker. `/review`
+*does* shell out to Codex, so running it next is the first genuine cross-model
+coverage this branch will get.

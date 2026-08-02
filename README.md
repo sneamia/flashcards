@@ -6,7 +6,7 @@ screen. That inversion is the whole point: no menus, no mascots, no reward
 loops, nothing competing for the child's attention. Just a word, then an
 illustration that confirms the read, then the next word.
 
-Three phonics categories, shown grouped in the deck picker:
+Four phonics categories, shown grouped in the deck picker:
 
 - **CVC** — a starter deck of short-vowel three-letter words (cat, hen, pig,
   dog, bus…) plus one deck per short vowel (Short A/E/I/O/U): six decks, 70 words.
@@ -15,11 +15,16 @@ Three phonics categories, shown grouped in the deck picker:
 - **Blends** — a starter deck of initial/final consonant blends (flag, frog,
   star, nest…) plus L-Blends, R-Blends, S-Blends, and Ending Blends: five
   decks, 57 words.
+- **Long Vowels** — the Magic E deck: a final `e` makes the earlier vowel say
+  its name (cake, kite, bone); u_e has two sounds, as in cube and as in flute.
+  Covers a_e, i_e, o_e, and u_e: one deck, 28 words.
 
-Each category also offers an optional **"shuffle all"** entry that mixes every
-card in the category into a random order for review. The authored per-deck order
-is the default and stays the primary path — shuffle is an extra, opt-in row, and
-a shuffle run is deliberately not resumable across a relaunch.
+Each category also offers an optional **shuffle** entry that mixes every
+card in the category into a random order for review — labeled "shuffle all"
+for a multi-deck category, or plain "shuffle" for a single-deck one. The
+authored per-deck order is the default and stays the primary path — shuffle is
+an extra, opt-in row, and a shuffle run is deliberately not resumable across a
+relaunch.
 
 Words are chosen for high illustration coverage (>75%); where a plain glyph
 won't read, the art is figurative — e.g. `chin` is a face with an arrow to the
@@ -69,8 +74,9 @@ Runs deck validation and a contrast check (`prebuild`), then `tsc --noEmit`
 and the Vite production build into `dist/`. Deck validation also gates the
 art: every shipped SVG must stay within the six-hex warm palette (the
 `KEEP_COLORS` color-word exception in `scripts/fetch-art.mjs` is the only
-sanctioned deviation), and every card's `graphemes` split must join back to
-its word. It also rejects two cards in the same category that share a word or
+sanctioned deviation) — though an element that omits `fill` entirely defaults
+to black undetected, a known gap tracked as `TODOS.md` P3.17 — and every
+card's `graphemes` split must join back to its word. It also rejects two cards in the same category that share a word or
 an illustration — either one would appear twice in that category's shuffle
 pool, and the same drawing on two different words defeats the point of the
 reveal. (Reuse *across* categories is deliberate and stays allowed; a shuffle
@@ -93,16 +99,25 @@ for success.
 ## Adding a deck
 
 Add a new JSON file to `decks/` following the existing schema (include a
-`category` of `cvc`, `digraphs`, or `blends`, and an `order` unique within that
-category; no word and no `img` may repeat one already used by another deck in
-the same category) and run the art pipeline for any new illustrations. Decks are
+`category` of `cvc`, `digraphs`, `blends`, or `magic-e` — note `magic-e`'s
+display title is "Long Vowels", so the id and the title differ — and an
+`order` unique within that category; no word and no `img` may repeat one
+already used by another deck in the same category) and run the art pipeline
+for any new illustrations. Decks are
 auto-discovered, grouped under their category, and sorted by `order` — **no
 app-logic changes required.** (Per Eng Decision #11: this is *not* "zero code
 changes" in general — a new deck still needs an art-pipeline run and passes
-through build-time validation — but it never touches `src/`.) To add a *new
-category*, add it to `src/categories.ts` only — `scripts/validate-decks.mjs`
-derives the valid category id set from that file at build time, so the two can't
-drift.
+through build-time validation — but it never touches `src/`.)
+
+To add a *new category*, the only `src/` change is a `{ id, title, order }`
+entry in `src/categories.ts` — `scripts/validate-decks.mjs` regex-derives the
+valid category id set from that file, so a deck can never name a category that
+doesn't exist. Note that guard runs in one direction only: a category with no
+decks passes every gate and simply never renders (`groupByCategory()` drops
+empty groups), so ship the category together with at least one deck. Beyond
+those two files you also owe a README bullet here (pinned by
+`tests/unit/docs-sync.test.ts`) and the pinned id/title/count arrays in
+`tests/unit/decks.test.ts` and `tests/e2e/flows.spec.ts`.
 
 ## Deploy
 

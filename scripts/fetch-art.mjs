@@ -227,6 +227,41 @@ const MAP = {
   bread: '1F35E',     // bread
   brush: '1F58C',     // lower left paintbrush (~ brush)
 
+  // --- Magic E (magic-e) ---
+  cake: 'E0C7',       // cake (extras-openmoji; plain cake, no candles)
+  wave: '1F30A',      // water wave
+  kite: '1FA81',      // kite
+  bike: '1F6B2',      // bicycle (~ bike)
+  five: '0035-FE0F-20E3', // keycap 5 (numeral reads as "five")
+  nine: '0039-FE0F-20E3', // keycap 9 (numeral reads as "nine")
+  // smile: 1F642 (slightly smiling face) renders, after the palette remap, as
+  // the same tan circle with two dots and a curved mouth as `grin` (1F600,
+  // r-blends) — a child names both "happy face". Same call as `stone` below.
+  // Left unmapped — image-free card.
+  pine: '1F332',      // evergreen tree (~ pine)
+  bone: '1F9B4',      // bone
+  // stone: public/art/stone.svg was byte-identical to `rock`'s (1FAA8,
+  // digraphs). Cross-category hex reuse is legal by convention (a shuffle
+  // pool never spans categories) and five pairs ship that way — see the
+  // pinned allowlist in tests/unit/decks.test.ts. This one is a judgment
+  // call rather than a new rule: rock and stone are near-synonyms a
+  // preschooler may treat as ONE word, so the identical picture reads as the
+  // app having lost its place rather than as two words that happen to share
+  // a drawing (same reasoning that dropped `jog`'s art in favor of `run`'s —
+  // see above). Left unmapped — image-free card.
+  globe: '1F30D',     // globe showing Europe-Africa (~ globe)
+  home: '1F3E0',      // house (~ home)
+  cone: '1F366',      // soft ice cream (~ cone; the cone shape)
+  rope: '1FAA2',      // knot (~ rope)
+  // cube: 1F9CA (ice) renders as a plain tan isometric box once the palette
+  // remap strips the translucency — the same object as `block` (blends) and
+  // `box` (cvc), both of which a child meets earlier. Same call as `smile`
+  // and `stone`. Left unmapped — image-free card.
+  // mule: the only candidate glyph (1FACF) is a donkey — a different
+  // animal — so a preschooler names the picture "donkey" or "horse",
+  // contradicting the read instead of confirming it. Left unmapped —
+  // image-free card.
+
   // --- Hand-drawn placeholders (leave UNMAPPED so fetch-art never overwrites) ---
   // whip, chip, chin, shin, shut, mop, block: no OpenMoji glyph plausibly
   // reads as these for a preschooler (chin/shin need a figurative arrow to a

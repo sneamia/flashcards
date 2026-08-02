@@ -456,16 +456,16 @@ test.describe('end card', () => {
   });
 });
 
-test.describe('categories + shuffle-all', () => {
-  test('the picker groups decks under category headers, each with a shuffle-all row', async ({ page }) => {
+test.describe('categories + shuffle rows', () => {
+  test('the picker groups decks under category headers, each with a shuffle row', async ({ page }) => {
     await page.goto('/');
     await waitForBoot(page);
 
     const stage = page.locator('#stage');
-    // Category headers (CVC, Digraphs, Blends).
-    await expect(stage.locator('.cat')).toHaveText(['CVC', 'Digraphs', 'Blends']);
-    // One shuffle-all row per category.
-    await expect(stage.locator('.row.shuffle')).toHaveCount(3);
+    // Category headers (CVC, Digraphs, Blends, Long Vowels).
+    await expect(stage.locator('.cat')).toHaveText(['CVC', 'Digraphs', 'Blends', 'Long Vowels']);
+    // One shuffle row per category (4 categories as of v1.7's Magic E addition).
+    await expect(stage.locator('.row.shuffle')).toHaveCount(4);
     await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"]')).toHaveCount(1);
     // The digraphs shuffle pools all 55 digraph words (wh grew from 4 to 7
     // cards in v1.4 — added wheel, whale, whisk).
@@ -475,6 +475,34 @@ test.describe('categories + shuffle-all', () => {
     // cards in v1.4 when the two-syllable "spider" card was removed).
     await expect(stage.locator('.row.shuffle[data-shuffle="cvc"]')).toContainText('70 words');
     await expect(stage.locator('.row.shuffle[data-shuffle="blends"]')).toContainText('57 words');
+    // Magic E landed in v1.7 as the app's first single-deck category — its
+    // shuffle row pools its one 28-card deck.
+    await expect(stage.locator('.row.shuffle[data-shuffle="magic-e"]')).toContainText('28 words');
+
+    // shuffleRowEl() (src/main.ts) drops the word "all" when a category has
+    // exactly one deck, since nothing is being combined. Every category
+    // before v1.7 was multi-deck, so that branch has NEVER rendered in
+    // production — Magic E is the first single-deck category to ship, and
+    // these assertions pin the branch in BOTH directions. `.toHaveText`
+    // (exact match) is deliberate: a `.toContainText('shuffle')` substring
+    // check would pass for "shuffle all" too and would prove nothing about
+    // which label actually rendered.
+    await expect(stage.locator('.row.shuffle[data-shuffle="magic-e"] .dg')).toHaveText('shuffle');
+    await expect(stage.locator('.row.shuffle[data-shuffle="magic-e"] .ct')).toHaveText('28 words');
+    await expect(stage.locator('.row.shuffle[data-shuffle="magic-e"]')).toHaveAttribute(
+      'aria-label',
+      'Shuffle Long Vowels, 28 words',
+    );
+    // Contrast case: a multi-deck category still gets the "all" form.
+    await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"] .dg')).toHaveText('shuffle all');
+    // shuffleRowEl() has a SECOND, independent copy of the same ternary for
+    // the aria-label (src/main.ts) — the screen-reader label a parent using
+    // VoiceOver actually hears. Pin that one in both directions too, or
+    // inverting it would silently regress 3 of the 4 rows with a green suite.
+    await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"]')).toHaveAttribute(
+      'aria-label',
+      'Shuffle all Digraphs, 55 words',
+    );
   });
 
   test('a shuffle-all row starts a run with the category title in the corner', async ({ page }) => {
@@ -486,6 +514,29 @@ test.describe('categories + shuffle-all', () => {
     await expect(stage).toHaveAttribute('data-state', 'word');
     // Corner shows the category title, not a single digraph id.
     await expect(page.locator('#stage .corner')).toContainText('Digraphs · 1 of 55');
+  });
+
+  test('the Long Vowels shuffle row starts a run with the CATEGORY title in the corner', async ({
+    page,
+  }) => {
+    // Before the v1.7 rename, the Long Vowels category and its one deck were
+    // BOTH titled "Magic E" — so a shuffle-run corner and a deck-run corner
+    // would have rendered byte-identical text ("Magic E · 1 of 28" either
+    // way), even though the shuffle-run corner is built from the CATEGORY
+    // title (buildShuffledDeck(), src/decks.ts) and the deck-run corner from
+    // the DECK title (src/main.ts) — two different fields that happened to
+    // collide. This pins that, post-rename, the two are visibly distinct:
+    // the deck-run corner still reads "Magic E · 1 of 28" (pinned by 'the
+    // Magic E deck itself opens and reveals its first card', added below in
+    // this same describe), while THIS shuffle-run corner must read
+    // "Long Vowels · 1 of 28".
+    await page.goto('/');
+    await waitForBoot(page);
+
+    const stage = page.locator('#stage');
+    await stage.locator('.row.shuffle[data-shuffle="magic-e"]').tap();
+    await expect(stage).toHaveAttribute('data-state', 'word');
+    await expect(page.locator('#stage .corner')).toContainText('Long Vowels · 1 of 28');
   });
 
   test('a shuffle run is NOT resumable: reloading mid-run lands on the picker', async ({ page }) => {
@@ -503,6 +554,63 @@ test.describe('categories + shuffle-all', () => {
     await page.reload();
     await waitForBoot(page);
     await expect(stage).toHaveAttribute('data-state', 'deck_pick');
+  });
+
+  test('the picker keeps its scroll position when you exit a deck back to it', async ({ page }) => {
+    // render() rebuilds the whole stage with replaceChildren(), so .decks is a
+    // brand-new element on every render and its scrollTop would reset to 0.
+    // Long Vowels is the LAST category in a list roughly three viewports tall
+    // on a phone in landscape, so without the save/restore in render() a
+    // parent has to re-scroll to the bottom after every single run — which is
+    // exactly the path to the category this release adds.
+    await page.goto('/');
+    await waitForBoot(page);
+
+    const stage = page.locator('#stage');
+    const decks = stage.locator('.decks');
+
+    // Scroll to the bottom, where Long Vowels lives.
+    const scrolled = await decks.evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+      return el.scrollTop;
+    });
+    // Guard against a vacuous pass: if the list ever fits without scrolling,
+    // scrollTop stays 0 and the assertion below would prove nothing.
+    expect(scrolled).toBeGreaterThan(0);
+
+    await stage.locator('.row[data-deck-id="magic-e"]').tap();
+    await expect(stage).toHaveAttribute('data-state', 'word');
+
+    // Long-press back out to the picker (same pattern as 'long-press inside a
+    // deck exits to the picker').
+    await page.waitForTimeout(SAFE_WAIT_MS);
+    await stage.dispatchEvent('pointerdown', { pointerId: 71, isPrimary: true });
+    await expect(stage).toHaveAttribute('data-state', 'deck_pick', { timeout: 3000 });
+    await stage.dispatchEvent('pointerup', { pointerId: 71 });
+
+    // The rebuilt .decks must come back where it was, not at the top.
+    await expect
+      .poll(() => stage.locator('.decks').evaluate((el) => el.scrollTop))
+      .toBe(scrolled);
+  });
+
+  test('the Magic E deck itself opens and reveals its first card', async ({ page }) => {
+    await page.goto('/');
+    await waitForBoot(page);
+
+    const stage = page.locator('#stage');
+    // Same selector convention as openFirstDeck()'s sh row: the stable
+    // data-deck-id hook, not row position or text.
+    await page.locator('#stage .row[data-deck-id="magic-e"]').tap();
+    await expect(stage).toHaveAttribute('data-state', 'word');
+    await expect(page.locator('#stage .corner')).toHaveText('Magic E · 1 of 28');
+    await expect(page.locator('#stage .word')).toHaveText('cake');
+
+    // Advance one beat: word -> image (cake has art at art/cake.svg).
+    await page.waitForTimeout(SAFE_WAIT_MS);
+    await stage.tap();
+    await expect(stage).toHaveAttribute('data-state', 'image');
+    await expect(page.locator('#stage .reveal .art')).toHaveAttribute('src', /art\/cake\.svg$/);
   });
 });
 

@@ -54,6 +54,15 @@ let activeShuffleDeck: Deck | null = null;
 // Runtime image-decode-failure set, keyed by the card's `img` path. Ctx.hasImage
 // treats any path in here as "no image" for the rest of this launch (Design D2)
 // — never a permanent downgrade, just for this render/session.
+// Keyed by PATH, not by (deck, card): since v1.7, 8 words are intentionally
+// duplicated across categories and share the exact same img file (e.g.
+// art/snake.svg is both s-blends' and magic-e's "snake"), so a decode failure
+// on one deck's card degrades the other deck's identically-pathed card too.
+// This is deliberate, not a bug — it's the same physical asset, so if it
+// won't decode once this session it's unlikely to decode later either, and
+// showing it consistently degraded on both cards beats retrying a URL
+// already known bad. (Red team, v1.7, conf 6 — flagged as newly-relevant
+// once shared paths existed; assessed here as correct as-is.)
 const failedImages = new Set<string>();
 const decodeCache = new Map<string, Promise<boolean>>();
 const wordSizeCache = new Map<string, number>();
@@ -273,24 +282,26 @@ function rowEl(deck: Deck): HTMLButtonElement {
   return btn;
 }
 
-// The per-category "shuffle all" entry: same row surface as a deck, but starts
-// a synthetic shuffle-run over every card in the category (dispatch() rebuilds
-// the shuffled deck on the tap).
+// The per-category shuffle entry ("shuffle all", or plain "shuffle" when the
+// category holds one deck): same row surface as a deck, but starts a synthetic
+// shuffle-run over every card in the category (dispatch() rebuilds the
+// shuffled deck on the tap).
 function shuffleRowEl(group: CategoryGroup): HTMLButtonElement {
   const total = group.decks.reduce((n, d) => n + d.cards.length, 0);
   const startId = `${SHUFFLE_PREFIX}${group.id}`;
   // "all" only reads true when the run spans more than one deck (e.g. DIGRAPHS
-  // = sh+ch+th+wh+ng+ck). A single-deck category (none currently — all three
-  // are multi-deck as of v1.3) would just shuffle its one deck, so drop "all"
-  // there — nothing is being combined.
-  const label = group.decks.length > 1 ? 'shuffle all' : 'shuffle';
+  // = sh+ch+th+wh+ng+ck). A single-deck category just shuffles its one deck, so
+  // drop "all" there — nothing is being combined. Magic E (v1.7) is the first
+  // single-deck category to ship, so this branch went live with it; both sides
+  // are pinned by e2e (exact-match on .dg, since a substring check would pass
+  // for either label). isMulti drives both the visible label AND the
+  // aria-label below — a single source so the two can't drift out of sync.
+  const isMulti = group.decks.length > 1;
+  const label = isMulti ? 'shuffle all' : 'shuffle';
   const btn = el('button', 'row shuffle');
   btn.type = 'button';
   btn.dataset.shuffle = group.id;
-  btn.setAttribute(
-    'aria-label',
-    `${group.decks.length > 1 ? 'Shuffle all' : 'Shuffle'} ${group.title}, ${total} words`,
-  );
+  btn.setAttribute('aria-label', `${isMulti ? 'Shuffle all' : 'Shuffle'} ${group.title}, ${total} words`);
   const dg = el('span', 'dg');
   dg.textContent = label;
   const ct = el('span', 'ct');
@@ -299,6 +310,19 @@ function shuffleRowEl(group: CategoryGroup): HTMLButtonElement {
   btn.addEventListener('click', (e) => startFromRow(e, startId));
   return btn;
 }
+
+/* The picker's scroll offset, carried across re-renders.
+   render() rebuilds the whole stage with replaceChildren(), so the .decks
+   scroll container is a NEW element every time and its scrollTop resets to 0.
+   That was invisible while the list was short, but the picker is now 4 headers
+   + 18 deck rows + 4 shuffle rows against a ~300px-tall scroller on a phone in
+   landscape — roughly three screens. Without this, a parent who scrolls to the
+   last category, runs a deck, and exits lands back at the top and has to
+   re-scroll every single time. Saved on the way out of any render that had a
+   .decks (including rotate/restore, so a portrait detour doesn't lose the
+   place) and reapplied after the new picker is in the DOM. Assigning scrollTop
+   self-clamps to the new scrollHeight, so a shorter list can't strand it. */
+let pickerScrollTop = 0;
 
 function renderPicker(): DocumentFragment {
   const frag = document.createDocumentFragment();
@@ -441,9 +465,28 @@ function computeDataState(s: AppState, portrait: boolean, restore: boolean): str
   return s.screen;
 }
 
+// Appends the picker and restores its scroll position. Both call sites that
+// can land on the picker (the normal deck_pick render and the corrupt/stale
+// deckId recovery below) must go through this, not `stage.append(renderPicker())`
+// directly, or the recovery path silently drops the saved scroll position.
+// Self-contained (clears stage itself) so a future call site can't silently
+// stack a duplicate .picker/.decks tree by forgetting a prior replaceChildren().
+function appendPicker(): void {
+  stage.replaceChildren();
+  stage.append(renderPicker());
+  // Reapply after the append: scrollTop only sticks once the element is
+  // in the document and laid out, not while it's still in the fragment.
+  const decksEl = stage.querySelector('.decks');
+  if (decksEl) decksEl.scrollTop = pickerScrollTop;
+}
+
 function render(): void {
   const dataState = computeDataState(state, isPortraitNow(), restoreNeeded);
   stage.setAttribute('data-state', dataState);
+  // Remember where the picker was scrolled before this render throws the
+  // element away (see pickerScrollTop).
+  const outgoingDecks = stage.querySelector('.decks');
+  if (outgoingDecks) pickerScrollTop = outgoingDecks.scrollTop;
   stage.replaceChildren();
 
   if (dataState === 'restore') {
@@ -456,9 +499,10 @@ function render(): void {
   }
 
   switch (state.screen) {
-    case 'deck_pick':
-      stage.append(renderPicker());
+    case 'deck_pick': {
+      appendPicker();
       return;
+    }
     case 'about':
       stage.append(renderAbout());
       return;
@@ -476,7 +520,7 @@ function render(): void {
         // back in charge of its own rows.
         state = initialState();
         stage.setAttribute('data-state', 'deck_pick');
-        stage.append(renderPicker());
+        appendPicker();
         return;
       }
       if (state.beat === 'word') stage.append(renderWordBeat(deck, state.cardIndex));

@@ -40,8 +40,10 @@ const REFERENCED_ART = new Set(
 
 describe('fetch-art MAP ↔ deck img consistency', () => {
   it('parses a non-trivial MAP out of scripts/fetch-art.mjs (anti-drift guard)', () => {
-    // ~145 entries at v1.4; a collapsed parse means the regex or the MAP
-    // moved — fail loudly instead of passing on an empty key list.
+    // 156 entries at v1.7 (up from ~145 at v1.4, plus the Long Vowels deck's
+    // MAP entries, less cube/smile cut in review); a collapsed parse means the
+    // regex or the MAP moved — fail loudly instead of passing on an empty key
+    // list.
     expect(MAP_KEYS.length).toBeGreaterThan(100);
     expect(new Set(MAP_KEYS).size).toBe(MAP_KEYS.length); // no duplicate keys
   });
