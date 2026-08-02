@@ -410,7 +410,7 @@ One line per release; details in CHANGELOG.md and this file's git history.
   duplicate words (8, allowlist-guarded); first single-deck category, taking the
   plain-`shuffle` label branch live after 5 releases dormant; `mule`/`stone` art
   cut on review; new guards for deck-vs-category title collision and accidental
-  cross-category duplicates (101 unit / 35 e2e).
+  cross-category duplicates (105 unit / 36 e2e).
 - **v1.6.0** (2026-07-26) — backlog sweep: `jog`'s colliding art dropped
   (151/182), restore recovery re-checks on `visibilitychange` + post-listener,
   validator per-category duplicate-word + duplicate-`img` + comment-proof
