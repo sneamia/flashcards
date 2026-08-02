@@ -1,7 +1,7 @@
 # Handoff — v1.7 Long Vowels category (BRANCH, not yet reviewed or shipped)
 
-**Branch:** `v1.7/magic-e-category` — 13 commits ahead of `main` @ `1783040`. Not squashed, not PR'd, not merged, not deployed.
-**Date:** 2026-08-01 · **Status:** implementation complete, all four gates green, adversarial review done and its findings fixed or backlogged. **Next step is `/review` then `/ship`.**
+**Branch:** `v1.7/magic-e-category` — 16 commits ahead of `main` @ `1783040` (13 as of this record's original write-up, plus 3 more from the review pass — see "What `/review` changed" below). Not squashed, not PR'd, not merged, not deployed.
+**Date:** 2026-08-01 · **Status:** implementation complete, all four gates green, `/review`'s adversarial pass done and its findings fixed or backlogged (see below). **Next step is opening the PR, then `/ship`.**
 **Source docs:** the spec authored in-session via `/spec` (archived under `~/.gstack/projects/flashcards/specs/`), `TODOS.md` (updated), repo `DESIGN.md`, `CLAUDE.md` conventions. The v1.6 record this replaced lives at git `1783040:handoff.md`.
 
 ## What this was
@@ -74,7 +74,7 @@ b80c462 docs: document the Magic E category and the single-deck shuffle label
 | Gate | Result |
 |---|---|
 | `npm run validate` | PASSED — 18 decks, 0 warnings |
-| `npx vitest run` | 104 passed (9 files) |
+| `npx vitest run` | 105 passed (9 files) |
 | `npm run test:e2e` | 36 passed |
 | `npm run build` | clean; `tsc --noEmit` clean; precache 178 entries / 363.25 KiB |
 

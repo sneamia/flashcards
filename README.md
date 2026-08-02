@@ -74,8 +74,9 @@ Runs deck validation and a contrast check (`prebuild`), then `tsc --noEmit`
 and the Vite production build into `dist/`. Deck validation also gates the
 art: every shipped SVG must stay within the six-hex warm palette (the
 `KEEP_COLORS` color-word exception in `scripts/fetch-art.mjs` is the only
-sanctioned deviation), and every card's `graphemes` split must join back to
-its word. It also rejects two cards in the same category that share a word or
+sanctioned deviation) — though an element that omits `fill` entirely defaults
+to black undetected, a known gap tracked as `TODOS.md` P3.17 — and every
+card's `graphemes` split must join back to its word. It also rejects two cards in the same category that share a word or
 an illustration — either one would appear twice in that category's shuffle
 pool, and the same drawing on two different words defeats the point of the
 reveal. (Reuse *across* categories is deliberate and stays allowed; a shuffle

@@ -35,7 +35,10 @@ These are hard requirements, not preferences:
 Muted flat-art palette (illustrations, palette-remapped from OpenMoji at build):
 low-saturation warm tones only. Examples in use: clay `#a6785a`, sand `#c9b48f`,
 sail `#e0cba8` / `#cbb287`, mast `#8a6a4a`. No blues, ever. The build fails if
-any shipped art SVG strays from these six hexes (`scripts/validate-decks.mjs`).
+any shipped art SVG strays from these six hexes via a `fill` it explicitly names
+(`scripts/validate-decks.mjs`) — an element that omits `fill` entirely defaults
+to black instead of failing the gate; see `TODOS.md` P3.17 for the known gap and
+the pre-existing files it affects.
 
 **Color-word exception (approved 2026-07-07):** when a card's meaning IS a
 color, remapping the glyph would make the card lie — so the `red` card keeps
