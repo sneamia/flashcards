@@ -194,6 +194,7 @@ test.describe('gesture-on-touch', () => {
     // The overlay carries the full gesture list AND the CC BY-SA attribution.
     await expect(stage).toContainText('two-finger tap: back');
     await expect(stage).toContainText('OpenMoji');
+    await expect(stage).toContainText('Mulberry Symbols');
 
     // DISMISS is a parent gesture — it bypasses the lockout, so an immediate
     // tap closes the overlay.

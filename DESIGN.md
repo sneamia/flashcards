@@ -32,7 +32,7 @@ These are hard requirements, not preferences:
 | `--label-readable` | ~`#756b58` (confirm ≥4.5:1 on cream at build) | **Must-read** parent chrome: deck-picker gesture hint, "N words" counts. |
 | `--label` | `#a89f8d` | **Ignorable** chrome only: the barely-there card/picker corner label (~1.9:1 — intentional, do not use for anything that must be read). |
 
-Muted flat-art palette (illustrations, palette-remapped from OpenMoji at build):
+Muted flat-art palette (illustrations, palette-remapped from OpenMoji and Mulberry Symbols by the art pipeline):
 low-saturation warm tones only. Examples in use: clay `#a6785a`, sand `#c9b48f`,
 sail `#e0cba8` / `#cbb287`, mast `#8a6a4a`. No blues, ever. The build fails if
 any shipped art SVG strays from these six hexes via a `fill` it explicitly names

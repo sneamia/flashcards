@@ -1,17 +1,26 @@
-Illustrations in this directory are derived from OpenMoji.
+Illustrations in this directory are derived from two CC BY-SA 4.0 symbol sets.
 
-Source: OpenMoji — the open-source emoji and icon project (https://openmoji.org)
-Original license: Creative Commons Attribution-ShareAlike 4.0 International
-  (CC BY-SA 4.0) — https://creativecommons.org/licenses/by-sa/4.0/
+1. OpenMoji — the open-source emoji and icon project (https://openmoji.org)
+   Original license: Creative Commons Attribution-ShareAlike 4.0 International
+   (CC BY-SA 4.0) — https://creativecommons.org/licenses/by-sa/4.0/
 
-These files are ADAPTATIONS: the OpenMoji source SVGs have been recolored
+2. Mulberry Symbols — AAC pictograms by Steve Lee (https://mulberrysymbols.org)
+   Copyright 2018–2026 Steve Lee
+   Original license: Creative Commons Attribution-ShareAlike 4.0 International
+   (CC BY-SA 4.0) — https://creativecommons.org/licenses/by-sa/4.0/
+   Used for: back, bib, glue, kick, neck, pet, tape (see the MULBERRY table in
+   scripts/fetch-art.mjs for the exact source files).
+
+These files are ADAPTATIONS: the source SVGs have been recolored
 (palette-remapped to a muted warm set) and optimized. Because CC BY-SA 4.0
 includes a ShareAlike term, these adaptations are distributed under the same
 license, CC BY-SA 4.0.
 
 Attribution (as surfaced in the app's About overlay):
-  "Illustrations: OpenMoji — CC BY-SA 4.0, colors modified"
+  "Illustrations: OpenMoji & Mulberry Symbols — CC BY-SA 4.0, colors modified"
 
-Placeholder note: some SVGs here are hand-drawn placeholders in the OpenMoji
-flat style pending an art audit (see scripts/fetch-art.mjs). Once replaced by
-recolored OpenMoji sources, the attribution above applies to them in full.
+Hand-drawn note: some SVGs here (block, chin, chip, gate, gong, gum, hit, mop,
+peg, rug, shin, shut, top, tube, whip, whisk) are original drawings in the same
+flat style, made for this project where neither set has a glyph that reads for
+a preschooler. They are released under the same CC BY-SA 4.0 terms for
+simplicity.

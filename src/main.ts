@@ -98,7 +98,7 @@ const LONG_PRESS_TIMER_PAD_MS = 20;
 const MIN_WORD_PX = 48;
 const MAX_WORD_PX = 420;
 const WORD_MARGIN = 0.88; // fraction of viewport width available to the word
-const ATTRIBUTION = 'Illustrations: OpenMoji — CC BY-SA 4.0, colors modified';
+const ATTRIBUTION = 'Illustrations: OpenMoji & Mulberry Symbols — CC BY-SA 4.0, colors modified';
 const AUTO_LOCK_NOTE =
   'If the screen dims mid-session, set Auto-Lock to 5 minutes or longer (Settings → Display & Brightness).';
 const GESTURE_LINES = ['tap: next card', 'two-finger tap: back', 'hold: exit'];
