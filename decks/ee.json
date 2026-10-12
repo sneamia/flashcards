@@ -1,0 +1,19 @@
+{
+  "id": "ee",
+  "title": "ee",
+  "kind": "phonics",
+  "category": "magic-e",
+  "order": 3,
+  "cards": [
+    { "type": "word", "text": "bee", "graphemes": ["b", "ee"], "img": "art/bee.svg" },
+    { "type": "word", "text": "feet", "graphemes": ["f", "ee", "t"], "img": "art/feet.svg" },
+    { "type": "word", "text": "heel", "graphemes": ["h", "ee", "l"], "img": "art/heel.svg" },
+    { "type": "word", "text": "jeep", "graphemes": ["j", "ee", "p"], "img": "art/jeep.svg" },
+    { "type": "word", "text": "sheep", "graphemes": ["sh", "ee", "p"], "img": "art/sheep.svg" },
+    { "type": "word", "text": "three", "graphemes": ["thr", "ee"], "img": "art/three.svg" },
+    { "type": "word", "text": "green", "graphemes": ["gr", "ee", "n"], "img": "art/green.svg" },
+    { "type": "word", "text": "sleep", "graphemes": ["sl", "ee", "p"], "img": "art/sleep.svg" },
+    { "type": "word", "text": "teeth", "graphemes": ["t", "ee", "th"], "img": "art/teeth.svg" },
+    { "type": "word", "text": "cheek", "graphemes": ["ch", "ee", "k"], "img": "art/cheek.svg" }
+  ]
+}

@@ -37,9 +37,9 @@ describe('README.md category counts stay in sync with decks/*.json', () => {
   // One "<word> decks, <M> words" phrase per category bullet, in the
   // README's (= picker's) display order. \s+ tolerates the wrapped lines
   // ("six\n  decks, 55 words"). `decks?` (not just `decks`) because a
-  // single-deck category (Magic E) must read "one deck, 28 words" in
-  // correct English, not "one decks" — the parser has to accept the
-  // singular, not just the plural. This widens what the guard can *parse*;
+  // single-deck category must read "one deck, N words" in correct English, not
+  // "one decks" — Long Vowels was one in v1.7 ("one deck, 28 words") and may be
+  // again; the parser has to accept the singular, not just the plural. This widens what the guard can *parse*;
   // the two assertions below stay exactly as strict as before.
   const documented = [...README.matchAll(/(\w+)\s+decks?,\s+(\d+)\s+words/g)]
     .map((m) => ({ decks: NUMBER_WORDS[m[1]], words: Number(m[2]) }));

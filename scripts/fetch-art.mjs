@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /* Art pipeline (design doc step 4). DEV-TIME tool — NOT run during `npm run build`.
- * Pulls OpenMoji SVGs → palette-remaps to the muted warm set → SVGO → public/art.
+ * Pulls OpenMoji SVGs (the primary set) and Mulberry Symbols SVGs (a second
+ * source, only for words OpenMoji has no honest glyph for) → palette-remaps to
+ * the muted warm set → SVGO → public/art.
  * Resilient: on network failure it warns and leaves existing placeholder SVGs
  * untouched so the app still builds. Never leaves a half-written file.
  *
- * OpenMoji is CC BY-SA 4.0; the recolored SVGs are adaptations (ShareAlike) —
+ * Both sources are CC BY-SA 4.0; the recolored SVGs are adaptations (ShareAlike) —
  * see public/art/LICENSE. Usage:  node scripts/fetch-art.mjs [name ...]
  */
 import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync } from 'node:fs';
@@ -23,7 +25,8 @@ const PALETTE = ['#a6785a', '#c9b48f', '#e0cba8', '#cbb287', '#8a6a4a', '#3d3833
 // the listed hexes ship verbatim, but every OTHER color in the file still
 // remaps so outlines stay in design ink. Keep this to color-words only.
 const KEEP_COLORS = new Map([
-  ['red', ['#ea5a47']], // OpenMoji red-square fill
+  ['red', ['#ea5a47']],   // OpenMoji red-square fill
+  ['green', ['#b1cc33']], // OpenMoji green-square fill
 ]);
 
 // art filename (without .svg) -> OpenMoji hexcode, verified to resolve (HTTP
@@ -52,7 +55,7 @@ const MAP = {
   // whisk: no OpenMoji glyph exists for a whisk (checked the base set and
   // extras-openmoji.csv at the pinned ref) and no figurative substitute
   // (spoon, swirl, spiral shell) reliably reads as "whisk" for a
-  // preschooler. Left unmapped — card stays image-free.
+  // preschooler. Hand-drawn instead (see the placeholders note below).
 
   // --- Digraphs: NG (ng) ---
   ring: '1F48D',      // ring
@@ -63,7 +66,9 @@ const MAP = {
   lung: '1FAC1',      // lungs (~ lung)
   // long, hang, fang, gong: no OpenMoji glyph plausibly reads as these for a
   // preschooler (long is an adjective; no hanger/gong glyph; tooth 1F9B7 is a
-  // molar, not a fang). Left unmapped — cards stay image-free.
+  // molar, not a fang). Mulberry has no better: its `long` is a ruler
+  // diagram, `hang` a figure on a pull-up bar, `fangs` a roaring mouth, and
+  // there is no gong at all. long, hang and fang stay image-free; gong is hand-drawn (see below).
 
   // --- Digraphs: CK (ck) ---
   duck: '1F986',      // duck
@@ -72,9 +77,11 @@ const MAP = {
   lock: '1F512',      // locked padlock (~ lock)
   pack: '1F392',      // backpack (~ pack)
   sick: '1F912',      // face with thermometer (~ sick)
-  // kick, neck, back, tick: no OpenMoji glyph plausibly reads as these for a
+  // kick, neck, back: no OpenMoji glyph plausibly reads as these for a
   // preschooler (foot 1F9B6 reads "foot", not kick; back/neck are body
-  // regions with no glyph; no tick-insect glyph). Left unmapped — image-free.
+  // regions with no glyph) — all three come from Mulberry instead (see
+  // MULBERRY below). tick: no tick-insect glyph in either set, and a
+  // checkmark would be the wrong (British) sense. Left unmapped — image-free.
 
   // --- CVC ---
   cat: '1F408',       // cat
@@ -158,8 +165,11 @@ const MAP = {
   men: '1F46C',       // men holding hands (~ men)
   gem: '1F48E',       // gem stone
   red: '1F7E5',       // red square (KEEP_COLORS preserves its red fill)
-  // pet: paw prints 1F43E read as "paws"; peg: safety pin 1F9F7 reads as a
-  // pin. Left unmapped — image-free.
+  // pet: paw prints 1F43E read as "paws" — Mulberry's person-patting-a-dog
+  // drawing is used instead (see MULBERRY below). peg: safety pin 1F9F7 reads
+  // as a pin, and Mulberry's only candidate is a clothes peg, which a North
+  // American child names "clothespin" (the app is American English, see
+  // README). peg is hand-drawn as a pegboard instead (see below).
 
   // --- CVC: Short U (cvc-u) ---
   tub: '1F6C1',       // bathtub (~ tub)
@@ -170,8 +180,14 @@ const MAP = {
   run: '1F3C3',       // person running (~ run)
   cut: '2702',        // scissors (~ cut)
   // mud, rug, gum: no OpenMoji glyph plausibly reads as these for a
-  // preschooler (mud/gum have no glyph; yarn 1F9F6 is not a rug). Left
-  // unmapped — cards stay image-free.
+  // preschooler (mud/gum have no glyph; yarn 1F9F6 is not a rug). Mulberry
+  // was checked too (2026-10-12): no mud; its rug is a 350-path pattern
+  // (105 KB after SVGO, against a ~6 KB norm here); its chewing gum reads
+  // as a chocolate bar once the palette remap strips the colour. rug is
+  // hand-drawn (see the placeholders note below). gum: a hand-drawn face
+  // blowing a bubble was tried too and read as a face beside a coin — the
+  // palette has no way to draw a translucent bubble. mud and gum stay
+  // image-free.
 
   // --- CVC: Short I (cvc-i) ---
   wig: '1F9B1',       // curly hair component (~ wig; floating hairpiece)
@@ -182,8 +198,10 @@ const MAP = {
   sit: '1FA91',       // chair (~ sit)
   rib: '1F356',       // meat on bone (~ rib)
   bin: '1F5D1',       // wastebasket (bin)
-  // bib, hit: no OpenMoji glyph reliably reads for a preschooler — left
-  // unmapped (image-free cards).
+  // bib: no OpenMoji glyph — Mulberry's baby bib is used instead (see
+  // MULBERRY below). hit: no OpenMoji glyph reliably reads for a
+  // preschooler, and Mulberry's candidates are a hammer and a punch (read
+  // "hammer" / "angry"). hit is hand-drawn instead (see below).
 
   // --- CVC: Short O (cvc-o) ---
   pot: '1F372',       // pot of food (~ pot)
@@ -194,13 +212,14 @@ const MAP = {
   hot: '1F975',       // hot face
   cop: '1F46E',       // police officer (~ cop)
   bot: '1F916',       // robot
-  // top: no OpenMoji glyph reliably reads for a preschooler — left unmapped
-  // (image-free card).
+  // top: no OpenMoji glyph reliably reads for a preschooler — hand-drawn as a
+  // spinning top (see the placeholders note below).
   // jog: unlike top, a glyph exists (1F3C3 person running) — but it's the
   // same glyph already mapped to `run` (cvc-u), and run/jog both live in
   // the CVC category, so a single "shuffle all CVC" session could show the
   // identical picture for two different words. Deliberately left unmapped
   // (image-free card) rather than reused — see TODOS.md P1.1.
+  // Mulberry's `jog_,_to` is another running figure — same call.
 
   // --- Blends: L-Blends (l-blends) ---
   clap: '1F44F',      // clapping hands
@@ -212,8 +231,9 @@ const MAP = {
   flute: '1FA88',     // flute
   plane: '2708',      // airplane
   plate: '1F37D',     // fork and knife with plate (~ plate)
-  // glue: no OpenMoji glyph plausibly reads as glue for a preschooler.
-  // Left unmapped — card stays image-free.
+  // glue: no OpenMoji glyph plausibly reads as glue for a preschooler —
+  // Mulberry's squeeze bottle with a spreader is used instead (see MULBERRY
+  // below).
 
   // --- Blends: R-Blends (r-blends) ---
   grin: '1F600',      // grinning face
@@ -238,6 +258,7 @@ const MAP = {
   // the same tan circle with two dots and a curved mouth as `grin` (1F600,
   // r-blends) — a child names both "happy face". Same call as `stone` below.
   // Left unmapped — image-free card.
+  // Mulberry's `smile_,_to` is a bare mouth with teeth — closer still to grin.
   pine: '1F332',      // evergreen tree (~ pine)
   bone: '1F9B4',      // bone
   // stone: public/art/stone.svg was byte-identical to `rock`'s (1FAA8,
@@ -249,31 +270,139 @@ const MAP = {
   // app having lost its place rather than as two words that happen to share
   // a drawing (same reasoning that dropped `jog`'s art in favor of `run`'s —
   // see above). Left unmapped — image-free card.
+  // Mulberry's `stone` is the same smooth-rock silhouette — same call.
   globe: '1F30D',     // globe showing Europe-Africa (~ globe)
   home: '1F3E0',      // house (~ home)
   cone: '1F366',      // soft ice cream (~ cone; the cone shape)
   rope: '1FAA2',      // knot (~ rope)
+  // tape: no OpenMoji glyph — Mulberry's roll of masking tape is used
+  // instead (see MULBERRY below). cape: no glyph in either set (1F9B8
+  // superhero reads "superhero"). tube: Mulberry offers only a test tube and
+  // two AAC chew toys, none of which reads "tube" to a 4-year-old. cape stays
+  // image-free; tube and gate are hand-drawn (see below).
   // cube: 1F9CA (ice) renders as a plain tan isometric box once the palette
   // remap strips the translucency — the same object as `block` (blends) and
   // `box` (cvc), both of which a child meets earlier. Same call as `smile`
   // and `stone`. Left unmapped — image-free card.
+  // Mulberry has only stock cubes and dice — same call.
   // mule: the only candidate glyph (1FACF) is a donkey — a different
   // animal — so a preschooler names the picture "donkey" or "horse",
   // contradicting the read instead of confirming it. Left unmapped —
   // image-free card.
+  // Mulberry's only candidate is likewise a donkey.
+
+  // --- Long Vowels: ai (ai) ---
+  rain: '1F327',      // cloud with rain
+  mail: '2709',       // envelope (~ mail; a child may say "letter")
+  pail: '1FAA3',      // bucket (~ pail — the "Jack and Jill" sense)
+  sail: '26F5',       // sailboat (~ sail; the sail dominates the glyph)
+  chain: '26D3',      // chains
+  brain: '1F9E0',     // brain
+  // nail, paint: Mulberry (see MULBERRY below). tail: no glyph in either set —
+  // hand-drawn as hindquarters with an arrow at the tail (see the placeholders
+  // note below). wait: Mulberry's only file embeds a raster photo (denylist);
+  // stays image-free.
+
+  // --- Long Vowels: ee (ee) ---
+  bee: '1F41D',       // honeybee
+  sheep: '1F411',     // ewe
+  three: '0033-FE0F-20E3', // keycap 3 (numeral reads as "three")
+  green: '1F7E9',     // green square (KEEP_COLORS preserves its green fill)
+  sleep: '1F4A4',     // zzz (~ sleep; 1F634 sleeping face is `nap`'s glyph, cvc)
+  // feet, heel, jeep, teeth, cheek: Mulberry (see MULBERRY below). seed was
+  // dropped: Mulberry's seed packet reads "flower"/"packet".
+
+  // --- Long Vowels: igh (igh) ---
+  light: '1F4A1',     // light bulb
+  night: '1F303',     // night with stars (~ night; skyline under a moon)
+  // thigh: Mulberry (see MULBERRY below). high, right, bright, sigh: nothing
+  // reads honestly — Mulberry's `high` is a tall building (reads "tall"),
+  // `right` a bare arrow, `bright` a second bulb (would collide with light
+  // inside this category's pool), and the exhaling face 1F62E-200D-1F4A8 for
+  // `sigh` reads "blow". All four stay image-free.
+
+  // --- Long Vowels: oa (oa) ---
+  boat: '1F6E5',      // motor boat (distinct from `sail`'s sailboat, same pool)
+  goat: '1F410',      // goat
+  soap: '1F9FC',      // bar of soap with bubbles
+  road: '1F6E3',      // motorway (~ road)
+  // coat, toast, goal: Mulberry (see MULBERRY below). toad: Mulberry's toad
+  // is a warty side view, but a preschooler names any frog-shape "frog", and
+  // `frog` ships in blends — the stone/rock, jog/run call. float: ring buoy
+  // 1F6DF reads "life ring". loaf: 1F35E is `bread`'s glyph and reads
+  // "bread". All three stay image-free.
+
+  // --- Long Vowels: ea (ea) ---
+  leaf: '1F343',      // leaf fluttering in wind
+  bean: '1FAD8',      // beans (~ bean)
+  seal: '1F9AD',      // seal
+  peach: '1F351',     // peach
+  meat: '1F969',      // cut of meat
+  // beach, tea, beak: Mulberry (see MULBERRY below). sea: 1F30A is `wave`'s
+  // glyph in this very category and 1F3D6 is `sand`'s (blends); 1FAB8 coral
+  // reads "coral". speak: 1F5E3 speaking head reads "talk". Both image-free.
 
   // --- Hand-drawn placeholders (leave UNMAPPED so fetch-art never overwrites) ---
-  // whip, chip, chin, shin, shut, mop, block: no OpenMoji glyph plausibly
+  // whip, chip, chin, shin, shut, mop, block, gate, rug, top, tube, whisk, gong, peg, hit, tail: no OpenMoji (or Mulberry) glyph plausibly
   // reads as these for a preschooler (chin/shin need a figurative arrow to a
   // body part; chip must be a potato chip, not french fries 1F35F, for
   // American English). See public/art/*.svg — hand-authored in the warm
   // palette. Leaving them out of MAP keeps `npm run fetch-art` from clobbering
   // them.
+  // The 2026-10-12 set: rug (two shaded ovals), top (spinning top), tube (hollow roll), whisk, gong (in its stand),
+  // peg (pegboard — the North American sense), hit (bat striking a ball), gate (garden gate), tail (hindquarters with an arrow at the tail).
   // whiz: tried 1F4A8 "dashing away" (speed-lines cloud) — dropped on
   // render-check. Alone (no running figure) it reads as smoke/wind, and
   // it's colloquially read as a fart-cloud emoji — not a reliable "whiz"
   // for a preschooler. Left unmapped (stays image-free).
 };
+
+// Second source — Mulberry Symbols (https://mulberrysymbols.org), AAC
+// pictograms drawn for children. CC BY-SA 4.0 like OpenMoji, so the same
+// ShareAlike adaptation terms apply (public/art/LICENSE). Used ONLY where
+// OpenMoji has no glyph that honestly reads as the word; every entry was
+// eyeballed on a contact sheet AFTER the palette remap (2026-10-12).
+// art filename -> Mulberry `EN/` file name WITHOUT `.svg`, verified to
+// resolve (HTTP 200) at the pinned MULBERRY_REF. Mulberry's own naming is
+// kept verbatim — verbs carry a `_,_to` suffix. (~) as in MAP. A word lives
+// in exactly ONE of MAP / MULBERRY (enforced at startup below).
+const MULBERRY = {
+  // --- Digraphs: CK (ck) ---
+  kick: 'kick_ball_1_,_to', // child kicking a ball (~ kick; a child may say "soccer")
+  neck: 'neck',             // torso with an ink arrow at the neck (same device as chin/shin)
+  back: 'back',             // rear view of a torso (~ back)
+
+  // --- CVC: Short E (cvc-e) / Short I (cvc-i) ---
+  pet: 'stroke_,_to',       // person patting a dog (~ pet; a child may say "dog")
+  bib: 'bib',               // baby bib
+
+  // --- Blends: L-Blends (l-blends) ---
+  glue: 'glue',             // squeeze bottle with a spreader
+
+  // --- Magic E (magic-e) ---
+  tape: 'masking_tape',     // roll of tape with a peeled end
+
+  // --- Long Vowels: vowel-team decks (v1.8) ---
+  nail: 'nail',             // a single hardware nail
+  paint: 'paint',           // open paint can
+  feet: 'feet',             // two bare feet (OpenMoji 1F9B6 is one foot)
+  heel: 'heel',             // foot with an ink arrow at the heel
+  jeep: 'jeep',             // jeep, side view (~ jeep; a child may say "car")
+  teeth: 'teeth',           // open mouth showing teeth
+  cheek: 'cheek',           // face with an ink arrow at the cheek
+  thigh: 'thigh',           // leg with an ink arrow at the thigh
+  coat: 'coat',             // long buttoned coat (OpenMoji 1F9E5 reads "dress" after the remap)
+  toast: 'toast',           // toast on a plate
+  goal: 'goal',             // football goal net (1F945 is `net`'s glyph, cvc)
+  beach: 'beach',           // palm, sun, waves, sand
+  tea: 'tea',               // cup and saucer with a tea bag
+  beak: 'beak',             // bird head with an ink arrow at the beak
+};
+
+// Same immutability reasoning as OPENMOJI_REF below. 9cbab9f == `master` on
+// 2026-10-12 (the repo moved from straight-street/ to mulberrysymbols/).
+const MULBERRY_REF = '9cbab9f400c5de44e2bc58839cca07294aadb086';
+const MULBERRY_BASE = `https://raw.githubusercontent.com/mulberrysymbols/mulberry-symbols/${MULBERRY_REF}/EN`;
 
 // Pinned to a COMMIT SHA, not a tag or `master`: this script writes remote
 // content into public/ (served from the github.io origin), and tags can be
@@ -281,6 +410,30 @@ const MAP = {
 // new OpenMoji art. 005bf5b == release tag 15.1.0.
 const OPENMOJI_REF = '005bf5bc62392a9f90e1b6429c163d17610a791e';
 const OPENMOJI_BASE = `https://raw.githubusercontent.com/hfg-gmuend/openmoji/${OPENMOJI_REF}/color/svg`;
+
+// A word's art comes from exactly one upstream. Fail loudly at startup rather
+// than letting MAP silently win — keeps the two tables honest.
+const inBoth = Object.keys(MAP).filter((name) => Object.hasOwn(MULBERRY, name));
+if (inBoth.length) {
+  console.error(`fetch-art: mapped in BOTH MAP and MULBERRY: ${inBoth.join(', ')} — a word has exactly one source`);
+  process.exit(1);
+}
+
+// Resolve a word to its upstream URL plus a label for the log line, or null
+// for hand-drawn / deliberately image-free words.
+function sourceOf(name) {
+  if (Object.hasOwn(MAP, name)) {
+    return { url: `${OPENMOJI_BASE}/${MAP[name]}.svg`, label: `OpenMoji ${MAP[name]}` };
+  }
+  if (Object.hasOwn(MULBERRY, name)) {
+    // Mulberry names carry commas (`_,_to`) — encode so the raw URL is exact.
+    return {
+      url: `${MULBERRY_BASE}/${encodeURIComponent(MULBERRY[name])}.svg`,
+      label: `Mulberry ${MULBERRY[name]}`,
+    };
+  }
+  return null;
+}
 
 function hexToRgb(h) {
   return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
@@ -297,14 +450,35 @@ function nearest(hex) {
   return best;
 }
 
+// CSS named colours. remap()'s two passes below only see hex literals, so a
+// `fill="orange"` would pass through untouched; SVGO's convertColors then
+// turns it into `#ffa500`, which validate-decks.mjs's palette gate rejects at
+// build time — loud, but the file is unusable. Both upstreams are hex-first,
+// yet Mulberry's seeds.svg does carry one. Map the names that occur in flat
+// symbol art to hex FIRST so the normal nearest-palette remap handles them.
+const NAMED_COLORS = {
+  black: '#000000', white: '#ffffff', red: '#ff0000', orange: '#ffa500', yellow: '#ffff00',
+  green: '#008000', lime: '#00ff00', blue: '#0000ff', navy: '#000080', purple: '#800080',
+  pink: '#ffc0cb', brown: '#a52a2a', gray: '#808080', grey: '#808080', silver: '#c0c0c0',
+  maroon: '#800000', olive: '#808000', teal: '#008080', aqua: '#00ffff', fuchsia: '#ff00ff',
+};
+const NAMED_COLOR_RE = new RegExp(
+  `(?<![\\w-])(fill|stroke|stop-color)(\\s*[=:]\\s*["']?)(${Object.keys(NAMED_COLORS).join('|')})\\b`,
+  'gi',
+);
+
 function remap(svg, keepHexes) {
   // Remap every #rrggbb / #rgb fill or stroke to the nearest palette token,
   // except hexes explicitly preserved via KEEP_COLORS (color-word fills).
   // Negative lookbehind: url(#abc123)-style id references are hex-SHAPED but
-  // not colors — rewriting them breaks gradient/<use> refs. (rgb()/named
-  // colors pass through unremapped — a known limitation of this pipeline.)
+  // not colors — rewriting them breaks gradient/<use> refs. (rgb() colors
+  // pass through unremapped — SVGO's convertColors turns them into hex
+  // afterwards, so a non-palette one still fails validate-decks' palette gate,
+  // and rgb(0,0,0) collapses to the default fill, which inkDefaultFills then
+  // inks.)
   const keep = new Set((keepHexes ?? []).map((h) => h.toLowerCase()));
-  return svg.replace(/(?<!url\()#[0-9a-fA-F]{6}\b/g,
+  const named = svg.replace(NAMED_COLOR_RE, (m, prop, sep, name) => `${prop}${sep}${NAMED_COLORS[name.toLowerCase()]}`);
+  return named.replace(/(?<!url\()#[0-9a-fA-F]{6}\b/g,
                      (m) => (keep.has(m.toLowerCase()) ? m : nearest(m)))
             .replace(/(?<!url\()#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])\b/g,
                      (m, r, g, b) => {
@@ -313,8 +487,57 @@ function remap(svg, keepHexes) {
                      });
 }
 
-async function fetchOne(name, code) {
-  const url = `${OPENMOJI_BASE}/${code}.svg`;
+// SVG's default `fill` is opaque BLACK. A paint element with no fill of its
+// own and no fill-bearing ancestor therefore renders #000 — off-palette, and
+// invisible to validate-decks.mjs's palette gate, which only sees hex
+// literals PRESENT in the file (TODOS.md P3.17; bike.svg shipped that way in
+// v1.7 and was hand-fixed). Treat the implicit black exactly as remap()
+// treats an explicit one — nearest palette colour, i.e. the ink — by writing
+// it in. Runs AFTER SVGO so it sees the final tree (collapseGroups /
+// moveGroupAttrsToElems can move a fill up or down a level).
+// Subtrees whose fill-less children must NOT be inked: a <mask>/<clipPath>
+// child's default black means "hide"/"clip"; a <defs>/<symbol> child inherits
+// its fill from each referencing <use> through the shadow tree, and a fill
+// written onto the definition would override every instance. Fill-less <use>
+// elements ARE inked instead (a <use> with no fill rendering a fill-less
+// definition is the black case).
+const PAINT_ELEMENTS = new Set(['path', 'circle', 'rect', 'ellipse', 'polygon', 'polyline', 'use']);
+const NON_RENDERING = new Set(['mask', 'clipPath', 'defs', 'symbol']);
+const INK = PALETTE[5]; // #3d3833
+const UNSET_FILL = /^(?:inherit|initial|unset|currentColor)$/i;
+function inkDefaultFills(svg) {
+  const stack = []; // one entry per open ancestor: is fill already settled below it?
+  let inked = 0;
+  const out = svg.replace(/<(\/?)([A-Za-z][\w:-]*)([^>]*?)(\/?)>/g, (tag, close, el, attrs, selfClose) => {
+    if (close) { stack.pop(); return tag; }
+    const inherited = stack.length > 0 && stack[stack.length - 1];
+    // `inherit`/`initial`/`unset` with no coloured ancestor, and `currentColor`
+    // (the `color` property, default black), all still render #000 — a fill
+    // that names them is NOT settled. The hex gate can't see them either.
+    const fillAttr = attrs.match(/(?:^|\s)fill\s*=\s*["']([^"']*)["']/);
+    const styleFill = attrs.match(/(?:^|\s)style\s*=\s*["'][^"']*\bfill\s*:\s*([^;"']+)/);
+    const ownValue = fillAttr?.[1] ?? styleFill?.[1]?.trim();
+    const own = ownValue !== undefined && !UNSET_FILL.test(ownValue);
+    const settled = inherited || own || NON_RENDERING.has(el);
+    let result = tag;
+    if (!settled && PAINT_ELEMENTS.has(el)) {
+      inked++;
+      // Rewrite a keyword fill in place (a second fill attribute would be a
+      // duplicate — an XML parse error that blanks the whole image); append
+      // one only when the element had no fill at all.
+      const rewritten = attrs
+        .replace(/\sfill\s*=\s*["'](?:inherit|initial|unset|currentColor)["']/i, '')
+        .replace(/(\bfill\s*:\s*)(?:inherit|initial|unset|currentColor)\b/i, `$1${INK}`);
+      const hasFillNow = /(?:^|\s)fill\s*=/.test(rewritten) || /\bfill\s*:/.test(rewritten);
+      result = hasFillNow ? `<${el}${rewritten}${selfClose}>` : `<${el}${rewritten} fill="${INK}"${selfClose}>`;
+    }
+    if (!selfClose) stack.push(settled || PAINT_ELEMENTS.has(el));
+    return result;
+  });
+  return { svg: out, inked };
+}
+
+async function fetchOne(name, url) {
   const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   const raw = await res.text();
@@ -324,36 +547,61 @@ async function fetchOne(name, code) {
   const { data } = optimize(recolored, {
     multipass: true,
     plugins: [
-      'preset-default',
+      // removeViewBox stays OFF: the app's art must be viewBox-only (see
+      // tests/unit/art-svg-sizing.test.ts), and Mulberry roots declare a
+      // width/height equal to the viewBox — exactly the case where the default
+      // would drop the viewBox, leaving NO size information once
+      // removeDimensions runs below.
+      // inlineStyles' default (onlyMatchedOnce: true) leaves a CLASS shared by
+      // several shapes in the <style> block; removeAttrs then strips the
+      // classes and the second multipass deletes the now-unmatched rules, so
+      // every shape silently loses its fill and inkDefaultFills paints the
+      // whole drawing ink under a green run. Inline shared rules too, so
+      // Mulberry's `.stN{fill:…}` files keep their colours (and become usable).
+      { name: 'preset-default', params: { overrides: { removeViewBox: false, inlineStyles: { onlyMatchedOnce: false } } } },
       'removeScriptElement',
-      { name: 'removeAttrs', params: { attrs: '(^on.*)' } },
+      // Mulberry roots carry width="850.394" height="850.394"; OpenMoji's
+      // carry none, so this is a no-op for them (outputs stay byte-identical).
+      'removeDimensions',
+      // on*: active content. class: Mulberry's theming hooks (aac-skin-fill)
+      // — dead weight, nothing here styles by class.
+      { name: 'removeAttrs', params: { attrs: ['(^on.*)', 'class'] } },
     ],
   });
+  const { svg, inked } = inkDefaultFills(data);
+  if (inked) console.warn(`note  ${name}: ${inked} fill-less paint element(s) would have rendered black — inked ${INK}`);
   // Belt-and-braces after SVGO: refuse to write if any active-content vector
   // survived sanitization (these bytes are served from the site's own origin).
   // Internal #id references (<use xlink:href="#x">) are allowed; anything
-  // external or executable fails the word loudly instead of shipping.
-  const DENYLIST = /<\s*(script|foreignObject|style|animate|animateTransform|animateMotion|set|iframe|image)\b|javascript:|(?:xlink:)?href\s*=\s*["'](?!#)/i;
-  if (DENYLIST.test(data)) throw new Error(`sanitization denylist hit — refused to write ${name}.svg`);
+  // external or executable fails the word loudly instead of shipping. Element
+  // names may carry a namespace prefix (<svg:script> is still a script to an XML
+  // parser), so the prefix is optional in the match. <text>/<tspan> are refused
+  // because printed letters that are not the card's word defeat the reveal;
+  // <object>/<embed>/<link> and any url(…) that is not an internal #id reference
+  // are refused as external content. A <style> block that survives inlining
+  // (unusual selectors) is refused too — its generic .st0/#Layer_1 names would
+  // collide if ever inlined into the page.
+  const DENYLIST = /<\s*(?:[\w-]+:)?(script|foreignObject|style|animate|animateTransform|animateMotion|set|iframe|image|text|tspan|object|embed|link)\b|javascript:|(?:xlink:)?href\s*=\s*["'](?!#)|url\(\s*["']?(?!#)/i;
+  if (DENYLIST.test(svg)) throw new Error(`sanitization denylist hit — refused to write ${name}.svg`);
   // .tmp suffix (NOT .svg) so a crash mid-write can never leave a stray file
   // that vite.config.ts's `**/*.svg` precache glob would ship to every user.
   const tmp = join(ART_DIR, `${name}.svg.tmp`);
   const out = join(ART_DIR, `${name}.svg`);
-  writeFileSync(tmp, data, 'utf8');
+  writeFileSync(tmp, svg, 'utf8');
   renameSync(tmp, out); // atomic — never a half-written asset
-  return data.length;
+  return svg.length;
 }
 
 const requested = process.argv.slice(2);
-const targets = requested.length ? requested : Object.keys(MAP);
+const targets = requested.length ? requested : [...Object.keys(MAP), ...Object.keys(MULBERRY)];
 
 let ok = 0, failed = 0;
 for (const name of targets) {
-  const code = MAP[name];
-  if (!code) { console.warn(`skip  ${name}: no OpenMoji mapping`); continue; }
+  const source = sourceOf(name);
+  if (!source) { console.warn(`skip  ${name}: no OpenMoji or Mulberry mapping`); continue; }
   try {
-    const bytes = await fetchOne(name, code);
-    console.log(`ok    ${name}.svg  (${bytes} bytes, remapped from ${code})`);
+    const bytes = await fetchOne(name, source.url);
+    console.log(`ok    ${name}.svg  (${bytes} bytes, remapped from ${source.label})`);
     ok++;
   } catch (e) {
     console.warn(`warn  ${name}: ${e.message} — kept existing placeholder`);

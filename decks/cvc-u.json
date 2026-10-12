@@ -6,7 +6,7 @@
   "order": 6,
   "cards": [
     { "type": "word", "text": "mud", "graphemes": ["m", "u", "d"] },
-    { "type": "word", "text": "rug", "graphemes": ["r", "u", "g"] },
+    { "type": "word", "text": "rug", "graphemes": ["r", "u", "g"], "img": "art/rug.svg" },
     { "type": "word", "text": "tub", "graphemes": ["t", "u", "b"], "img": "art/tub.svg" },
     { "type": "word", "text": "nut", "graphemes": ["n", "u", "t"], "img": "art/nut.svg" },
     { "type": "word", "text": "pup", "graphemes": ["p", "u", "p"], "img": "art/pup.svg" },

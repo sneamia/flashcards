@@ -65,10 +65,12 @@ describe('art SVG root dimensions', () => {
     // 163 files at v1.7 (up from 151 at v1.6 — jog's art was dropped in v1.6,
     // see TODOS P1.1 — then the Long Vowels deck's art landed in v1.7, 12 net
     // after cube and smile were cut in review for reading as block/box and
-    // grin); a
-    // collapsed glob means the path moved — fail loudly rather than pass on an
-    // empty set.
-    expect(Object.keys(ART).length).toBeGreaterThan(100);
+    // grin); then 215 at v1.8 (15 tail drawings — 7 Mulberry + 8 hand-drawn —
+    // and 37 vowel-team drawings); a collapsed glob means the path moved — fail
+    // loudly rather than pass on an empty set. The floor tracks the real count
+    // loosely (215 at v1.8) so a glob that silently dropped half the art would
+    // fail too.
+    expect(Object.keys(ART).length).toBeGreaterThan(200);
   });
 
   it('no art SVG declares a root width/height — viewBox only', () => {

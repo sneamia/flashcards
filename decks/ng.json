@@ -14,6 +14,6 @@
     { "type": "word", "text": "hang", "graphemes": ["h", "a", "ng"] },
     { "type": "word", "text": "lung", "graphemes": ["l", "u", "ng"], "img": "art/lung.svg" },
     { "type": "word", "text": "fang", "graphemes": ["f", "a", "ng"] },
-    { "type": "word", "text": "gong", "graphemes": ["g", "o", "ng"] }
+    { "type": "word", "text": "gong", "graphemes": ["g", "o", "ng"], "img": "art/gong.svg" }
   ]
 }

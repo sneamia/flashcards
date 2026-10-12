@@ -84,25 +84,32 @@ const PALETTE = new Set(
   ((FETCH_ART_SRC.match(/const PALETTE = \[([^\]]+)\]/)?.[1] ?? '')
     .match(/#[0-9a-fA-F]{6}/g) ?? []).map((h) => h.toLowerCase()),
 );
-const KEEP_COLORS = new Set(
-  ((FETCH_ART_SRC.match(/const KEEP_COLORS = new Map\(\[([\s\S]*?)\]\);/)?.[1] ?? '')
-    .match(/\['[^']+'/g) ?? []).map((s) => s.slice(2, -1)),
+// name -> the hexes that ONE word may keep verbatim (DESIGN.md: the colour-word
+// exception is surgical — the listed hexes ship, everything else in the file
+// must still be palette). Parsed from the `['name', ['#hex', …]]` entries;
+// before v1.8 the whole file was skipped by name, so an off-palette colour a
+// refetch introduced into red.svg would have shipped unseen.
+const KEEP_COLORS = new Map(
+  [...(FETCH_ART_SRC.match(/const KEEP_COLORS = new Map\(\[([\s\S]*?)\]\);/)?.[1] ?? '')
+    .matchAll(/\['([^']+)',\s*\[([^\]]*)\]/g)]
+    .map((m) => [m[1], (m[2].match(/#[0-9a-fA-F]{6}/g) ?? []).map((h) => h.toLowerCase())]),
 );
 if (PALETTE.size === 0) {
   errors.push('scripts/fetch-art.mjs: parsed zero PALETTE hexes (palette moved or regex drift?)');
 }
 for (const art of artFiles) {
-  if (!art.endsWith('.svg') || KEEP_COLORS.has(art.replace(/\.svg$/, ''))) continue;
+  if (!art.endsWith('.svg')) continue;
+  const allowed = new Set([...PALETTE, ...(KEEP_COLORS.get(art.replace(/\.svg$/, '')) ?? [])]);
   const svg = readFileSync(join(ART_DIR, art), 'utf8');
   const offPalette = new Set();
   // Same hex-shape rules as fetch-art's remap(): skip url(#id) references.
   for (const m of svg.matchAll(/(?<!url\()#([0-9a-fA-F]{6})\b/g)) {
     const hex = `#${m[1].toLowerCase()}`;
-    if (!PALETTE.has(hex)) offPalette.add(hex);
+    if (!allowed.has(hex)) offPalette.add(hex);
   }
   for (const m of svg.matchAll(/(?<!url\()#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])\b(?![0-9a-fA-F])/g)) {
     const hex = `#${m[1]}${m[1]}${m[2]}${m[2]}${m[3]}${m[3]}`.toLowerCase();
-    if (!PALETTE.has(hex)) offPalette.add(hex);
+    if (!allowed.has(hex)) offPalette.add(hex);
   }
   if (offPalette.size) {
     errors.push(`public/art/${art}: off-palette color(s) ${[...offPalette].join(', ')} — art must stay within the six DESIGN.md hexes (KEEP_COLORS in scripts/fetch-art.mjs is the only sanctioned exception)`);

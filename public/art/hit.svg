@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- A bat hitting a ball: fat-barrelled bat, ball with stitches, impact burst. -->
+  <g transform="translate(-6 6)">
+    <path d="M11.9 85.9 L33.9 63.9 L40.3 50.3 L62.3 28.3 Q75.4 26.6 73.7 39.7 L51.7 61.7 L38.1 68.1 L16.1 90.1 Q10 92 11.9 85.9 Z" fill="#a6785a" stroke="#3d3833" stroke-width="2.5" stroke-linejoin="round"/>
+  </g>
+  <circle cx="86" cy="15" r="11.5" fill="#e0cba8" stroke="#3d3833" stroke-width="2.5"/>
+  <path d="M79 8 Q85 15 79 22" fill="none" stroke="#3d3833" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M93 8 Q87 15 93 22" fill="none" stroke="#3d3833" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M77 27 L83.0 27.0" fill="none" stroke="#3d3833" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M77 27 L80.0 21.8" fill="none" stroke="#3d3833" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M77 27 L74.0 21.8" fill="none" stroke="#3d3833" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M77 27 L71.0 27.0" fill="none" stroke="#3d3833" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M77 27 L74.0 32.2" fill="none" stroke="#3d3833" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M77 27 L80.0 32.2" fill="none" stroke="#3d3833" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

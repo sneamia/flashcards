@@ -194,6 +194,7 @@ test.describe('gesture-on-touch', () => {
     // The overlay carries the full gesture list AND the CC BY-SA attribution.
     await expect(stage).toContainText('two-finger tap: back');
     await expect(stage).toContainText('OpenMoji');
+    await expect(stage).toContainText('Mulberry Symbols');
 
     // DISMISS is a parent gesture — it bypasses the lockout, so an immediate
     // tap closes the overlay.
@@ -475,30 +476,25 @@ test.describe('categories + shuffle rows', () => {
     // cards in v1.4 when the two-syllable "spider" card was removed).
     await expect(stage.locator('.row.shuffle[data-shuffle="cvc"]')).toContainText('70 words');
     await expect(stage.locator('.row.shuffle[data-shuffle="blends"]')).toContainText('57 words');
-    // Magic E landed in v1.7 as the app's first single-deck category — its
-    // shuffle row pools its one 28-card deck.
-    await expect(stage.locator('.row.shuffle[data-shuffle="magic-e"]')).toContainText('28 words');
+    // Long Vowels landed in v1.7 as a single 28-card deck and grew to six
+    // decks in v1.8 (28 + 10 + 10 + 7 + 10 + 10 = 75 pooled words).
+    await expect(stage.locator('.row.shuffle[data-shuffle="magic-e"]')).toContainText('75 words');
 
     // shuffleRowEl() (src/main.ts) drops the word "all" when a category has
-    // exactly one deck, since nothing is being combined. Every category
-    // before v1.7 was multi-deck, so that branch has NEVER rendered in
-    // production — Magic E is the first single-deck category to ship, and
-    // these assertions pin the branch in BOTH directions. `.toHaveText`
-    // (exact match) is deliberate: a `.toContainText('shuffle')` substring
-    // check would pass for "shuffle all" too and would prove nothing about
-    // which label actually rendered.
-    await expect(stage.locator('.row.shuffle[data-shuffle="magic-e"] .dg')).toHaveText('shuffle');
-    await expect(stage.locator('.row.shuffle[data-shuffle="magic-e"] .ct')).toHaveText('28 words');
+    // exactly one deck, since nothing is being combined. Long Vowels was the
+    // first (and so far only) category to ship single-deck, in v1.7; v1.8's
+    // vowel-team decks made it multi-deck again, so the plain "shuffle" branch
+    // is dormant once more and is covered only by buildShuffledDeck()'s
+    // single-deck unit test. Pin the "all" form on BOTH label sites (text and
+    // aria-label — shuffleRowEl has two independent copies of the ternary)
+    // with exact matches: `.toContainText('shuffle')` would pass for either.
+    await expect(stage.locator('.row.shuffle[data-shuffle="magic-e"] .dg')).toHaveText('shuffle all');
+    await expect(stage.locator('.row.shuffle[data-shuffle="magic-e"] .ct')).toHaveText('75 words');
     await expect(stage.locator('.row.shuffle[data-shuffle="magic-e"]')).toHaveAttribute(
       'aria-label',
-      'Shuffle Long Vowels, 28 words',
+      'Shuffle all Long Vowels, 75 words',
     );
-    // Contrast case: a multi-deck category still gets the "all" form.
     await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"] .dg')).toHaveText('shuffle all');
-    // shuffleRowEl() has a SECOND, independent copy of the same ternary for
-    // the aria-label (src/main.ts) — the screen-reader label a parent using
-    // VoiceOver actually hears. Pin that one in both directions too, or
-    // inverting it would silently regress 3 of the 4 rows with a green suite.
     await expect(stage.locator('.row.shuffle[data-shuffle="digraphs"]')).toHaveAttribute(
       'aria-label',
       'Shuffle all Digraphs, 55 words',
@@ -529,14 +525,14 @@ test.describe('categories + shuffle rows', () => {
     // the deck-run corner still reads "Magic E · 1 of 28" (pinned by 'the
     // Magic E deck itself opens and reveals its first card', added below in
     // this same describe), while THIS shuffle-run corner must read
-    // "Long Vowels · 1 of 28".
+    // "Long Vowels · 1 of 75" (the pooled category, six decks as of v1.8).
     await page.goto('/');
     await waitForBoot(page);
 
     const stage = page.locator('#stage');
     await stage.locator('.row.shuffle[data-shuffle="magic-e"]').tap();
     await expect(stage).toHaveAttribute('data-state', 'word');
-    await expect(page.locator('#stage .corner')).toContainText('Long Vowels · 1 of 28');
+    await expect(page.locator('#stage .corner')).toContainText('Long Vowels · 1 of 75');
   });
 
   test('a shuffle run is NOT resumable: reloading mid-run lands on the picker', async ({ page }) => {
@@ -562,7 +558,14 @@ test.describe('categories + shuffle rows', () => {
     // Long Vowels is the LAST category in a list roughly three viewports tall
     // on a phone in landscape, so without the save/restore in render() a
     // parent has to re-scroll to the bottom after every single run — which is
-    // exactly the path to the category this release adds.
+    // exactly the path to the category v1.7 added.
+    //
+    // The row tapped below must be one that is VISIBLE at max scroll — the
+    // bottom-most deck row. locator.tap() scrolls an out-of-view row into view
+    // first, which legitimately moves .decks.scrollTop before render() captures
+    // it, so the restored offset would differ from `scrolled` through no fault
+    // of the app. As of v1.8 Long Vowels holds six decks, so Magic E sits five
+    // rows above the bottom and no longer qualifies; `ea` is last.
     await page.goto('/');
     await waitForBoot(page);
 
@@ -578,7 +581,7 @@ test.describe('categories + shuffle rows', () => {
     // scrollTop stays 0 and the assertion below would prove nothing.
     expect(scrolled).toBeGreaterThan(0);
 
-    await stage.locator('.row[data-deck-id="magic-e"]').tap();
+    await stage.locator('.row[data-deck-id="ea"]').tap();
     await expect(stage).toHaveAttribute('data-state', 'word');
 
     // Long-press back out to the picker (same pattern as 'long-press inside a
@@ -611,6 +614,22 @@ test.describe('categories + shuffle rows', () => {
     await stage.tap();
     await expect(stage).toHaveAttribute('data-state', 'image');
     await expect(page.locator('#stage .reveal .art')).toHaveAttribute('src', /art\/cake\.svg$/);
+  });
+  test('a vowel-team deck (ai) opens on its first card and reveals its art', async ({ page }) => {
+    await page.goto('/');
+    await waitForBoot(page);
+
+    const stage = page.locator('#stage');
+    await page.locator('#stage .row[data-deck-id="ai"]').tap();
+    await expect(stage).toHaveAttribute('data-state', 'word');
+    await expect(page.locator('#stage .corner')).toHaveText('ai · 1 of 10');
+    await expect(page.locator('#stage .word')).toHaveText('rain');
+
+    // word -> image: rain is an OpenMoji card (art/rain.svg).
+    await page.waitForTimeout(SAFE_WAIT_MS);
+    await stage.tap();
+    await expect(stage).toHaveAttribute('data-state', 'image');
+    await expect(page.locator('#stage .reveal .art')).toHaveAttribute('src', /art\/rain\.svg$/);
   });
 });
 

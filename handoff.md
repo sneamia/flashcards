@@ -1,176 +1,144 @@
-# Handoff — v1.7 Long Vowels category (BRANCH, not yet reviewed or shipped)
+# Handoff — v1.8 vowel-team decks + Mulberry Symbols art (BRANCH, not yet reviewed or shipped)
 
-**Branch:** `v1.7/magic-e-category` — 16 commits ahead of `main` @ `1783040` (13 as of this record's original write-up, plus 3 more from the review pass — see "What `/review` changed" below). Not squashed, not PR'd, not merged, not deployed.
-**Date:** 2026-08-01 · **Status:** implementation complete, all four gates green, `/review`'s adversarial pass done and its findings fixed or backlogged (see below). **Next step is opening the PR, then `/ship`.**
-**Source docs:** the spec authored in-session via `/spec` (archived under `~/.gstack/projects/flashcards/specs/`), `TODOS.md` (updated), repo `DESIGN.md`, `CLAUDE.md` conventions. The v1.6 record this replaced lives at git `1783040:handoff.md`.
+**Branch:** `v1.8/vowel-teams-mulberry-art` — 12 commits ahead of `main` @ `6090513` (see Done). Not squashed, not merged, not deployed; a PR is open from this branch (`gh pr view`).
+**Date:** 2026-10-12 · **Status:** implementation complete, all four gates green on the final tree; `/review` run (6 specialists + red team + Claude adversarial + Codex adversarial) and its findings fixed in `8252992`; the unresolved items are device-eyeball judgments (Open, below). Merge and deploy are James's call (`/land-and-deploy`) — P1.3 reserved the Mulberry design sign-off for him.
+**Source docs:** the plan at `docs/superpowers/plans/2026-10-12-v1.8-vowel-teams-mulberry-art.md` (committed in `c2b251e` with an as-executed note), `TODOS.md`, `DESIGN.md`, `CLAUDE.md`. The v1.7 record this replaced lives at git `6090513:handoff.md`.
 
 ## What this was
 
-Add silent-e / CVCe as a fourth category — the natural pedagogy step after
-blends, and the first new category since the app shipped with three. Specced
-first (it was a `plan first` backlog item), then implemented in three
-file-disjoint waves plus a review-fix pass.
+Two pieces of work on one branch. (A) Shrink the image-free tail: add Mulberry
+Symbols as a SHA-pinned second art source for words OpenMoji cannot draw, and
+hand-draw the rest where an honest picture exists. James's mid-task ask: draw
+`rug` as two shaded ovals, and draw the other tail words rather than leave them
+blank. Result: 7 tail words from Mulberry, 7 hand-drawn from the tail (gate,
+rug, top, tube, gong, peg, hit), `whisk` moved off the old never-chase list and
+hand-drawn too, plus a hand-drawn `tail` for the new `ai` deck; a hand-drawn
+`gum` was tried and cut.
 
-Two things worth carrying forward: the spec's own "what breaks" table was wrong
-in two places, and the adversarial review found three HIGH findings. Both are
-recorded here rather than quietly corrected.
+(B) Five vowel-team decks under Long Vowels — `ai`, `ee`, `igh`, `oa`, `ea`,
+47 words, 37 illustrated, each carrying its team as one grapheme chunk. Five,
+not six: `ow` was researched and deferred (see TODOS ideas). Long Vowels is now
+6 decks / 75 words.
 
 ## Scope decisions made (do not re-litigate)
 
-James decided these explicitly during the spec (D1–D5):
-
-- **One deck, not per-vowel.** Word supply is lopsided — u_e yields only 3 usable
-  words, so per-vowel decks would ship a visible runt.
-- **No `graphemes` key** on any Magic E card. **This one needs revisiting — see
-  Open below.**
-- **Soft c/g, s=/z/, `ph` words held back** (face, page, race, space, rice, mice,
-  nose, rose, phone). Each smuggles in a rule the app has never taught. Now its
-  own TODOS item, with art already researched and verified.
-- **The 8 existing magic-e words duplicated in, not moved.** Moving them would
-  reorder cards mid-deck in 5 shipped decks — the exact trigger condition TODOS
-  item 11 names for revisiting the resume-by-index bug.
-- **28 cards**, longest deck in the app (previous max 20, `cvc`). I raised the
-  session-length concern; James reaffirmed. A chosen trade, not a defect.
+- **`ow` deferred.** The same spelling says /ow/ in cow, so it belongs beside the
+  other vowel sounds, and its long-o words (slow, grow, row, glow, show, throw)
+  have no honest art. `ay` has at most 50% honest art. Both in TODOS ideas.
+- **`seed` replaced by `heel`** in the `ee` deck.
+- **`coat` from Mulberry** — OpenMoji's coat glyph reads "dress".
+- **Word-only on purpose:** wait, high, right, bright, sigh, toad, float, loaf,
+  sea, speak. Reasons: toad reads "frog", float's best picture is a ring buoy
+  that reads "life ring", speak is a head that reads "talk", loaf's only glyph
+  is `bread`'s and reads "bread", sea's candidates are `wave`'s glyph (same
+  category) or coral, wait/high/right/bright/sigh have nothing that reads
+  honestly (building → "tall", bare arrow, second bulb, exhaling face → "blow").
+- **Mulberry candidates rejected:** clothes peg (reads "clothespin"), chewing
+  gum (a chocolate bar once the colour is gone), 105 KB rug (too heavy). All
+  three replaced by hand-drawn versions, except gum — the hand-drawn gum (a face
+  blowing a bubble) was tried and cut because it read as a face beside a coin.
+- **No OpenMoji hex reused across categories for the new decks** — stricter than
+  the convention, so no new byte-identical pairs.
+- **Magic E graphemes untouched** (still 0/28, pinned); the vowel-team decks are
+  pinned the other way, to carry them.
+- **One commit per unit of work** (below): Mulberry source + 7 words
+  (`3ede482`), hand-drawn pictures (`1fb2364`), attribution docs (`14abdfc`),
+  rug shading fix (`33f1908`), pipeline hardening from review (`8b94220`), gum
+  cut (`0f7871c`), vowel-team decks + 37 drawings (`115617f`), release record
+  (`5faf500`), stale-comment refresh (`2d2cfd5`), the plan doc (`c2b251e`),
+  the `/review` fixes (`8252992`), this handoff refresh (HEAD).
 
 ## Done (`git log --oneline main..`)
 
 ```
-874a302 docs: close the Magic-E backlog item and record what v1.7 review left open
-07d126a docs: sync CLAUDE.md current state to the in-flight v1.7 branch
-c2d6c08 v1.7.0: Long Vowels category with the 28-card Magic E deck
-186d058 docs: add the Long Vowels category to the doc enumerations and fix the u_e rule
-1fd6cf1 test: guard deck-vs-category titles and cross-category duplicate words
-7151781 fix: rename the category to Long Vowels and drop misleading mule/stone art
-70ab071 chore: gitignore the /implement wave-state directory
-971c0d5 docs: correct the stale single-deck shuffle comment in shuffleRowEl
-5d8bda0 test: cover the four-category picker and the single-deck shuffle label
-b80c462 docs: document the Magic E category and the single-deck shuffle label
-47cea1a test: pin deck and category totals to 18 decks / 4 categories
-0b8636f feat: add the Magic E deck as a fourth category (28 cards)
-84ba0d9 feat: add OpenMoji art for the Magic E deck (16 glyphs)
+(HEAD)  docs: refresh the handoff after /review — commit count, gates on the final tree, cross-model status
+8252992 fix(review): keep shared-class fills through SVGO, harden the art denylist and inking, gate colour-word files per hex
+c2b251e docs: add the v1.8 implementation plan (Mulberry source, hand-drawn tail set, vowel-team decks)
+2d2cfd5 docs: refresh the single-deck comments the vowel-team decks made stale; pin the handoff's SHA
+5faf500 docs: record v1.8.0 — vowel-team decks, Mulberry Symbols source, backlog follow-ons
+115617f feat: five vowel-team decks (ai, ee, igh, oa, ea) under Long Vowels with 37 new drawings
+0f7871c fix: cut gum's hand-drawn art — a face beside a light disc reads as a coin, not a bubble
+8b94220 refactor: harden the art pipeline's default-fill inking and named-colour remap after review
+33f1908 fix: smooth the rug's shading into one continuous band
+14abdfc docs: credit Mulberry Symbols alongside OpenMoji in the overlay, license and docs
+1fb2364 feat: nine hand-drawn illustrations for words neither symbol set covers
+3ede482 feat: add Mulberry Symbols as a second art source and illustrate seven image-free words
 ```
-
-## Shipped
-
-- Category id `magic-e`, **title "Long Vowels"** — id and title differ on
-  purpose. The deck inside is titled "Magic E". They must not match; there is now
-  a guard for it.
-- 28 cards, 20 illustrated, 8 word-only (cape, tape, gate, tube, mule, stone,
-  cube, smile).
-- 12 new OpenMoji glyphs shipped (16 were verified HTTP 200 at the pinned ref
-  `005bf5b`, OpenMoji 15.1.0, before going into MAP; `mule` and `stone` were
-  cut mid-implementation and `cube` and `smile` cut in `/review` — see Fixed
-  in CHANGELOG).
-- **First single-deck category in the app's history.** `shuffleRowEl`'s
-  `decks.length > 1` branch (`src/main.ts:288`, `:294`) had been dead code since
-  v1.2; it now renders plain `shuffle` instead of `shuffle all`, because nothing
-  is being combined. Pinned by e2e in *both* directions with exact-match
-  assertions — `toContainText('shuffle')` passes for either label and would
-  prove nothing.
-- **First cross-category duplicate words**: 210 cards, 202 distinct.
 
 ## Verification (final tree)
 
 | Gate | Result |
 |---|---|
-| `npm run validate` | PASSED — 18 decks, 0 warnings |
-| `npx vitest run` | 105 passed (9 files) |
-| `npm run test:e2e` | 36 passed |
-| `npm run build` | clean; `tsc --noEmit` clean; precache 178 entries / 363.25 KiB |
+| `npm run validate` | PASSED — 23 decks (on `8252992`, with the per-hex KEEP_COLORS gate live) |
+| `npx vitest run` | 107 passed (9 files) (on `8252992`) |
+| `npm run test:e2e` | 37 passed (on `8252992`, `/review` probe 015) |
+| `npm run build` | clean; precache 230 entries / 507 KiB (on `8252992`) |
 
-Totals: 18 decks / 210 cards / 202 distinct words / 171 illustrated (81%) /
-163 art SVGs / 156 MAP entries. Pools 70 / 55 / 57 / 28.
+Evidence: `.gstack/qa-reports/review-v1.8-20261012/functional/` (gitignored, local
+to James's machine) holds the `/review` probe captures 001–015.
 
-## Two new guards worth knowing about
+Totals: 23 decks / 257 cards / 249 distinct words / 223 illustrated (87%) /
+215 art SVGs / 178 MAP + 21 MULBERRY entries. Pools 70 / 55 / 57 / 75.
 
-Both in `tests/unit/decks.test.ts`, both deliberately broken and re-verified red
-before being committed green:
+## Guards worth knowing about
 
-- **A deck title never equals its own category title.** v1.4 retitled `CVC Mix`
-  and `Mixed Blends` precisely to stop them echoing their headers, but that rule
-  lived *only* as a prose comment in a test — which is why this branch first
-  shipped a `Magic E` deck under a `Magic E` header with the whole suite green.
-  A collision also makes a deck run and a category shuffle run render an
-  identical in-run corner (`${title} · 1 of 28` either way) even though only the
-  deck run is resumable.
-- **Cross-category duplicate words restricted to a pinned 8-word allowlist.**
-  `validate-decks.mjs`'s duplicate-word guard is scoped per category, so the
-  moment intentional duplicates existed, an *accidental* one became invisible to
-  every gate in the repo.
+- **Inverse graphemes pin.** `tests/unit/decks.test.ts` pins Magic E at no
+  `graphemes` key on any card AND the five vowel-team decks at carrying them
+  with the team as one chunk (`r·ai·n`). A tool "helpfully" filling or stripping
+  either side now fails red.
+- **One source per word.** A word may sit in MAP or MULBERRY, never both —
+  enforced at runtime by `fetch-art.mjs` (it refuses) and by a unit test.
+- **`inkDefaultFills`.** The fetch pipeline inks fill-less paint elements in the
+  palette's dark tone, so new art cannot ship black. This closes the hole for new
+  art only; the validate-decks gate and the 16 older files are still TODOS P3.17.
+- **Scroll-restore e2e now taps `ea`.** The picker-scroll test scrolls `.decks`
+  to its maximum and expects that exact offset back after a run. With five decks
+  below it, the Magic E row is ~33px above the viewport at max scroll, and
+  Playwright's `tap()` scrolls an out-of-view row into view BEFORE the tap — so
+  `render()` captured the post-tap offset (1024, not 1057) and restored it
+  faithfully. Not an app bug: the test now taps `ea`, the bottom-most deck row,
+  which is visible at max scroll. The comment in the test records this.
 
-## Where the spec was wrong (for calibration)
-
-- It named `NUMBER_WORDS` in `docs-sync.test.ts` as the fix for documenting a
-  single-deck category, but missed that the regex on the next line hardcodes the
-  plural `decks,`. A subagent caught it and correctly refused to force the suite
-  green. Fix was widening the pattern to `decks?,`, which changes what the guard
-  *parses*, not what it *asserts*.
-- It listed one stale assertion site in `decks.test.ts`; there were four, plus
-  two test names carrying the old counts in prose.
-
-## What `/review` changed (2026-08-01, after the record above)
-
-Seven reviewers (5 specialists + red team + adversarial). Decisions D1–D4 taken
-by James; everything else was mechanical and auto-applied.
-
-- **Cut `cube` and `smile` art** (D2) — `cube` renders as the same tan box as
-  `block`/`box`, `smile` as the same face as `grin`. Same call as `stone`. Deck
-  is now 20 illustrated / 8 word-only; app art 171/210.
-- **Pinned cross-category art sharing** (D1) — two new guards: shared `img`
-  paths (GUARD C, `decks.test.ts`) and byte-identical files
-  (`art-svg-sizing.test.ts`, the 5 grandfathered pairs). A reviewer proved the
-  hole live: `jog` → `art/globe.svg` passed validate + unit + build green. The
-  `stone` MAP comment was narrowed from "new rule" to the judgment call it is.
-- **GUARD B strengthened** (was vacuous) — it pinned the *set* of duplicate
-  words and discarded the span, so escalating `whale` to a third category
-  passed 101/101. Now pins the full word → categories map. GUARD A extended to
-  cover deck-vs-deck title collisions.
-- **Picker keeps its scroll position** (D4) — `render()` rebuilt `.decks` every
-  time, so returning to the picker reset a ~3-viewport list to the top, with
-  Long Vowels last. ~6 lines in `src/main.ts`, pinned by e2e.
-- **`bike.svg` black fill fixed** (D3) — two fill-less `<path>`s defaulted to
-  `#000000`. The palette gate structurally cannot see a *missing* `fill`, so
-  `DESIGN.md`'s "the build fails" claim is false; 16 files on `main` leak the
-  same way. Now **TODOS P3.17**.
-- **Counts corrected** — "16 new glyphs" was 14 (now 12 after the cuts), in
-  three docs. CHANGELOG's "the build now fails if a ninth shows up" was false:
-  only `npm test` catches it, and there is no PR-triggered CI.
-- **Doc drift swept** — stale 3-category enumerations in `styles.css`,
-  `categories.ts`, `types.ts`, `ARCHITECTURE.md`, `docs-sync.test.ts`, e2e test
-  names; `README`'s "add a category = categories.ts only" corrected (this
-  branch disproved it); `add-deck` SKILL.md gained a new-category step and the
-  `graphemes` carve-out; `package-lock.json` synced 1.4.0 → 1.7.0.
-
-Both strengthened guards and the new e2e were verified **red** against real
-mutations before being accepted green.
+- **`/review` hardening (`8252992`).** SVGO now inlines SHARED classes too
+  (`inlineStyles: { onlyMatchedOnce: false }`) — before, a Mulberry file with
+  `.stN` classes lost every fill and would have shipped as an ink silhouette
+  under a green run (latent: no shipped file was affected; proven by harness,
+  and jeep/coat re-derive byte-identical). `inkDefaultFills` skips
+  `<defs>`/`<symbol>` (a `<use fill>` would be overridden), inks fill-less
+  `<use>`, and rewrites `inherit`/`initial`/`unset`/`currentColor` fills in
+  place. The DENYLIST accepts namespace-prefixed element names and refuses
+  `<text>`/`<tspan>`/`<object>`/`<embed>`/`<link>` and external `url()`.
+  `validate-decks.mjs` gates KEEP_COLORS files on PALETTE ∪ their listed hex
+  instead of skipping the whole file — DESIGN.md's "surgical" claim is now true.
 
 ## Open — needs James
 
-1. **The `graphemes` inconsistency (review H1, conf 9).** The 8 duplicated words
-   already carry consonant+e splits in their original decks — `snake` is
-   `["sn","a","ke"]` in s-blends, and v1.4 shipped `grape` as `gr·a·pe`
-   deliberately. So the same word now has phonics data in one deck and none in
-   the other, and nothing catches it: the validator only checks `graphemes` when
-   present, and no test asserts coverage. Decision D2 was taken without this fact
-   on the table. Three options are written up in `TODOS.md` under the parked
-   convention item; **(c) pin 0/28 as intentional with a test** is cheapest,
-   **(a) strip graphemes from the 8 originals** is most consistent. Until it is
-   settled, do not let a tool fill that field in.
-2. **Four figurative art cards to eyeball** — `home`→house glyph, `cone`→soft ice
-   cream, `pine`→evergreen, `globe`→Earth. The risk is a child naming the picture
-   with a word they already know, which contradicts the read instead of
-   confirming it. `mule` (donkey — wrong animal), `stone` (byte-identical to
-   `rock`), `cube` (reads as `block`/`box`) and `smile` (reads as `grin`) were
-   all cut to word-only for exactly this — the last two in `/review`. These
-   four survive because the risk is a *naming* call a real child has to settle,
-   not a duplicate-drawing call with an existing precedent. → P5 device checklist.
-3. **`rowEl`/`shuffleRowEl` extract is now triggered** — the parked condition was
-   "next time either changes", and `shuffleRowEl` changed here.
+1. **Device eyeball list** — the figurative-art picks (Mulberry people-scenes,
+   hand-drawn nine, figurative OpenMoji), extended by the review's design pass:
+   `back` is the only body-part card without an arrow (add one or cut), `teeth`
+   may read "mouth", `tube` "roll", `jeep`/`coat` render dark because the remap
+   collapses their browns, and `three`/`five`/`nine` are three keycap squares
+   in one Long Vowels pool. See the v1.8 bullet in `TODOS.md` P5.
+0. **`green` in KEEP_COLORS** — the colour-word exception's second member
+   (precedent: `red`, approved 2026-07-07). DESIGN.md now names it; your
+   sign-off is the only thing missing.
+2. **Dormant single-deck label branch.** No single-deck category ships now; the
+   plain `shuffle` form is covered only by a unit test. Nothing to do unless a
+   single-deck category returns (TODOS parked).
+3. **Whether to re-add `ow` / `ay`** — researched, deferred, not rejected (TODOS
+   ideas), alongside the Other Vowels / Bossy R categories.
+4. **P3.17** — the validate-decks fill-less gate and the 16-file black-fill sweep
+   are still open.
 
-## Known gap (non-blocking)
+## Cross-model review
 
-The adversarial review ran **Claude-only** — no independent cross-model check.
-Codex is disabled on this account (`codex_reviews: disabled`), and `/implement`
-has no `codex exec` dispatch wired regardless. Recorded, not a blocker. `/review`
-*does* shell out to Codex, so running it next is the first genuine cross-model
-coverage this branch will get.
+Codex (`gpt-6.1-sol`) **did** run this time — the adversarial pass completed
+with two Low findings (the `<use>` fill override and the `inherit`/`initial`
+keywords), both fixed in `8252992` alongside the Claude adversarial pass's
+shared-class finding. The Claude adversarial, six specialists and red team all
+completed.
+
+**KNOWN GAP (non-blocking):** the Codex *structured* review (`codex review
+--base main`) returned untagged prose ("No actionable regressions were
+identified") with no severity tags or explicit no-findings marker, so the
+review tooling records it as unverified coverage rather than a pass.

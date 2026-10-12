@@ -23,14 +23,14 @@ src/
   decks.ts       # deck loader + category grouping + shuffle-pool builder (skip sentence) — Core-logic agent
   main.ts        # DOM wiring: renders screens, owns timers/wakelock/persistence — Core-logic agent
 decks/
-  18 deck JSONs — cvc + cvc-{a,e,i,o,u} · sh ch th wh ng ck ·
-  blends + {l,r,s,end}-blends · magic-e                  # Deck-data agent
+  23 deck JSONs — cvc + cvc-{a,e,i,o,u} · sh ch th wh ng ck ·
+  blends + {l,r,s,end}-blends · magic-e ai ee igh oa ea     # Deck-data agent
 public/
   art/*.svg      # placeholder + pipeline art — Build-scripts agent
   fonts/*.woff2  # Andika — PWA/fonts agent
   icons/*.png    # PWA icons — PWA/fonts agent
 scripts/
-  fetch-art.mjs        # OpenMoji fetch (SHA-pinned ref) + palette-remap (KEEP_COLORS color-word exception) + sanitize denylist + SVGO; exits non-zero on any failed fetch — Build-scripts agent
+  fetch-art.mjs        # OpenMoji + Mulberry Symbols fetch (both SHA-pinned) + palette-remap (KEEP_COLORS color-word exception) + default-fill inking + sanitize denylist + SVGO; exits non-zero on any failed fetch — Build-scripts agent
   validate-decks.mjs   # build-time deck validation + art palette gate + graphemes-join check — Build-scripts agent
   check-contrast.mjs   # --label-readable >=4.5:1 on cream — Build-scripts agent
   gen-icons.mjs        # one-off PWA icon generator (manual; needs `npm i --no-save sharp opentype.js wawoff2` — outlines the Andika "a" glyph to a path so librsvg can't fall back to a double-story system font)

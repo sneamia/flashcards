@@ -9,7 +9,7 @@
     { "type": "word", "text": "clip", "graphemes": ["cl", "i", "p"], "img": "art/clip.svg" },
     { "type": "word", "text": "flip", "graphemes": ["fl", "i", "p"], "img": "art/flip.svg" },
     { "type": "word", "text": "cloud", "graphemes": ["cl", "ou", "d"], "img": "art/cloud.svg" },
-    { "type": "word", "text": "glue", "graphemes": ["gl", "ue"] },
+    { "type": "word", "text": "glue", "graphemes": ["gl", "ue"], "img": "art/glue.svg" },
     { "type": "word", "text": "glad", "graphemes": ["gl", "a", "d"], "img": "art/glad.svg" },
     { "type": "word", "text": "plate", "graphemes": ["pl", "a", "te"], "img": "art/plate.svg" },
     { "type": "word", "text": "plus", "graphemes": ["pl", "u", "s"], "img": "art/plus.svg" },

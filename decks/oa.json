@@ -1,0 +1,19 @@
+{
+  "id": "oa",
+  "title": "oa",
+  "kind": "phonics",
+  "category": "magic-e",
+  "order": 5,
+  "cards": [
+    { "type": "word", "text": "boat", "graphemes": ["b", "oa", "t"], "img": "art/boat.svg" },
+    { "type": "word", "text": "goat", "graphemes": ["g", "oa", "t"], "img": "art/goat.svg" },
+    { "type": "word", "text": "coat", "graphemes": ["c", "oa", "t"], "img": "art/coat.svg" },
+    { "type": "word", "text": "road", "graphemes": ["r", "oa", "d"], "img": "art/road.svg" },
+    { "type": "word", "text": "soap", "graphemes": ["s", "oa", "p"], "img": "art/soap.svg" },
+    { "type": "word", "text": "toast", "graphemes": ["t", "oa", "st"], "img": "art/toast.svg" },
+    { "type": "word", "text": "goal", "graphemes": ["g", "oa", "l"], "img": "art/goal.svg" },
+    { "type": "word", "text": "toad", "graphemes": ["t", "oa", "d"] },
+    { "type": "word", "text": "float", "graphemes": ["fl", "oa", "t"] },
+    { "type": "word", "text": "loaf", "graphemes": ["l", "oa", "f"] }
+  ]
+}

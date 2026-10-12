@@ -98,7 +98,7 @@ const LONG_PRESS_TIMER_PAD_MS = 20;
 const MIN_WORD_PX = 48;
 const MAX_WORD_PX = 420;
 const WORD_MARGIN = 0.88; // fraction of viewport width available to the word
-const ATTRIBUTION = 'Illustrations: OpenMoji — CC BY-SA 4.0, colors modified';
+const ATTRIBUTION = 'Illustrations: OpenMoji & Mulberry Symbols — CC BY-SA 4.0, colors modified';
 const AUTO_LOCK_NOTE =
   'If the screen dims mid-session, set Auto-Lock to 5 minutes or longer (Settings → Display & Brightness).';
 const GESTURE_LINES = ['tap: next card', 'two-finger tap: back', 'hold: exit'];
@@ -291,11 +291,13 @@ function shuffleRowEl(group: CategoryGroup): HTMLButtonElement {
   const startId = `${SHUFFLE_PREFIX}${group.id}`;
   // "all" only reads true when the run spans more than one deck (e.g. DIGRAPHS
   // = sh+ch+th+wh+ng+ck). A single-deck category just shuffles its one deck, so
-  // drop "all" there — nothing is being combined. Magic E (v1.7) is the first
-  // single-deck category to ship, so this branch went live with it; both sides
-  // are pinned by e2e (exact-match on .dg, since a substring check would pass
-  // for either label). isMulti drives both the visible label AND the
-  // aria-label below — a single source so the two can't drift out of sync.
+  // drop "all" there — nothing is being combined. Long Vowels was the first
+  // single-deck category to ship (v1.7) and took this branch live; v1.8's
+  // vowel-team decks made it multi-deck again, so the plain branch is dormant
+  // and only the "all" form is pinned by e2e (exact-match on .dg, since a
+  // substring check would pass for either label). isMulti drives both the
+  // visible label AND the aria-label below — a single source so the two
+  // can't drift out of sync.
   const isMulti = group.decks.length > 1;
   const label = isMulti ? 'shuffle all' : 'shuffle';
   const btn = el('button', 'row shuffle');
@@ -315,7 +317,7 @@ function shuffleRowEl(group: CategoryGroup): HTMLButtonElement {
    render() rebuilds the whole stage with replaceChildren(), so the .decks
    scroll container is a NEW element every time and its scrollTop resets to 0.
    That was invisible while the list was short, but the picker is now 4 headers
-   + 18 deck rows + 4 shuffle rows against a ~300px-tall scroller on a phone in
+   + 23 deck rows + 4 shuffle rows against a ~300px-tall scroller on a phone in
    landscape — roughly three screens. Without this, a parent who scrolls to the
    last category, runs a deck, and exits lands back at the top and has to
    re-scroll every single time. Saved on the way out of any render that had a

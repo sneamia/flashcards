@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- A spinning top (the toy): cap, stem and knob, striped body, motion arcs. -->
+  <path d="M14 40 Q14 62 50 88 Q86 62 86 40 Z" fill="#a6785a" stroke="#3d3833" stroke-width="2.5" stroke-linejoin="round"/>
+  <ellipse cx="50" cy="40" rx="36" ry="9" fill="#c9b48f" stroke="#3d3833" stroke-width="2.5"/>
+  <rect x="46" y="12" width="8" height="22" rx="3" fill="#8a6a4a" stroke="#3d3833" stroke-width="2.5"/>
+  <circle cx="50" cy="12" r="4" fill="#cbb287" stroke="#3d3833" stroke-width="2.5"/>
+  <path d="M24 56 Q50 66 76 56" fill="none" stroke="#e0cba8" stroke-width="4" stroke-linecap="round"/>
+  <path d="M6 70 Q10 84 24 90" fill="none" stroke="#3d3833" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M94 70 Q90 84 76 90" fill="none" stroke="#3d3833" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="50" cy="92" r="1.8" fill="#3d3833"/>
+</svg>

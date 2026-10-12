@@ -15,9 +15,11 @@ Four phonics categories, shown grouped in the deck picker:
 - **Blends** — a starter deck of initial/final consonant blends (flag, frog,
   star, nest…) plus L-Blends, R-Blends, S-Blends, and Ending Blends: five
   decks, 57 words.
-- **Long Vowels** — the Magic E deck: a final `e` makes the earlier vowel say
-  its name (cake, kite, bone); u_e has two sounds, as in cube and as in flute.
-  Covers a_e, i_e, o_e, and u_e: one deck, 28 words.
+- **Long Vowels** — the Magic E deck (a final `e` makes the earlier vowel say
+  its name: cake, kite, bone; u_e has two sounds, as in cube and as in flute)
+  plus one deck per vowel team — `ai`, `ee`, `igh`, `oa`, `ea` — where two or
+  three letters together spell the long sound (rain, sheep, light, boat, leaf):
+  six decks, 75 words.
 
 Each category also offers an optional **shuffle** entry that mixes every
 card in the category into a random order for review — labeled "shuffle all"
@@ -88,13 +90,17 @@ pool never spans categories.)
 npm run fetch-art
 ```
 
-Pulls the relevant OpenMoji SVGs from an immutable, SHA-pinned upstream
-commit, palette-remaps them to the muted warm illustration palette
+Pulls the relevant OpenMoji SVGs — and, for a handful of words OpenMoji has
+no honest glyph for, Mulberry Symbols SVGs — from immutable, SHA-pinned
+upstream commits, palette-remaps them to the muted warm illustration palette
 (color-words like `red` keep their meaningful fill via the scoped
 `KEEP_COLORS` exception), sanitizes and optimizes with SVGO into
-`public/art/`. Any active-content SVG is refused, and the script exits
-non-zero if any fetch fails so a scripted caller can't mistake a partial run
-for success.
+`public/art/`. Elements that declare no fill (which SVG would paint black)
+are inked in the palette's dark tone at fetch time. Any active-content SVG
+is refused, and the script exits non-zero if any fetch fails so a scripted
+caller can't mistake a partial run for success. Always pass the words you
+changed (`npm run fetch-art -- word1 word2`) — with no arguments it
+re-fetches every mapped word from both sources.
 
 ## Adding a deck
 
@@ -143,7 +149,7 @@ restores it.)
 ## Credits
 
 - **Andika** font, [SIL Open Font License](public/fonts/OFL.txt).
-- Illustrations derived from **OpenMoji** ([CC BY-SA 4.0](public/art/LICENSE)), colors modified.
+- Illustrations derived from **OpenMoji** and **Mulberry Symbols** ([CC BY-SA 4.0](public/art/LICENSE)), colors modified.
 
 ## License
 

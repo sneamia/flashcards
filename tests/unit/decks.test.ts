@@ -34,14 +34,14 @@ import {
 describe('loadDecks() against the real decks/*.json fixtures', () => {
   const decks = loadDecks();
 
-  it('resolves import.meta.glob and returns all eighteen decks', () => {
-    expect(decks).toHaveLength(18);
+  it('resolves import.meta.glob and returns all twenty-three decks', () => {
+    expect(decks).toHaveLength(23);
     expect(new Set(decks.map((d) => d.id))).toEqual(
       new Set([
         'cvc', 'cvc-a', 'cvc-e', 'cvc-i', 'cvc-o', 'cvc-u',
         'sh', 'ch', 'th', 'wh', 'ng', 'ck',
         'blends', 'l-blends', 'r-blends', 's-blends', 'end-blends',
-        'magic-e',
+        'magic-e', 'ai', 'ee', 'igh', 'oa', 'ea',
       ]),
     );
   });
@@ -52,7 +52,7 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
       cvc: 20, 'cvc-a': 10, 'cvc-e': 10, 'cvc-i': 10, 'cvc-o': 10, 'cvc-u': 10,
       sh: 10, ch: 9, th: 9, wh: 7, ng: 10, ck: 10,
       blends: 18, 'l-blends': 10, 'r-blends': 10, 's-blends': 9, 'end-blends': 10,
-      'magic-e': 28,
+      'magic-e': 28, ai: 10, ee: 10, igh: 7, oa: 10, ea: 10,
     });
   });
 
@@ -61,7 +61,7 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
     // (`${deck.title} · 1 of N`, src/main.ts). v1.4 retitled four decks —
     // digraph decks are lowercase like their sound (ck, ng), and the two
     // starter decks no longer collide with their category headers
-    // (CVC Mix ≠ CVC, Mixed Blends ≠ Blends). Pin all eighteen so a retitle
+    // (CVC Mix ≠ CVC, Mixed Blends ≠ Blends). Pin all twenty-three (the v1.8 vowel-team decks are lowercase like the digraph decks — the title IS the grapheme) so a retitle
     // is always a deliberate, test-visible change.
     const titles = Object.fromEntries(decks.map((d) => [d.id, d.title]));
     expect(titles).toEqual({
@@ -70,7 +70,7 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
       sh: 'sh', ch: 'ch', th: 'th', wh: 'wh', ng: 'ng', ck: 'ck',
       blends: 'Mixed Blends', 'l-blends': 'L-Blends', 'r-blends': 'R-Blends',
       's-blends': 'S-Blends', 'end-blends': 'Ending Blends',
-      'magic-e': 'Magic E',
+      'magic-e': 'Magic E', ai: 'ai', ee: 'ee', igh: 'igh', oa: 'oa', ea: 'ea',
     });
   });
 
@@ -89,7 +89,7 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
   });
 
   // Magic E ships with NO `graphemes` key on any of its 28 cards — the only
-  // deck of 18 without one (see TODOS.md's split-digraph convention item).
+  // deck of 23 without one (see TODOS.md's split-digraph convention item).
   // This is a deliberate, still-undecided gap: 8 of these cards are the SAME
   // words as in blends/wh, and those originals DO carry a consonant+e split
   // (e.g. s-blends' snake is ["sn","a","ke"]). Pinning 0/28 here means a
@@ -102,6 +102,22 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
     expect(magicE?.cards).toHaveLength(28);
     for (const card of magicE?.cards ?? []) {
       expect(card.graphemes).toBeUndefined();
+    }
+  });
+
+  // The inverse pin for the v1.8 vowel-team decks: unlike Magic E (above), a
+  // vowel team IS a contiguous grapheme ("ai" in rain), so these decks carry a
+  // split on every card, it joins back to the word, and the deck's own team
+  // appears in it as ONE chunk — never as two separate letters.
+  it('every vowel-team deck carries a graphemes split naming its team on every card', () => {
+    for (const id of ['ai', 'ee', 'igh', 'oa', 'ea']) {
+      const deck = decks.find((d) => d.id === id);
+      expect(deck, id).toBeDefined();
+      for (const card of deck?.cards ?? []) {
+        expect(card.graphemes, `${id}: ${card.text}`).toBeDefined();
+        expect(card.graphemes?.join(''), `${id}: ${card.text}`).toBe(card.text);
+        expect(card.graphemes, `${id}: ${card.text}`).toContain(id);
+      }
     }
   });
 });
@@ -128,8 +144,12 @@ describe('groupByCategory() against the real fixtures', () => {
     ]);
   });
 
-  it('the Magic E category contains exactly its one deck', () => {
-    expect(groups.find((g) => g.id === 'magic-e')?.decks.map((d) => d.id)).toEqual(['magic-e']);
+  it('orders the Long Vowels decks by their intra-category `order`: magic-e, ai, ee, igh, oa, ea', () => {
+    // Magic E first (the v1.7 deck), then the v1.8 vowel teams in teaching
+    // order: ai and ee, then igh and oa, then ea.
+    expect(groups.find((g) => g.id === 'magic-e')?.decks.map((d) => d.id)).toEqual([
+      'magic-e', 'ai', 'ee', 'igh', 'oa', 'ea',
+    ]);
   });
 
   // GUARD A — a deck's title must never equal its own category's title.
@@ -172,8 +192,8 @@ describe('groupByCategory() against the real fixtures', () => {
   // appeared in more than one category. The Long Vowels deck deliberately
   // reuses 8 words that already live in a blends deck or in `wh` — each word
   // teaches its ORIGINAL pattern (a blend, or the `wh` digraph) in its first
-  // deck, and the silent-e pattern in Long Vowels — so the app is now 210
-  // cards / 202 distinct words. scripts/validate-decks.mjs's duplicate-word
+  // deck, and the silent-e pattern in Long Vowels — so the app was 210 cards /
+  // 202 distinct words at v1.7 (257 / 249 at v1.8). scripts/validate-decks.mjs's duplicate-word
   // guard is deliberately scoped PER CATEGORY (a word repeated within one
   // category's shuffle pool is the bug that guards against), so an
   // ACCIDENTAL cross-category duplicate — e.g. a future deck copy-pasting a
@@ -346,12 +366,12 @@ describe('buildShuffledDeck()', () => {
 });
 
 describe('buildShuffledDeck() — single-deck category', () => {
-  // The Long Vowels category (id 'magic-e') IS single-deck in production as
-  // of v1.7 — it holds exactly the one 'magic-e' deck. This synthetic
-  // fixture still pins the one-deck pooling path directly (rather than
-  // depending on that production category's exact contents staying
-  // single-deck forever): the pool is just that deck's cards, under the
-  // reserved shuffle id.
+  // No shipped category is single-deck any more: Long Vowels (id 'magic-e')
+  // was, in v1.7, until the v1.8 vowel-team decks joined it. This synthetic
+  // fixture is therefore the ONLY coverage of the one-deck pooling path (and
+  // the plain "shuffle" label branch in shuffleRowEl has no live data path at
+  // all — see TODOS.md's parked note): the pool is just that deck's cards,
+  // under the reserved shuffle id.
   const group = {
     id: 'cvc',
     title: 'CVC',

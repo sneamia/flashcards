@@ -1,0 +1,19 @@
+{
+  "id": "ea",
+  "title": "ea",
+  "kind": "phonics",
+  "category": "magic-e",
+  "order": 6,
+  "cards": [
+    { "type": "word", "text": "leaf", "graphemes": ["l", "ea", "f"], "img": "art/leaf.svg" },
+    { "type": "word", "text": "seal", "graphemes": ["s", "ea", "l"], "img": "art/seal.svg" },
+    { "type": "word", "text": "peach", "graphemes": ["p", "ea", "ch"], "img": "art/peach.svg" },
+    { "type": "word", "text": "beach", "graphemes": ["b", "ea", "ch"], "img": "art/beach.svg" },
+    { "type": "word", "text": "sea", "graphemes": ["s", "ea"] },
+    { "type": "word", "text": "meat", "graphemes": ["m", "ea", "t"], "img": "art/meat.svg" },
+    { "type": "word", "text": "tea", "graphemes": ["t", "ea"], "img": "art/tea.svg" },
+    { "type": "word", "text": "bean", "graphemes": ["b", "ea", "n"], "img": "art/bean.svg" },
+    { "type": "word", "text": "beak", "graphemes": ["b", "ea", "k"], "img": "art/beak.svg" },
+    { "type": "word", "text": "speak", "graphemes": ["sp", "ea", "k"] }
+  ]
+}

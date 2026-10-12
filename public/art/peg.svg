@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- A pegboard toy: one peg standing in a board, one lying in front. -->
+  <rect x="8" y="58" width="84" height="22" rx="4" fill="#c9b48f" stroke="#3d3833" stroke-width="2.5"/>
+  <circle cx="28" cy="69" r="5.5" fill="#8a6a4a"/>
+  <circle cx="72" cy="69" r="5.5" fill="#8a6a4a"/>
+  <circle cx="50" cy="69" r="5.5" fill="#8a6a4a"/>
+  <rect x="43" y="22" width="14" height="48" rx="7" fill="#a6785a" stroke="#3d3833" stroke-width="2.5"/>
+  <ellipse cx="50" cy="23" rx="7" ry="3" fill="#e0cba8"/>
+  <path d="M12 80 H88" fill="none" stroke="#8a6a4a" stroke-width="2" stroke-linecap="round"/>
+  <g transform="rotate(-8 24 90)">
+    <rect x="8" y="86" width="32" height="10" rx="5" fill="#a6785a" stroke="#3d3833" stroke-width="2.5"/>
+    <ellipse cx="40" cy="91" rx="3" ry="5" fill="#e0cba8"/>
+  </g>
+</svg>

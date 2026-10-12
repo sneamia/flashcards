@@ -11,6 +11,6 @@
     { "type": "word", "text": "when", "graphemes": ["wh", "e", "n"] },
     { "type": "word", "text": "wheel", "graphemes": ["wh", "ee", "l"], "img": "art/wheel.svg" },
     { "type": "word", "text": "whale", "graphemes": ["wh", "a", "le"], "img": "art/whale.svg" },
-    { "type": "word", "text": "whisk", "graphemes": ["wh", "i", "sk"] }
+    { "type": "word", "text": "whisk", "graphemes": ["wh", "i", "sk"], "img": "art/whisk.svg" }
   ]
 }
