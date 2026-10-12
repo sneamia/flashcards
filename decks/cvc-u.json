@@ -12,7 +12,7 @@
     { "type": "word", "text": "pup", "graphemes": ["p", "u", "p"], "img": "art/pup.svg" },
     { "type": "word", "text": "jug", "graphemes": ["j", "u", "g"], "img": "art/jug.svg" },
     { "type": "word", "text": "hut", "graphemes": ["h", "u", "t"], "img": "art/hut.svg" },
-    { "type": "word", "text": "gum", "graphemes": ["g", "u", "m"], "img": "art/gum.svg" },
+    { "type": "word", "text": "gum", "graphemes": ["g", "u", "m"] },
     { "type": "word", "text": "run", "graphemes": ["r", "u", "n"], "img": "art/run.svg" },
     { "type": "word", "text": "cut", "graphemes": ["c", "u", "t"], "img": "art/cut.svg" }
   ]

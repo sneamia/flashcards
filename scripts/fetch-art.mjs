@@ -182,8 +182,11 @@ const MAP = {
   // preschooler (mud/gum have no glyph; yarn 1F9F6 is not a rug). Mulberry
   // was checked too (2026-10-12): no mud; its rug is a 350-path pattern
   // (105 KB after SVGO, against a ~6 KB norm here); its chewing gum reads
-  // as a chocolate bar once the palette remap strips the colour. mud stays image-free; rug and gum are
-  // hand-drawn (see the placeholders note below).
+  // as a chocolate bar once the palette remap strips the colour. rug is
+  // hand-drawn (see the placeholders note below). gum: a hand-drawn face
+  // blowing a bubble was tried too and read as a face beside a coin — the
+  // palette has no way to draw a translucent bubble. mud and gum stay
+  // image-free.
 
   // --- CVC: Short I (cvc-i) ---
   wig: '1F9B1',       // curly hair component (~ wig; floating hairpiece)
@@ -288,14 +291,14 @@ const MAP = {
   // Mulberry's only candidate is likewise a donkey.
 
   // --- Hand-drawn placeholders (leave UNMAPPED so fetch-art never overwrites) ---
-  // whip, chip, chin, shin, shut, mop, block, gate, rug, top, tube, whisk, gong, peg, hit, gum: no OpenMoji (or Mulberry) glyph plausibly
+  // whip, chip, chin, shin, shut, mop, block, gate, rug, top, tube, whisk, gong, peg, hit: no OpenMoji (or Mulberry) glyph plausibly
   // reads as these for a preschooler (chin/shin need a figurative arrow to a
   // body part; chip must be a potato chip, not french fries 1F35F, for
   // American English). See public/art/*.svg — hand-authored in the warm
   // palette. Leaving them out of MAP keeps `npm run fetch-art` from clobbering
   // them.
   // The 2026-10-12 set: rug (two shaded ovals), top (spinning top), tube (hollow roll), whisk, gong (in its stand),
-  // peg (pegboard — the North American sense), hit (bat striking a ball), gum (face blowing a bubble), gate (garden gate).
+  // peg (pegboard — the North American sense), hit (bat striking a ball), gate (garden gate).
   // whiz: tried 1F4A8 "dashing away" (speed-lines cloud) — dropped on
   // render-check. Alone (no running figure) it reads as smoke/wind, and
   // it's colloquially read as a fart-cloud emoji — not a reliable "whiz"
