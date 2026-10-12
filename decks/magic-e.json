@@ -14,7 +14,7 @@
     { "type": "word", "text": "whale", "img": "art/whale.svg" },
     { "type": "word", "text": "wave", "img": "art/wave.svg" },
     { "type": "word", "text": "cape" },
-    { "type": "word", "text": "tape" },
+    { "type": "word", "text": "tape", "img": "art/tape.svg" },
     { "type": "word", "text": "gate" },
     { "type": "word", "text": "kite", "img": "art/kite.svg" },
     { "type": "word", "text": "bike", "img": "art/bike.svg" },

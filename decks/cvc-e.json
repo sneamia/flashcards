@@ -9,7 +9,7 @@
     { "type": "word", "text": "ten", "graphemes": ["t", "e", "n"], "img": "art/ten.svg" },
     { "type": "word", "text": "net", "graphemes": ["n", "e", "t"], "img": "art/net.svg" },
     { "type": "word", "text": "leg", "graphemes": ["l", "e", "g"], "img": "art/leg.svg" },
-    { "type": "word", "text": "pet", "graphemes": ["p", "e", "t"] },
+    { "type": "word", "text": "pet", "graphemes": ["p", "e", "t"], "img": "art/pet.svg" },
     { "type": "word", "text": "wet", "graphemes": ["w", "e", "t"], "img": "art/wet.svg" },
     { "type": "word", "text": "gem", "graphemes": ["g", "e", "m"], "img": "art/gem.svg" },
     { "type": "word", "text": "red", "graphemes": ["r", "e", "d"], "img": "art/red.svg" },
