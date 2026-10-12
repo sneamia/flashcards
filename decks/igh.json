@@ -1,0 +1,16 @@
+{
+  "id": "igh",
+  "title": "igh",
+  "kind": "phonics",
+  "category": "magic-e",
+  "order": 4,
+  "cards": [
+    { "type": "word", "text": "light", "graphemes": ["l", "igh", "t"], "img": "art/light.svg" },
+    { "type": "word", "text": "night", "graphemes": ["n", "igh", "t"], "img": "art/night.svg" },
+    { "type": "word", "text": "high", "graphemes": ["h", "igh"] },
+    { "type": "word", "text": "right", "graphemes": ["r", "igh", "t"] },
+    { "type": "word", "text": "thigh", "graphemes": ["th", "igh"], "img": "art/thigh.svg" },
+    { "type": "word", "text": "bright", "graphemes": ["br", "igh", "t"] },
+    { "type": "word", "text": "sigh", "graphemes": ["s", "igh"] }
+  ]
+}

@@ -8,8 +8,9 @@ Illustrations in this directory are derived from two CC BY-SA 4.0 symbol sets.
    Copyright 2018–2026 Steve Lee
    Original license: Creative Commons Attribution-ShareAlike 4.0 International
    (CC BY-SA 4.0) — https://creativecommons.org/licenses/by-sa/4.0/
-   Used for: back, bib, glue, kick, neck, pet, tape (see the MULBERRY table in
-   scripts/fetch-art.mjs for the exact source files).
+   Used for: back, beach, beak, bib, cheek, coat, feet, glue, goal, heel, jeep,
+   kick, nail, neck, paint, pet, tape, tea, teeth, thigh, toast (see the
+   MULBERRY table in scripts/fetch-art.mjs for the exact source files).
 
 These files are ADAPTATIONS: the source SVGs have been recolored
 (palette-remapped to a muted warm set) and optimized. Because CC BY-SA 4.0
@@ -20,7 +21,7 @@ Attribution (as surfaced in the app's About overlay):
   "Illustrations: OpenMoji & Mulberry Symbols — CC BY-SA 4.0, colors modified"
 
 Hand-drawn note: some SVGs here (block, chin, chip, gate, gong, hit, mop, peg,
-rug, shin, shut, top, tube, whip, whisk) are original drawings in the same
-flat style, made for this project where neither set has a glyph that reads for
+rug, shin, shut, tail, top, tube, whip, whisk) are original drawings in the
+same flat style, made for this project where neither set has a glyph that reads for
 a preschooler. They are released under the same CC BY-SA 4.0 terms for
 simplicity.

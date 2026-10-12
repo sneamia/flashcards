@@ -23,8 +23,8 @@ src/
   decks.ts       # deck loader + category grouping + shuffle-pool builder (skip sentence) — Core-logic agent
   main.ts        # DOM wiring: renders screens, owns timers/wakelock/persistence — Core-logic agent
 decks/
-  18 deck JSONs — cvc + cvc-{a,e,i,o,u} · sh ch th wh ng ck ·
-  blends + {l,r,s,end}-blends · magic-e                  # Deck-data agent
+  23 deck JSONs — cvc + cvc-{a,e,i,o,u} · sh ch th wh ng ck ·
+  blends + {l,r,s,end}-blends · magic-e ai ee igh oa ea     # Deck-data agent
 public/
   art/*.svg      # placeholder + pipeline art — Build-scripts agent
   fonts/*.woff2  # Andika — PWA/fonts agent

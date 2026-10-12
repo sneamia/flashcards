@@ -34,14 +34,14 @@ import {
 describe('loadDecks() against the real decks/*.json fixtures', () => {
   const decks = loadDecks();
 
-  it('resolves import.meta.glob and returns all eighteen decks', () => {
-    expect(decks).toHaveLength(18);
+  it('resolves import.meta.glob and returns all twenty-three decks', () => {
+    expect(decks).toHaveLength(23);
     expect(new Set(decks.map((d) => d.id))).toEqual(
       new Set([
         'cvc', 'cvc-a', 'cvc-e', 'cvc-i', 'cvc-o', 'cvc-u',
         'sh', 'ch', 'th', 'wh', 'ng', 'ck',
         'blends', 'l-blends', 'r-blends', 's-blends', 'end-blends',
-        'magic-e',
+        'magic-e', 'ai', 'ee', 'igh', 'oa', 'ea',
       ]),
     );
   });
@@ -52,7 +52,7 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
       cvc: 20, 'cvc-a': 10, 'cvc-e': 10, 'cvc-i': 10, 'cvc-o': 10, 'cvc-u': 10,
       sh: 10, ch: 9, th: 9, wh: 7, ng: 10, ck: 10,
       blends: 18, 'l-blends': 10, 'r-blends': 10, 's-blends': 9, 'end-blends': 10,
-      'magic-e': 28,
+      'magic-e': 28, ai: 10, ee: 10, igh: 7, oa: 10, ea: 10,
     });
   });
 
@@ -61,7 +61,7 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
     // (`${deck.title} · 1 of N`, src/main.ts). v1.4 retitled four decks —
     // digraph decks are lowercase like their sound (ck, ng), and the two
     // starter decks no longer collide with their category headers
-    // (CVC Mix ≠ CVC, Mixed Blends ≠ Blends). Pin all eighteen so a retitle
+    // (CVC Mix ≠ CVC, Mixed Blends ≠ Blends). Pin all twenty-three (the v1.8 vowel-team decks are lowercase like the digraph decks — the title IS the grapheme) so a retitle
     // is always a deliberate, test-visible change.
     const titles = Object.fromEntries(decks.map((d) => [d.id, d.title]));
     expect(titles).toEqual({
@@ -70,7 +70,7 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
       sh: 'sh', ch: 'ch', th: 'th', wh: 'wh', ng: 'ng', ck: 'ck',
       blends: 'Mixed Blends', 'l-blends': 'L-Blends', 'r-blends': 'R-Blends',
       's-blends': 'S-Blends', 'end-blends': 'Ending Blends',
-      'magic-e': 'Magic E',
+      'magic-e': 'Magic E', ai: 'ai', ee: 'ee', igh: 'igh', oa: 'oa', ea: 'ea',
     });
   });
 
@@ -104,6 +104,22 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
       expect(card.graphemes).toBeUndefined();
     }
   });
+
+  // The inverse pin for the v1.8 vowel-team decks: unlike Magic E (above), a
+  // vowel team IS a contiguous grapheme ("ai" in rain), so these decks carry a
+  // split on every card, it joins back to the word, and the deck's own team
+  // appears in it as ONE chunk — never as two separate letters.
+  it('every vowel-team deck carries a graphemes split naming its team on every card', () => {
+    for (const id of ['ai', 'ee', 'igh', 'oa', 'ea']) {
+      const deck = decks.find((d) => d.id === id);
+      expect(deck, id).toBeDefined();
+      for (const card of deck?.cards ?? []) {
+        expect(card.graphemes, `${id}: ${card.text}`).toBeDefined();
+        expect(card.graphemes?.join(''), `${id}: ${card.text}`).toBe(card.text);
+        expect(card.graphemes, `${id}: ${card.text}`).toContain(id);
+      }
+    }
+  });
 });
 
 describe('groupByCategory() against the real fixtures', () => {
@@ -128,8 +144,12 @@ describe('groupByCategory() against the real fixtures', () => {
     ]);
   });
 
-  it('the Magic E category contains exactly its one deck', () => {
-    expect(groups.find((g) => g.id === 'magic-e')?.decks.map((d) => d.id)).toEqual(['magic-e']);
+  it('orders the Long Vowels decks by their intra-category `order`: magic-e, ai, ee, igh, oa, ea', () => {
+    // Magic E first (the v1.7 deck), then the v1.8 vowel teams in teaching
+    // order: ai and ee, then igh and oa, then ea.
+    expect(groups.find((g) => g.id === 'magic-e')?.decks.map((d) => d.id)).toEqual([
+      'magic-e', 'ai', 'ee', 'igh', 'oa', 'ea',
+    ]);
   });
 
   // GUARD A — a deck's title must never equal its own category's title.

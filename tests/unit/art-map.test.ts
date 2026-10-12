@@ -47,13 +47,14 @@ const REFERENCED_ART = new Set(
 
 describe('fetch-art MAP/MULBERRY ↔ deck img consistency', () => {
   it('parses a non-trivial MAP and MULBERRY out of scripts/fetch-art.mjs (anti-drift guard)', () => {
-    // 156 OpenMoji entries at v1.7; a collapsed parse means the regex or the
-    // table moved — fail loudly instead of passing on an empty key list.
+    // 178 OpenMoji entries at v1.8 (156 at v1.7 + 22 vowel-team glyphs); a
+    // collapsed parse means the regex or the table moved — fail loudly instead of passing on an empty key list.
     expect(MAP_KEYS.length).toBeGreaterThan(100);
     expect(new Set(MAP_KEYS).size).toBe(MAP_KEYS.length); // no duplicate keys
-    // Mulberry landed in v1.8 with 7 entries — the OpenMoji-less tail (kick,
-    // neck, back, pet, bib, glue, tape). Same anti-vacuous reasoning.
-    expect(MULBERRY_KEYS.length).toBeGreaterThanOrEqual(7);
+    // Mulberry landed in v1.8 with 21 entries — the 7-word OpenMoji-less tail
+    // (kick, neck, back, pet, bib, glue, tape) plus 14 vowel-team words. Same
+    // anti-vacuous reasoning.
+    expect(MULBERRY_KEYS.length).toBeGreaterThanOrEqual(20);
     expect(new Set(MULBERRY_KEYS).size).toBe(MULBERRY_KEYS.length);
   });
 

@@ -25,7 +25,8 @@ const PALETTE = ['#a6785a', '#c9b48f', '#e0cba8', '#cbb287', '#8a6a4a', '#3d3833
 // the listed hexes ship verbatim, but every OTHER color in the file still
 // remaps so outlines stay in design ink. Keep this to color-words only.
 const KEEP_COLORS = new Map([
-  ['red', ['#ea5a47']], // OpenMoji red-square fill
+  ['red', ['#ea5a47']],   // OpenMoji red-square fill
+  ['green', ['#b1cc33']], // OpenMoji green-square fill
 ]);
 
 // art filename (without .svg) -> OpenMoji hexcode, verified to resolve (HTTP
@@ -290,15 +291,66 @@ const MAP = {
   // image-free card.
   // Mulberry's only candidate is likewise a donkey.
 
+  // --- Long Vowels: ai (ai) ---
+  rain: '1F327',      // cloud with rain
+  mail: '2709',       // envelope (~ mail; a child may say "letter")
+  pail: '1FAA3',      // bucket (~ pail — the "Jack and Jill" sense)
+  sail: '26F5',       // sailboat (~ sail; the sail dominates the glyph)
+  chain: '26D3',      // chains
+  brain: '1F9E0',     // brain
+  // nail, paint: Mulberry (see MULBERRY below). tail: no glyph in either set —
+  // hand-drawn as hindquarters with an arrow at the tail (see the placeholders
+  // note below). wait: Mulberry's only file embeds a raster photo (denylist);
+  // stays image-free.
+
+  // --- Long Vowels: ee (ee) ---
+  bee: '1F41D',       // honeybee
+  sheep: '1F411',     // ewe
+  three: '0033-FE0F-20E3', // keycap 3 (numeral reads as "three")
+  green: '1F7E9',     // green square (KEEP_COLORS preserves its green fill)
+  sleep: '1F4A4',     // zzz (~ sleep; 1F634 sleeping face is `nap`'s glyph, cvc)
+  // feet, heel, jeep, teeth, cheek: Mulberry (see MULBERRY below). seed was
+  // dropped: Mulberry's seed packet reads "flower"/"packet".
+
+  // --- Long Vowels: igh (igh) ---
+  light: '1F4A1',     // light bulb
+  night: '1F303',     // night with stars (~ night; skyline under a moon)
+  // thigh: Mulberry (see MULBERRY below). high, right, bright, sigh: nothing
+  // reads honestly — Mulberry's `high` is a tall building (reads "tall"),
+  // `right` a bare arrow, `bright` a second bulb (would collide with light
+  // inside this category's pool), and the exhaling face 1F62E-200D-1F4A8 for
+  // `sigh` reads "blow". All four stay image-free.
+
+  // --- Long Vowels: oa (oa) ---
+  boat: '1F6E5',      // motor boat (distinct from `sail`'s sailboat, same pool)
+  goat: '1F410',      // goat
+  soap: '1F9FC',      // bar of soap with bubbles
+  road: '1F6E3',      // motorway (~ road)
+  // coat, toast, goal: Mulberry (see MULBERRY below). toad: Mulberry's toad
+  // is a warty side view, but a preschooler names any frog-shape "frog", and
+  // `frog` ships in blends — the stone/rock, jog/run call. float: ring buoy
+  // 1F6DF reads "life ring". loaf: 1F35E is `bread`'s glyph and reads
+  // "bread". All three stay image-free.
+
+  // --- Long Vowels: ea (ea) ---
+  leaf: '1F343',      // leaf fluttering in wind
+  bean: '1FAD8',      // beans (~ bean)
+  seal: '1F9AD',      // seal
+  peach: '1F351',     // peach
+  meat: '1F969',      // cut of meat
+  // beach, tea, beak: Mulberry (see MULBERRY below). sea: 1F30A is `wave`'s
+  // glyph in this very category and 1F3D6 is `sand`'s (blends); 1FAB8 coral
+  // reads "coral". speak: 1F5E3 speaking head reads "talk". Both image-free.
+
   // --- Hand-drawn placeholders (leave UNMAPPED so fetch-art never overwrites) ---
-  // whip, chip, chin, shin, shut, mop, block, gate, rug, top, tube, whisk, gong, peg, hit: no OpenMoji (or Mulberry) glyph plausibly
+  // whip, chip, chin, shin, shut, mop, block, gate, rug, top, tube, whisk, gong, peg, hit, tail: no OpenMoji (or Mulberry) glyph plausibly
   // reads as these for a preschooler (chin/shin need a figurative arrow to a
   // body part; chip must be a potato chip, not french fries 1F35F, for
   // American English). See public/art/*.svg — hand-authored in the warm
   // palette. Leaving them out of MAP keeps `npm run fetch-art` from clobbering
   // them.
   // The 2026-10-12 set: rug (two shaded ovals), top (spinning top), tube (hollow roll), whisk, gong (in its stand),
-  // peg (pegboard — the North American sense), hit (bat striking a ball), gate (garden gate).
+  // peg (pegboard — the North American sense), hit (bat striking a ball), gate (garden gate), tail (hindquarters with an arrow at the tail).
   // whiz: tried 1F4A8 "dashing away" (speed-lines cloud) — dropped on
   // render-check. Alone (no running figure) it reads as smoke/wind, and
   // it's colloquially read as a fart-cloud emoji — not a reliable "whiz"
@@ -329,6 +381,22 @@ const MULBERRY = {
 
   // --- Magic E (magic-e) ---
   tape: 'masking_tape',     // roll of tape with a peeled end
+
+  // --- Long Vowels: vowel-team decks (v1.8) ---
+  nail: 'nail',             // a single hardware nail
+  paint: 'paint',           // open paint can
+  feet: 'feet',             // two bare feet (OpenMoji 1F9B6 is one foot)
+  heel: 'heel',             // foot with an ink arrow at the heel
+  jeep: 'jeep',             // jeep, side view (~ jeep; a child may say "car")
+  teeth: 'teeth',           // open mouth showing teeth
+  cheek: 'cheek',           // face with an ink arrow at the cheek
+  thigh: 'thigh',           // leg with an ink arrow at the thigh
+  coat: 'coat',             // long buttoned coat (OpenMoji 1F9E5 reads "dress" after the remap)
+  toast: 'toast',           // toast on a plate
+  goal: 'goal',             // football goal net (1F945 is `net`'s glyph, cvc)
+  beach: 'beach',           // palm, sun, waves, sand
+  tea: 'tea',               // cup and saucer with a tea bag
+  beak: 'beak',             // bird head with an ink arrow at the beak
 };
 
 // Same immutability reasoning as OPENMOJI_REF below. 9cbab9f == `master` on

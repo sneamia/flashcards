@@ -1,0 +1,19 @@
+{
+  "id": "ai",
+  "title": "ai",
+  "kind": "phonics",
+  "category": "magic-e",
+  "order": 2,
+  "cards": [
+    { "type": "word", "text": "rain", "graphemes": ["r", "ai", "n"], "img": "art/rain.svg" },
+    { "type": "word", "text": "sail", "graphemes": ["s", "ai", "l"], "img": "art/sail.svg" },
+    { "type": "word", "text": "nail", "graphemes": ["n", "ai", "l"], "img": "art/nail.svg" },
+    { "type": "word", "text": "mail", "graphemes": ["m", "ai", "l"], "img": "art/mail.svg" },
+    { "type": "word", "text": "pail", "graphemes": ["p", "ai", "l"], "img": "art/pail.svg" },
+    { "type": "word", "text": "tail", "graphemes": ["t", "ai", "l"], "img": "art/tail.svg" },
+    { "type": "word", "text": "chain", "graphemes": ["ch", "ai", "n"], "img": "art/chain.svg" },
+    { "type": "word", "text": "paint", "graphemes": ["p", "ai", "nt"], "img": "art/paint.svg" },
+    { "type": "word", "text": "brain", "graphemes": ["br", "ai", "n"], "img": "art/brain.svg" },
+    { "type": "word", "text": "wait", "graphemes": ["w", "ai", "t"] }
+  ]
+}

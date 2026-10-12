@@ -15,9 +15,11 @@ Four phonics categories, shown grouped in the deck picker:
 - **Blends** — a starter deck of initial/final consonant blends (flag, frog,
   star, nest…) plus L-Blends, R-Blends, S-Blends, and Ending Blends: five
   decks, 57 words.
-- **Long Vowels** — the Magic E deck: a final `e` makes the earlier vowel say
-  its name (cake, kite, bone); u_e has two sounds, as in cube and as in flute.
-  Covers a_e, i_e, o_e, and u_e: one deck, 28 words.
+- **Long Vowels** — the Magic E deck (a final `e` makes the earlier vowel say
+  its name: cake, kite, bone; u_e has two sounds, as in cube and as in flute)
+  plus one deck per vowel team — `ai`, `ee`, `igh`, `oa`, `ea` — where two or
+  three letters together spell the long sound (rain, sheep, light, boat, leaf):
+  six decks, 75 words.
 
 Each category also offers an optional **shuffle** entry that mixes every
 card in the category into a random order for review — labeled "shuffle all"
