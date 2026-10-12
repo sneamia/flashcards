@@ -41,11 +41,13 @@ to black instead of failing the gate; see `TODOS.md` P3.17 for the known gap and
 the pre-existing files it affects.
 
 **Color-word exception (approved 2026-07-07):** when a card's meaning IS a
-color, remapping the glyph would make the card lie — so the `red` card keeps
-its actually-red fill (`#ea5a47`). The exception is surgical: only the listed
+color, remapping the glyph would make the card lie — so the `red` card keeps its
+actually-red fill (`#ea5a47`) and, since v1.8, the `green` card its green
+(`#b1cc33`). The exception is surgical: only the listed
 hexes ship verbatim (`KEEP_COLORS` in `scripts/fetch-art.mjs`); every other
 color in the file still remaps, so the outline stays in the standard ink. The
-palette gate recognizes `KEEP_COLORS` as the one sanctioned deviation. Keep the
+palette gate reads `KEEP_COLORS` and allows exactly those hexes in exactly those
+files — every other colour in them is still gated. Keep the
 list to color-words only — it is not a door to decorative color.
 
 **Figurative art is allowed** where a single object won't read: a drawing may

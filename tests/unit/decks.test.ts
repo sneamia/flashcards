@@ -89,7 +89,7 @@ describe('loadDecks() against the real decks/*.json fixtures', () => {
   });
 
   // Magic E ships with NO `graphemes` key on any of its 28 cards — the only
-  // deck of 18 without one (see TODOS.md's split-digraph convention item).
+  // deck of 23 without one (see TODOS.md's split-digraph convention item).
   // This is a deliberate, still-undecided gap: 8 of these cards are the SAME
   // words as in blends/wh, and those originals DO carry a consonant+e split
   // (e.g. s-blends' snake is ["sn","a","ke"]). Pinning 0/28 here means a
@@ -192,8 +192,8 @@ describe('groupByCategory() against the real fixtures', () => {
   // appeared in more than one category. The Long Vowels deck deliberately
   // reuses 8 words that already live in a blends deck or in `wh` — each word
   // teaches its ORIGINAL pattern (a blend, or the `wh` digraph) in its first
-  // deck, and the silent-e pattern in Long Vowels — so the app is now 210
-  // cards / 202 distinct words. scripts/validate-decks.mjs's duplicate-word
+  // deck, and the silent-e pattern in Long Vowels — so the app was 210 cards /
+  // 202 distinct words at v1.7 (257 / 249 at v1.8). scripts/validate-decks.mjs's duplicate-word
   // guard is deliberately scoped PER CATEGORY (a word repeated within one
   // category's shuffle pool is the bug that guards against), so an
   // ACCIDENTAL cross-category duplicate — e.g. a future deck copy-pasting a

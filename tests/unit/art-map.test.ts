@@ -56,6 +56,12 @@ describe('fetch-art MAP/MULBERRY ↔ deck img consistency', () => {
     // anti-vacuous reasoning.
     expect(MULBERRY_KEYS.length).toBeGreaterThanOrEqual(20);
     expect(new Set(MULBERRY_KEYS).size).toBe(MULBERRY_KEYS.length);
+    // Shape guard: every `key: '…'` entry line in each block must have been
+    // parsed — an entry written with a different indent or quoting would
+    // otherwise be silently skipped by both the stale-key and overlap checks.
+    const entryLines = (block: string) => (block.match(/^\s+[a-z0-9_]+:\s*'/gm) ?? []).length;
+    expect(MAP_KEYS.length).toBe(entryLines(MAP_BLOCK));
+    expect(MULBERRY_KEYS.length).toBe(entryLines(MULBERRY_BLOCK));
   });
 
   it('no word is mapped in both MAP and MULBERRY — exactly one source per word', () => {

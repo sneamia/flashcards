@@ -317,7 +317,7 @@ function shuffleRowEl(group: CategoryGroup): HTMLButtonElement {
    render() rebuilds the whole stage with replaceChildren(), so the .decks
    scroll container is a NEW element every time and its scrollTop resets to 0.
    That was invisible while the list was short, but the picker is now 4 headers
-   + 18 deck rows + 4 shuffle rows against a ~300px-tall scroller on a phone in
+   + 23 deck rows + 4 shuffle rows against a ~300px-tall scroller on a phone in
    landscape — roughly three screens. Without this, a parent who scrolls to the
    last category, runs a deck, and exits lands back at the top and has to
    re-scroll every single time. Saved on the way out of any render that had a

@@ -62,11 +62,12 @@ any code; **decision only** = no code — the deliverable is the call itself.
 ### ~~3. Mulberry Symbols as a second art source~~ — SHIPPED v1.8.0
 Shipped as the `MULBERRY` table in `scripts/fetch-art.mjs` (SHA-pinned,
 URL-encoded names, same remap/SVGO/denylist path, `removeDimensions`,
-named-colour remap, default-fill inking). Earned back **15** of the 26-word
-tail: 7 from Mulberry (kick, neck, back, pet, bib, glue, tape) and 8
-hand-drawn where neither set reads (gate, rug, top, tube, whisk, gong, peg,
-hit — James asked for rug as two shaded ovals and for the rest to be drawn
-rather than left blank). Mulberry's clothes peg (reads "clothespin"),
+named-colour remap, default-fill inking). Earned back **14** of the 26-word
+tail: 7 from Mulberry (kick, neck, back, pet, bib, glue, tape) and 7 hand-drawn
+where neither set reads (gate, rug, top, tube, gong, peg, hit — James asked for
+rug as two shaded ovals and for the rest to be drawn rather than left blank).
+`whisk` was additionally moved OFF the old 13-word never-chase list and
+hand-drawn (same ask); that list is therefore 12 now, below. Mulberry's clothes peg (reads "clothespin"),
 chewing gum (reads chocolate after the remap) and 105 KB rug were passed
 over for hand-drawn versions; a hand-drawn gum (face blowing a bubble) was
 tried and cut — it read as a face beside a coin. **Stays image-free after
@@ -134,7 +135,7 @@ Items 7–10 shipped in v1.6.0. Two new items came out of v1.6's own review.
   Playwright webServer.
 - **Impact:** regression safety on the build gate. **Category:** testing/tooling.
 
-### 17. The palette gate can't see a MISSING `fill` — 16 files ship pure black (S/M)
+### 17. The palette gate can't see a MISSING `fill` — 18 files ship pure black (S/M)
 - **Path: direct** for the gate change; the 16-file art sweep it uncovers is
   mechanical but wants one eyeball pass.
 - **What:** `DESIGN.md` states "The build fails if any shipped art SVG strays
@@ -148,7 +149,7 @@ Items 7–10 shipped in v1.6.0. Two new items came out of v1.6's own review.
   `<path>`s as direct children of `<svg>` — the wheel tires, ~2,974 pure-black
   pixels rasterized at 288×288) and `public/art/smile.svg` (the eyes, ~796px).
   bike was fixed in review by adding `fill="#3d3833"`; smile was cut for an
-  unrelated reason. **16 files already on `main` leak the same way** — cop
+  unrelated reason. **18 files already on `main` leak the same way** (dry run of v1.8's `inkDefaultFills` over public/art: chick, cop, crab, flute, grin, hen, hot, hush, kid, king, melt, nap, pup, sick, train, trap, wolf, zip) — cop
   (~6,038px), hot (~1,280px), train, hush, melt, grin, sick, zip and others.
   Note a fill-less `<path>` INSIDE a `<g fill="…">` is fine and common (see
   `cake.svg`) — only elements with no fill-bearing ancestor default to black.
@@ -159,7 +160,7 @@ Items 7–10 shipped in v1.6.0. Two new items came out of v1.6's own review.
   the 16 pre-existing files, so land the sweep with it.
 - **Impact:** makes a documented build guarantee true. **Category:** design/tooling.
   (v1.7 review, design specialist, conf 10 — verified by reading both files.)
-- **Partly mitigated in v1.8:** `fetch-art.mjs` now inks fill-less paint elements at fetch time (`inkDefaultFills`), so NEW art cannot ship black (jeep and coat were inked this way). The validate-decks gate change and the 16-file sweep are still open.
+- **Partly mitigated in v1.8:** `fetch-art.mjs` now inks fill-less paint elements at fetch time (`inkDefaultFills`), so NEW art cannot ship black (jeep and coat were inked this way). Still open: the validate-decks gate for fill-less elements (it also cannot see `currentColor`/`inherit` fills, which the inking pass now rewrites for NEW art), the 18-file sweep, and the fact that hand-drawn SVGs never pass through the inking pass at all — the validator is the only durable guard for them. Closed in v1.8: the KEEP_COLORS exemption is now per-hex, not per-file.
 
 ### 18. Picker scroll position is lost across a rotate detour on a long list (S/M)
 - **Path: plan first** — the honest fix changes what's being remembered (a
@@ -313,7 +314,7 @@ can distinguish them. Documented in `restore.spec.ts`; not a gap to re-open.
   `gong`, `peg` (pegboard), `hit` (bat + ball), `tail` (hindquarters +
   arrow); `mail` (envelope), `pail` (bucket), `sail` (sailboat), `jeep` (dark
   side view), `sleep` (zzz), `night` (skyline + moon), `toast`, `bean`,
-  `peach`. Cutting any is a one-line `img` removal plus a MAP/MULBERRY or
+  `peach`. Also from the v1.8 review: `back` is the only body-part card without an ink arrow (consider adding one or cutting); `teeth` may read "mouth"; `tube` may read "roll"; `jeep` and `coat` render dark because the palette remap collapses their upstream browns into one token; `three`/`five`/`nine` are three keycap squares in one Long Vowels pool — judge whether numerals confirm the read when several share a pool; the hand-drawn set's 2.5px strokes read slightly heavier than OpenMoji's. Cutting any is a one-line `img` removal plus a MAP/MULBERRY or
   placeholders comment.
 - **Long Vowels scroll reachability** (v1.7) — the picker is now 4 categories /
   18 decks / 4 shuffle rows, and Long Vowels sits last. The v1.7 review probed
@@ -414,7 +415,7 @@ omitted; soft-c/g + s=/z/ + `ph` words held back (see the follow-on below).
   branch in `shuffleRowEl` has no live data path, so the e2e pin from v1.7
   was flipped to the "shuffle all" form and the plain form is covered only by
   `buildShuffledDeck()`'s single-deck unit test. Revisit if a category ever
-  ships single-deck again; nothing to do until then.
+  ships single-deck again; nothing to do until then. Fix if unparked: extract the label/aria ternary into a pure helper (e.g. `shuffleLabel(isMulti)` in a DOM-free module) so a unit test can pin both forms; `src/main.ts` itself boots on import and can't be unit-imported.
 
 ---
 

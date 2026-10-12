@@ -494,26 +494,42 @@ function remap(svg, keepHexes) {
 // v1.7 and was hand-fixed). Treat the implicit black exactly as remap()
 // treats an explicit one — nearest palette colour, i.e. the ink — by writing
 // it in. Runs AFTER SVGO so it sees the final tree (collapseGroups /
-// moveGroupAttrsToElems can move a fill up or down a level). Children of
-// <defs>, <pattern>, <marker> and <symbol> DO paint once referenced (via
-// <use>/fill) and default to black there too, so they are inked like anything
-// else. Only <mask> and <clipPath> subtrees are left alone: their default-black
-// child means "hide"/"clip", and inking it would change that.
-const PAINT_ELEMENTS = new Set(['path', 'circle', 'rect', 'ellipse', 'polygon', 'polyline']);
-const NON_RENDERING = new Set(['mask', 'clipPath']);
+// moveGroupAttrsToElems can move a fill up or down a level).
+// Subtrees whose fill-less children must NOT be inked: a <mask>/<clipPath>
+// child's default black means "hide"/"clip"; a <defs>/<symbol> child inherits
+// its fill from each referencing <use> through the shadow tree, and a fill
+// written onto the definition would override every instance. Fill-less <use>
+// elements ARE inked instead (a <use> with no fill rendering a fill-less
+// definition is the black case).
+const PAINT_ELEMENTS = new Set(['path', 'circle', 'rect', 'ellipse', 'polygon', 'polyline', 'use']);
+const NON_RENDERING = new Set(['mask', 'clipPath', 'defs', 'symbol']);
 const INK = PALETTE[5]; // #3d3833
+const UNSET_FILL = /^(?:inherit|initial|unset|currentColor)$/i;
 function inkDefaultFills(svg) {
   const stack = []; // one entry per open ancestor: is fill already settled below it?
   let inked = 0;
   const out = svg.replace(/<(\/?)([A-Za-z][\w:-]*)([^>]*?)(\/?)>/g, (tag, close, el, attrs, selfClose) => {
     if (close) { stack.pop(); return tag; }
     const inherited = stack.length > 0 && stack[stack.length - 1];
-    const own = /(?:^|\s)fill\s*=/.test(attrs) || /(?:^|\s)style\s*=\s*["'][^"']*\bfill\s*:/.test(attrs);
+    // `inherit`/`initial`/`unset` with no coloured ancestor, and `currentColor`
+    // (the `color` property, default black), all still render #000 — a fill
+    // that names them is NOT settled. The hex gate can't see them either.
+    const fillAttr = attrs.match(/(?:^|\s)fill\s*=\s*["']([^"']*)["']/);
+    const styleFill = attrs.match(/(?:^|\s)style\s*=\s*["'][^"']*\bfill\s*:\s*([^;"']+)/);
+    const ownValue = fillAttr?.[1] ?? styleFill?.[1]?.trim();
+    const own = ownValue !== undefined && !UNSET_FILL.test(ownValue);
     const settled = inherited || own || NON_RENDERING.has(el);
     let result = tag;
     if (!settled && PAINT_ELEMENTS.has(el)) {
       inked++;
-      result = `<${el}${attrs} fill="${INK}"${selfClose}>`;
+      // Rewrite a keyword fill in place (a second fill attribute would be a
+      // duplicate — an XML parse error that blanks the whole image); append
+      // one only when the element had no fill at all.
+      const rewritten = attrs
+        .replace(/\sfill\s*=\s*["'](?:inherit|initial|unset|currentColor)["']/i, '')
+        .replace(/(\bfill\s*:\s*)(?:inherit|initial|unset|currentColor)\b/i, `$1${INK}`);
+      const hasFillNow = /(?:^|\s)fill\s*=/.test(rewritten) || /\bfill\s*:/.test(rewritten);
+      result = hasFillNow ? `<${el}${rewritten}${selfClose}>` : `<${el}${rewritten} fill="${INK}"${selfClose}>`;
     }
     if (!selfClose) stack.push(settled || PAINT_ELEMENTS.has(el));
     return result;
@@ -536,7 +552,13 @@ async function fetchOne(name, url) {
       // width/height equal to the viewBox — exactly the case where the default
       // would drop the viewBox, leaving NO size information once
       // removeDimensions runs below.
-      { name: 'preset-default', params: { overrides: { removeViewBox: false } } },
+      // inlineStyles' default (onlyMatchedOnce: true) leaves a CLASS shared by
+      // several shapes in the <style> block; removeAttrs then strips the
+      // classes and the second multipass deletes the now-unmatched rules, so
+      // every shape silently loses its fill and inkDefaultFills paints the
+      // whole drawing ink under a green run. Inline shared rules too, so
+      // Mulberry's `.stN{fill:…}` files keep their colours (and become usable).
+      { name: 'preset-default', params: { overrides: { removeViewBox: false, inlineStyles: { onlyMatchedOnce: false } } } },
       'removeScriptElement',
       // Mulberry roots carry width="850.394" height="850.394"; OpenMoji's
       // carry none, so this is a no-op for them (outputs stay byte-identical).
@@ -551,10 +573,15 @@ async function fetchOne(name, url) {
   // Belt-and-braces after SVGO: refuse to write if any active-content vector
   // survived sanitization (these bytes are served from the site's own origin).
   // Internal #id references (<use xlink:href="#x">) are allowed; anything
-  // external or executable fails the word loudly instead of shipping. A
-  // surviving <style> block (class-based fills some Mulberry files use) is
-  // refused too — its generic .st0/#Layer_1 names would collide if inlined.
-  const DENYLIST = /<\s*(script|foreignObject|style|animate|animateTransform|animateMotion|set|iframe|image)\b|javascript:|(?:xlink:)?href\s*=\s*["'](?!#)/i;
+  // external or executable fails the word loudly instead of shipping. Element
+  // names may carry a namespace prefix (<svg:script> is still a script to an XML
+  // parser), so the prefix is optional in the match. <text>/<tspan> are refused
+  // because printed letters that are not the card's word defeat the reveal;
+  // <object>/<embed>/<link> and any url(…) that is not an internal #id reference
+  // are refused as external content. A <style> block that survives inlining
+  // (unusual selectors) is refused too — its generic .st0/#Layer_1 names would
+  // collide if ever inlined into the page.
+  const DENYLIST = /<\s*(?:[\w-]+:)?(script|foreignObject|style|animate|animateTransform|animateMotion|set|iframe|image|text|tspan|object|embed|link)\b|javascript:|(?:xlink:)?href\s*=\s*["'](?!#)|url\(\s*["']?(?!#)/i;
   if (DENYLIST.test(svg)) throw new Error(`sanitization denylist hit — refused to write ${name}.svg`);
   // .tmp suffix (NOT .svg) so a crash mid-write can never leave a stray file
   // that vite.config.ts's `**/*.svg` precache glob would ship to every user.

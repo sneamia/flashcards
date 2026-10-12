@@ -67,8 +67,10 @@ describe('art SVG root dimensions', () => {
     // after cube and smile were cut in review for reading as block/box and
     // grin); then 215 at v1.8 (15 tail drawings — 7 Mulberry + 8 hand-drawn —
     // and 37 vowel-team drawings); a collapsed glob means the path moved — fail
-    // loudly rather than pass on an empty set.
-    expect(Object.keys(ART).length).toBeGreaterThan(100);
+    // loudly rather than pass on an empty set. The floor tracks the real count
+    // loosely (215 at v1.8) so a glob that silently dropped half the art would
+    // fail too.
+    expect(Object.keys(ART).length).toBeGreaterThan(200);
   });
 
   it('no art SVG declares a root width/height — viewBox only', () => {

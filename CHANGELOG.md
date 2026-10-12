@@ -38,8 +38,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A new drawing whose shapes declare no fill — which SVG paints pure black —
   is inked in the palette's dark tone as it is fetched, so art can no longer
   ship with black shapes the palette check cannot see (how `bike`'s wheels
-  slipped through in v1.7). The sixteen older files with the same defect are
-  unchanged and still tracked as TODOS P3.17.
+  slipped through in v1.7). The eighteen older files with the same defect (a dry
+  run of the new inking pass over the shipped art lists them: chick, cop, crab,
+  flute, grin, hen, hot, hush, kid, king, melt, nap, pup, sick, train, trap,
+  wolf, zip) are unchanged and still tracked as TODOS P3.17.
 - The art pipeline refuses a word mapped in both source tables, strips
   Mulberry's root width/height so every drawing stays size-agnostic, and maps
   CSS colour names such as `orange` to hex before the palette remap.
