@@ -392,7 +392,7 @@ const NAMED_COLORS = {
   maroon: '#800000', olive: '#808000', teal: '#008080', aqua: '#00ffff', fuchsia: '#ff00ff',
 };
 const NAMED_COLOR_RE = new RegExp(
-  `\\b(fill|stroke|stop-color)(\\s*[=:]\\s*["']?)(${Object.keys(NAMED_COLORS).join('|')})\\b`,
+  `(?<![\\w-])(fill|stroke|stop-color)(\\s*[=:]\\s*["']?)(${Object.keys(NAMED_COLORS).join('|')})\\b`,
   'gi',
 );
 
@@ -401,8 +401,10 @@ function remap(svg, keepHexes) {
   // except hexes explicitly preserved via KEEP_COLORS (color-word fills).
   // Negative lookbehind: url(#abc123)-style id references are hex-SHAPED but
   // not colors — rewriting them breaks gradient/<use> refs. (rgb() colors
-  // pass through unremapped — a known limitation; SVGO's convertColors turns
-  // them into hex afterwards, so the palette gate still catches them.)
+  // pass through unremapped — SVGO's convertColors turns them into hex
+  // afterwards, so a non-palette one still fails validate-decks' palette gate,
+  // and rgb(0,0,0) collapses to the default fill, which inkDefaultFills then
+  // inks.)
   const keep = new Set((keepHexes ?? []).map((h) => h.toLowerCase()));
   const named = svg.replace(NAMED_COLOR_RE, (m, prop, sep, name) => `${prop}${sep}${NAMED_COLORS[name.toLowerCase()]}`);
   return named.replace(/(?<!url\()#[0-9a-fA-F]{6}\b/g,
@@ -421,13 +423,13 @@ function remap(svg, keepHexes) {
 // v1.7 and was hand-fixed). Treat the implicit black exactly as remap()
 // treats an explicit one — nearest palette colour, i.e. the ink — by writing
 // it in. Runs AFTER SVGO so it sees the final tree (collapseGroups /
-// moveGroupAttrsToElems can move a fill up or down a level). Subtrees that
-// never paint directly (<defs>, <mask>, <clipPath>, …) are left alone: a
-// mask's default-black child means "hide", and inking it would change that.
+// moveGroupAttrsToElems can move a fill up or down a level). Children of
+// <defs>, <pattern>, <marker> and <symbol> DO paint once referenced (via
+// <use>/fill) and default to black there too, so they are inked like anything
+// else. Only <mask> and <clipPath> subtrees are left alone: their default-black
+// child means "hide"/"clip", and inking it would change that.
 const PAINT_ELEMENTS = new Set(['path', 'circle', 'rect', 'ellipse', 'polygon', 'polyline']);
-const NON_RENDERING = new Set([
-  'defs', 'mask', 'clipPath', 'pattern', 'marker', 'symbol', 'linearGradient', 'radialGradient',
-]);
+const NON_RENDERING = new Set(['mask', 'clipPath']);
 const INK = PALETTE[5]; // #3d3833
 function inkDefaultFills(svg) {
   const stack = []; // one entry per open ancestor: is fill already settled below it?
@@ -435,7 +437,7 @@ function inkDefaultFills(svg) {
   const out = svg.replace(/<(\/?)([A-Za-z][\w:-]*)([^>]*?)(\/?)>/g, (tag, close, el, attrs, selfClose) => {
     if (close) { stack.pop(); return tag; }
     const inherited = stack.length > 0 && stack[stack.length - 1];
-    const own = /(?:^|\s)fill\s*=/.test(attrs) || /(?:^|\s)style\s*=\s*"[^"]*\bfill\s*:/.test(attrs);
+    const own = /(?:^|\s)fill\s*=/.test(attrs) || /(?:^|\s)style\s*=\s*["'][^"']*\bfill\s*:/.test(attrs);
     const settled = inherited || own || NON_RENDERING.has(el);
     let result = tag;
     if (!settled && PAINT_ELEMENTS.has(el)) {

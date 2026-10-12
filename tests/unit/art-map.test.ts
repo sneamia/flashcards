@@ -11,12 +11,12 @@
    the MAP stale.
 
    APPROACH: fetch-art.mjs can't be imported (its top level runs network
-   fetches), so the MAP keys are regex-parsed out of the source — the same
+   fetches), so the MAP/MULBERRY keys (both tables) are regex-parsed out of the source — the same
    anti-drift technique scripts/validate-decks.mjs already uses to derive
    PALETTE and KEEP_COLORS from this file. The source is pulled in via
    Vite's `?raw` import, not node:fs — tests/ is part of the tsc --noEmit
    build gate, whose types are vite/client only (no node types). The parse
-   is guarded against returning zero keys, so a refactor that moves MAP
+   is guarded against returning zero keys, so a refactor that moves MAP or MULBERRY
    fails loudly here rather than vacuously passing.
    ========================================================================= */
 
@@ -30,9 +30,9 @@ import { groupByCategory, loadDecks } from '../../src/decks';
 const MAP_BLOCK = FETCH_ART_SRC.match(/const MAP = \{([\s\S]*?)\n\};/)?.[1] ?? '';
 const MULBERRY_BLOCK = FETCH_ART_SRC.match(/const MULBERRY = \{([\s\S]*?)\n\};/)?.[1] ?? '';
 const parseKeys = (block: string): string[] =>
-  [...block.matchAll(/^\s{2}([a-z]+):\s*'/gm)].map((m) => m[1]);
+  [...block.matchAll(/^\s{2}([a-z0-9_]+):\s*'/gm)].map((m) => m[1]);
 const parseValues = (block: string): Map<string, string> =>
-  new Map([...block.matchAll(/^\s{2}([a-z]+):\s*'([^']+)'/gm)].map((m) => [m[1], m[2]]));
+  new Map([...block.matchAll(/^\s{2}([a-z0-9_]+):\s*'([^']+)'/gm)].map((m) => [m[1], m[2]]));
 const MAP_KEYS = parseKeys(MAP_BLOCK);
 const MULBERRY_KEYS = parseKeys(MULBERRY_BLOCK);
 const ALL_KEYS = [...MAP_KEYS, ...MULBERRY_KEYS];
