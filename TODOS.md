@@ -59,32 +59,23 @@ any code; **decision only** = no code — the deliverable is the call itself.
   fold (c)'s verification into the next device session.
 - **Impact:** offline reliability. **Category:** PWA/robustness.
 
-### 3. Mulberry Symbols as a second art source (M)
-- **Path: plan first.** Needs design sign-off before any pipeline code: a
-  second illustration style will sit beside OpenMoji on equal footing (does it
-  hold the "one warm world" feel after palette remap?), attribution must
-  extend beyond OpenMoji (the About overlay `ATTRIBUTION` constant, README
-  credits, `public/art/LICENSE`), and each candidate glyph needs the
-  "reliably evokes the word" eyeball. The spec is a curated word→glyph list +
-  attribution wording; the pipeline change itself is then direct.
-- **What:** ~3,400 child-focused AAC SVGs, CC BY-SA 4.0 (same license as
-  OpenMoji). Coverage today is **171/210 (~81%)**; the reachable image-free
-  tail is 26 words: kick, neck, back, tick, pet, peg, bib, hit, top, mud, rug,
-  gum, glue, long, hang, fang, gong, **jog**, plus v1.7's **cape, tape, gate,
-  tube, mule, stone, cube, smile** — potentially lifting coverage to ~93%.
-  `jog` joined the tail in v1.6 (ex-P1.1 dropped its OpenMoji art for colliding
-  with `run`'s inside the CVC shuffle pool); four v1.7 words joined for the same
-  cross-category-collision reason — `stone` (byte-identical to `rock`'s),
-  `cube` (reads as `block`/`box`) and `smile` (reads as `grin`), all three cut
-  in review — and `mule` because OpenMoji's only candidate is a donkey. A
-  *visibly distinct* Mulberry drawing is exactly what would earn all five back;
-  `mule`, `stone` and `cube` are the strongest candidates in the tail.
-- **Stays image-free by design** (do NOT chase art for these 13): the
-  function/sight words much, such, that, this, them, with, when, rich, plus
-  whiz, thud, thin, chat, whisk (no glyph reliably reads for a 3–5yo).
-- **Fix:** name-based second source in `fetch-art.mjs` (SHA-pinned like
-  OpenMoji), same palette remap + SVGO + active-content gates.
-- **Impact:** coverage. **Category:** content/art + pipeline.
+### ~~3. Mulberry Symbols as a second art source~~ — SHIPPED v1.8.0
+Shipped as the `MULBERRY` table in `scripts/fetch-art.mjs` (SHA-pinned,
+URL-encoded names, same remap/SVGO/denylist path, `removeDimensions`,
+named-colour remap, default-fill inking). Earned back **15** of the 26-word
+tail: 7 from Mulberry (kick, neck, back, pet, bib, glue, tape) and 8
+hand-drawn where neither set reads (gate, rug, top, tube, whisk, gong, peg,
+hit — James asked for rug as two shaded ovals and for the rest to be drawn
+rather than left blank). Mulberry's clothes peg (reads "clothespin"),
+chewing gum (reads chocolate after the remap) and 105 KB rug were passed
+over for hand-drawn versions; a hand-drawn gum (face blowing a bubble) was
+tried and cut — it read as a face beside a coin. **Stays image-free after
+the check** (reasons in the MAP comments): jog, stone, mule, cube, smile,
+tick, mud, cape, hang, fang, long, gum — plus the 12 function/abstract words
+that were never chased (much, such, that, this, them, with, when, rich,
+whiz, thud, thin, chat). The style-fit question was answered on a contact
+sheet (remapped Mulberry beside OpenMoji): holds; the busier people-scenes
+(kick, pet) are the ones to eyeball on a device (P5).
 
 ---
 
@@ -168,6 +159,7 @@ Items 7–10 shipped in v1.6.0. Two new items came out of v1.6's own review.
   the 16 pre-existing files, so land the sweep with it.
 - **Impact:** makes a documented build guarantee true. **Category:** design/tooling.
   (v1.7 review, design specialist, conf 10 — verified by reading both files.)
+- **Partly mitigated in v1.8:** `fetch-art.mjs` now inks fill-less paint elements at fetch time (`inkDefaultFills`), so NEW art cannot ship black (jeep and coat were inked this way). The validate-decks gate change and the 16-file sweep are still open.
 
 ### 18. Picker scroll position is lost across a rotate detour on a long list (S/M)
 - **Path: plan first** — the honest fix changes what's being remembered (a
@@ -314,6 +306,15 @@ can distinguish them. Documented in `restore.spec.ts`; not a gap to re-open.
   "earth"/"ball"). `mule` and `stone` were already cut to image-free for the same
   reason. Judge whether these four confirm the read or contradict it; cutting any
   is a one-line `img` removal plus a MAP comment. (v1.7 review H3.)
+- **v1.8 figurative-art eyeball** — verification only. Mulberry people-scenes,
+  the nine hand-drawn pictures, and the figurative OpenMoji picks whose naming
+  a child has to settle: `kick` (boy kicking a ball), `pet` (patting a dog),
+  `back` (rear torso); hand-drawn `gate`, `rug`, `top`, `tube`, `whisk`,
+  `gong`, `peg` (pegboard), `hit` (bat + ball), `tail` (hindquarters +
+  arrow); `mail` (envelope), `pail` (bucket), `sail` (sailboat), `jeep` (dark
+  side view), `sleep` (zzz), `night` (skyline + moon), `toast`, `bean`,
+  `peach`. Cutting any is a one-line `img` removal plus a MAP/MULBERRY or
+  placeholders comment.
 - **Long Vowels scroll reachability** (v1.7) — the picker is now 4 categories /
   18 decks / 4 shuffle rows, and Long Vowels sits last. The v1.7 review probed
   iPhone-13-landscape in Chromium: the list does scroll (`.decks` 275px tall vs
@@ -340,6 +341,25 @@ Delivered as the **Long Vowels** category (id `magic-e`) with one 28-card
 **Magic E** deck. Decisions taken: one deck rather than per-vowel; the 8
 already-shipped magic-e words duplicated in rather than moved; `graphemes`
 omitted; soft-c/g + s=/z/ + `ph` words held back (see the follow-on below).
+
+### `ow` (long o) and `ay` decks for Long Vowels (S each)
+- **Path: direct** once the art call is made — researched 2026-10-12 and
+  deferred, not rejected. `ow` as in snow: glyphs verified at the pinned refs
+  for snow 2744, crow 1F426-200D-2B1B, bowl 1F963, bow 1F380, mow E343 and
+  Mulberry `bubbles_blow` (blow); slow/grow/row/glow/show/throw have no honest
+  art (sloth, turtle, rowboat→"boat", star). Deferred because the same
+  spelling says /ow/ in cow — better taught beside the other vowel sounds
+  (below) than inside Long Vowels. `ay`: hay/day/play/tray/clay/spray/gray
+  have ≤50% honest art; gray would need a KEEP_COLORS entry.
+- **Impact:** content. **Category:** content/pedagogy.
+
+### Other Vowels and Bossy R as the next two categories (M each)
+- **Path: plan first** — each is a new category (`src/categories.ts` + README
+  bullet + pinned arrays; see add-deck SKILL.md). Other Vowels: oo (moon,
+  book), ou/ow (cloud is already in l-blends; cow, owl), oi/oy (coin, boy),
+  au/aw (saw, paw). Bossy R: ar (car, barn), or (fork, corn), er/ir/ur (fern,
+  bird, surf). Word supply and art have not been researched.
+- **Impact:** content. **Category:** content/pedagogy.
 
 ### Soft C / Soft G / s=/z/ / ph as a follow-on deck (M)
 - **Path: plan first** — pedagogy call, then pure data.
@@ -389,6 +409,12 @@ omitted; soft-c/g + s=/z/ + `ph` words held back (see the follow-on below).
   two picker row builders still share an ~8-line skeleton; extract
   `makeRow({cls,label,count,aria,startId})`. (v1.2 review, conf 5; re-flagged
   by the v1.7 review.)
+- **Single-deck "shuffle" label branch is dormant again (v1.8).** Long Vowels
+  was the only single-deck category; with six decks the `decks.length > 1`
+  branch in `shuffleRowEl` has no live data path, so the e2e pin from v1.7
+  was flipped to the "shuffle all" form and the plain form is covered only by
+  `buildShuffledDeck()`'s single-deck unit test. Revisit if a category ever
+  ships single-deck again; nothing to do until then.
 
 ---
 
@@ -405,6 +431,12 @@ omitted; soft-c/g + s=/z/ + `ph` words held back (see the follow-on below).
 
 One line per release; details in CHANGELOG.md and this file's git history.
 
+- **v1.8.0** (2026-10-12) — five vowel-team decks (ai, ee, igh, oa, ea; 47
+  cards, 37 illustrated) under Long Vowels (6 decks / 75 words); Mulberry
+  Symbols as a SHA-pinned second art source (7 tail words + 14 vowel-team
+  words) with default-fill inking and named-colour remap; nine hand-drawn
+  pictures (gate, rug, top, tube, whisk, gong, peg, hit, tail).
+  App 23 decks / 257 cards / 223 illustrated (87%); 107 unit / 37 e2e.
 - **v1.7.0** (2026-08-01) — **Long Vowels** category (id `magic-e`) with one
   28-card **Magic E** deck; 12 new glyphs (art 171/210); first cross-category
   duplicate words (8, allowlist-guarded); first single-deck category, taking the

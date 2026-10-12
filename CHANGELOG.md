@@ -6,6 +6,54 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-10-12
+
+### Added
+- Five **vowel-team** decks join the Long Vowels group — `ai`, `ee`, `igh`,
+  `oa` and `ea` — 47 words where two or three letters together spell the long
+  sound: rain, sheep, light, boat, leaf. Each card carries its phonics split
+  with the team as one chunk (`r·ai·n`); Magic E still carries none, on
+  purpose. Long Vowels grows from one deck of 28 to six decks of 75 words, so
+  its shuffle row reads "shuffle all" like the other groups again. 37 of the
+  47 new cards have a drawing; wait, high, right, bright, sigh, toad, float,
+  loaf, sea and speak are word-only because no honest picture exists (a toad
+  reads "frog", a ring buoy reads "life ring", a speaking head reads "talk").
+- A second source of drawings, **Mulberry Symbols** (CC BY-SA 4.0, the same
+  licence as OpenMoji), used only where OpenMoji has no glyph that reads as
+  the word. It illustrates seven cards that had been word-only since they
+  shipped — kick, neck, back, pet, bib, glue, tape — and fourteen of the new
+  vowel-team cards (feet, heel, teeth, cheek, thigh, beak, nail, paint, jeep,
+  coat, toast, goal, tea, beach). Its drawings pass through the same warm
+  palette remap, so they sit beside the OpenMoji art rather than looking like
+  a second app. The About overlay, README and art licence credit both sets.
+- Nine hand-drawn pictures for words neither set covers, in the same flat warm
+  style as the earlier chin, shin and mop: a garden **gate**, a braided **rug**
+  (two shaded ovals), a spinning **top**, a hollow **tube**, a **whisk**, a
+  **gong** in its stand, a pegboard for **peg**, a bat striking a ball for
+  **hit**, and hindquarters with an arrow at the **tail**.
+- The app now holds 23 decks / 257 cards / 249 distinct words, 223 of them
+  illustrated (87%, up from 81%).
+
+### Changed
+- A new drawing whose shapes declare no fill — which SVG paints pure black —
+  is inked in the palette's dark tone as it is fetched, so art can no longer
+  ship with black shapes the palette check cannot see (how `bike`'s wheels
+  slipped through in v1.7). The sixteen older files with the same defect are
+  unchanged and still tracked as TODOS P3.17.
+- The art pipeline refuses a word mapped in both source tables, strips
+  Mulberry's root width/height so every drawing stays size-agnostic, and maps
+  CSS colour names such as `orange` to hex before the palette remap.
+- Still word-only on purpose, after checking Mulberry and thinking through a
+  drawing for each: jog (any jogging figure is `run`'s picture), stone (rock),
+  mule (donkey), cube (block/box), smile (grin), tick (bug), cape (superhero),
+  hang (coat), fang (tooth), mud and long — each would be named with a
+  different word the child already knows — and gum, where a hand-drawn face
+  blowing a bubble was tried and read as a face beside a coin. Reasons sit
+  beside each word in `scripts/fetch-art.mjs`. Mulberry's clothes peg (reads
+  "clothespin" in North American English), its chewing gum (a chocolate bar
+  once the colour is gone) and its 105 KB rug were passed over in favour of
+  hand-drawn versions.
+
 ## [1.7.0] - 2026-08-01
 
 ### Added
