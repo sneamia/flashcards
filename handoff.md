@@ -1,8 +1,8 @@
 # Handoff — v1.8 vowel-team decks + Mulberry Symbols art (BRANCH, not yet reviewed or shipped)
 
-**Branch:** `v1.8/vowel-teams-mulberry-art` — 8 commits ahead of `main` @ `6090513` (7 implementation commits plus this record). Not squashed, not PR'd, not merged, not deployed.
-**Date:** 2026-10-12 · **Status:** implementation complete, all four gates green; `/review` and `/ship` are the next steps (not yet run).
-**Source docs:** the plan at `docs/superpowers/plans/2026-10-12-v1.8-vowel-teams-mulberry-art.md` (in-repo, untracked at the time of writing — the controller decides whether it ships), `TODOS.md`, `DESIGN.md`, `CLAUDE.md`. The v1.7 record this replaced lives at git `6090513:handoff.md`.
+**Branch:** `v1.8/vowel-teams-mulberry-art` — 12 commits ahead of `main` @ `6090513` (see Done). Not squashed, not merged, not deployed; a PR is open from this branch (`gh pr view`).
+**Date:** 2026-10-12 · **Status:** implementation complete, all four gates green on the final tree; `/review` run (6 specialists + red team + Claude adversarial + Codex adversarial) and its findings fixed in `8252992`; the unresolved items are device-eyeball judgments (Open, below). Merge and deploy are James's call (`/land-and-deploy`) — P1.3 reserved the Mulberry design sign-off for him.
+**Source docs:** the plan at `docs/superpowers/plans/2026-10-12-v1.8-vowel-teams-mulberry-art.md` (committed in `c2b251e` with an as-executed note), `TODOS.md`, `DESIGN.md`, `CLAUDE.md`. The v1.7 record this replaced lives at git `6090513:handoff.md`.
 
 ## What this was
 
@@ -10,9 +10,10 @@ Two pieces of work on one branch. (A) Shrink the image-free tail: add Mulberry
 Symbols as a SHA-pinned second art source for words OpenMoji cannot draw, and
 hand-draw the rest where an honest picture exists. James's mid-task ask: draw
 `rug` as two shaded ovals, and draw the other tail words rather than leave them
-blank. Result: 7 tail words from Mulberry, 8 hand-drawn (gate, rug, top, tube,
-whisk, gong, peg, hit) plus a hand-drawn `tail`; a hand-drawn `gum` was tried
-and cut.
+blank. Result: 7 tail words from Mulberry, 7 hand-drawn from the tail (gate,
+rug, top, tube, gong, peg, hit), `whisk` moved off the old never-chase list and
+hand-drawn too, plus a hand-drawn `tail` for the new `ai` deck; a hand-drawn
+`gum` was tried and cut.
 
 (B) Five vowel-team decks under Long Vowels — `ai`, `ee`, `igh`, `oa`, `ea`,
 47 words, 37 illustrated, each carrying its team as one grapheme chunk. Five,
@@ -44,11 +45,16 @@ not six: `ow` was researched and deferred (see TODOS ideas). Long Vowels is now
   (`3ede482`), hand-drawn pictures (`1fb2364`), attribution docs (`14abdfc`),
   rug shading fix (`33f1908`), pipeline hardening from review (`8b94220`), gum
   cut (`0f7871c`), vowel-team decks + 37 drawings (`115617f`), release record
-  (this commit).
+  (`5faf500`), stale-comment refresh (`2d2cfd5`), the plan doc (`c2b251e`),
+  the `/review` fixes (`8252992`), this handoff refresh (HEAD).
 
 ## Done (`git log --oneline main..`)
 
 ```
+(HEAD)  docs: refresh the handoff after /review — commit count, gates on the final tree, cross-model status
+8252992 fix(review): keep shared-class fills through SVGO, harden the art denylist and inking, gate colour-word files per hex
+c2b251e docs: add the v1.8 implementation plan (Mulberry source, hand-drawn tail set, vowel-team decks)
+2d2cfd5 docs: refresh the single-deck comments the vowel-team decks made stale; pin the handoff's SHA
 5faf500 docs: record v1.8.0 — vowel-team decks, Mulberry Symbols source, backlog follow-ons
 115617f feat: five vowel-team decks (ai, ee, igh, oa, ea) under Long Vowels with 37 new drawings
 0f7871c fix: cut gum's hand-drawn art — a face beside a light disc reads as a coin, not a bubble
@@ -63,10 +69,13 @@ not six: `ow` was researched and deferred (see TODOS ideas). Long Vowels is now
 
 | Gate | Result |
 |---|---|
-| `npm run validate` | PASSED — 23 decks |
-| `npx vitest run` | 107 passed (9 files) |
-| `npm run test:e2e` | 37 passed (run by the controller before the vowel-team commit; not re-run for this docs-only record) |
-| `npm run build` | clean; precache 230 entries / 507.39 KiB |
+| `npm run validate` | PASSED — 23 decks (on `8252992`, with the per-hex KEEP_COLORS gate live) |
+| `npx vitest run` | 107 passed (9 files) (on `8252992`) |
+| `npm run test:e2e` | 37 passed (on `8252992`, `/review` probe 015) |
+| `npm run build` | clean; precache 230 entries / 507 KiB (on `8252992`) |
+
+Evidence: `.gstack/qa-reports/review-v1.8-20261012/functional/` (gitignored, local
+to James's machine) holds the `/review` probe captures 001–015.
 
 Totals: 23 decks / 257 cards / 249 distinct words / 223 illustrated (87%) /
 215 art SVGs / 178 MAP + 21 MULBERRY entries. Pools 70 / 55 / 57 / 75.
@@ -90,10 +99,29 @@ Totals: 23 decks / 257 cards / 249 distinct words / 223 illustrated (87%) /
   faithfully. Not an app bug: the test now taps `ea`, the bottom-most deck row,
   which is visible at max scroll. The comment in the test records this.
 
+- **`/review` hardening (`8252992`).** SVGO now inlines SHARED classes too
+  (`inlineStyles: { onlyMatchedOnce: false }`) — before, a Mulberry file with
+  `.stN` classes lost every fill and would have shipped as an ink silhouette
+  under a green run (latent: no shipped file was affected; proven by harness,
+  and jeep/coat re-derive byte-identical). `inkDefaultFills` skips
+  `<defs>`/`<symbol>` (a `<use fill>` would be overridden), inks fill-less
+  `<use>`, and rewrites `inherit`/`initial`/`unset`/`currentColor` fills in
+  place. The DENYLIST accepts namespace-prefixed element names and refuses
+  `<text>`/`<tspan>`/`<object>`/`<embed>`/`<link>` and external `url()`.
+  `validate-decks.mjs` gates KEEP_COLORS files on PALETTE ∪ their listed hex
+  instead of skipping the whole file — DESIGN.md's "surgical" claim is now true.
+
 ## Open — needs James
 
 1. **Device eyeball list** — the figurative-art picks (Mulberry people-scenes,
-   hand-drawn nine, figurative OpenMoji). See the v1.8 bullet in `TODOS.md` P5.
+   hand-drawn nine, figurative OpenMoji), extended by the review's design pass:
+   `back` is the only body-part card without an arrow (add one or cut), `teeth`
+   may read "mouth", `tube` "roll", `jeep`/`coat` render dark because the remap
+   collapses their browns, and `three`/`five`/`nine` are three keycap squares
+   in one Long Vowels pool. See the v1.8 bullet in `TODOS.md` P5.
+0. **`green` in KEEP_COLORS** — the colour-word exception's second member
+   (precedent: `red`, approved 2026-07-07). DESIGN.md now names it; your
+   sign-off is the only thing missing.
 2. **Dormant single-deck label branch.** No single-deck category ships now; the
    plain `shuffle` form is covered only by a unit test. Nothing to do unless a
    single-deck category returns (TODOS parked).
@@ -102,6 +130,15 @@ Totals: 23 decks / 257 cards / 249 distinct words / 223 illustrated (87%) /
 4. **P3.17** — the validate-decks fill-less gate and the 16-file black-fill sweep
    are still open.
 
-## Known gap (non-blocking)
+## Cross-model review
 
-Cross-model review status: filled in by /review.
+Codex (`gpt-6.1-sol`) **did** run this time — the adversarial pass completed
+with two Low findings (the `<use>` fill override and the `inherit`/`initial`
+keywords), both fixed in `8252992` alongside the Claude adversarial pass's
+shared-class finding. The Claude adversarial, six specialists and red team all
+completed.
+
+**KNOWN GAP (non-blocking):** the Codex *structured* review (`codex review
+--base main`) returned untagged prose ("No actionable regressions were
+identified") with no severity tags or explicit no-findings marker, so the
+review tooling records it as unverified coverage rather than a pass.
