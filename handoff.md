@@ -28,9 +28,10 @@ not six: `ow` was researched and deferred (see TODOS ideas). Long Vowels is now
 - **`coat` from Mulberry** — OpenMoji's coat glyph reads "dress".
 - **Word-only on purpose:** wait, high, right, bright, sigh, toad, float, loaf,
   sea, speak. Reasons: toad reads "frog", float's best picture is a ring buoy
-  that reads "life ring", speak is a head that reads "talk", sea/loaf have no
-  glyph a 4-year-old names correctly, and wait/high/right/bright/sigh are
-  abstract.
+  that reads "life ring", speak is a head that reads "talk", loaf's only glyph
+  is `bread`'s and reads "bread", sea's candidates are `wave`'s glyph (same
+  category) or coral, wait/high/right/bright/sigh have nothing that reads
+  honestly (building → "tall", bare arrow, second bulb, exhaling face → "blow").
 - **Mulberry candidates rejected:** clothes peg (reads "clothespin"), chewing
   gum (a chocolate bar once the colour is gone), 105 KB rug (too heavy). All
   three replaced by hand-drawn versions, except gum — the hand-drawn gum (a face
@@ -48,7 +49,7 @@ not six: `ow` was researched and deferred (see TODOS ideas). Long Vowels is now
 ## Done (`git log --oneline main..`)
 
 ```
-<this commit> docs: record v1.8.0 — vowel-team decks, Mulberry Symbols source, backlog follow-ons
+5faf500 docs: record v1.8.0 — vowel-team decks, Mulberry Symbols source, backlog follow-ons
 115617f feat: five vowel-team decks (ai, ee, igh, oa, ea) under Long Vowels with 37 new drawings
 0f7871c fix: cut gum's hand-drawn art — a face beside a light disc reads as a coin, not a bubble
 8b94220 refactor: harden the art pipeline's default-fill inking and named-colour remap after review
@@ -81,10 +82,13 @@ Totals: 23 decks / 257 cards / 249 distinct words / 223 illustrated (87%) /
 - **`inkDefaultFills`.** The fetch pipeline inks fill-less paint elements in the
   palette's dark tone, so new art cannot ship black. This closes the hole for new
   art only; the validate-decks gate and the 16 older files are still TODOS P3.17.
-- **Scroll-restore e2e now taps `ea`.** The picker-scroll test used to tap the
-  last row, which was Magic E; Long Vowels now has six decks and Magic E sits
-  mid-list, so the test taps `ea` (the new last deck) to keep proving the bottom
-  of a long list is reachable and restored.
+- **Scroll-restore e2e now taps `ea`.** The picker-scroll test scrolls `.decks`
+  to its maximum and expects that exact offset back after a run. With five decks
+  below it, the Magic E row is ~33px above the viewport at max scroll, and
+  Playwright's `tap()` scrolls an out-of-view row into view BEFORE the tap — so
+  `render()` captured the post-tap offset (1024, not 1057) and restored it
+  faithfully. Not an app bug: the test now taps `ea`, the bottom-most deck row,
+  which is visible at max scroll. The comment in the test records this.
 
 ## Open — needs James
 

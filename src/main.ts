@@ -291,11 +291,13 @@ function shuffleRowEl(group: CategoryGroup): HTMLButtonElement {
   const startId = `${SHUFFLE_PREFIX}${group.id}`;
   // "all" only reads true when the run spans more than one deck (e.g. DIGRAPHS
   // = sh+ch+th+wh+ng+ck). A single-deck category just shuffles its one deck, so
-  // drop "all" there — nothing is being combined. Magic E (v1.7) is the first
-  // single-deck category to ship, so this branch went live with it; both sides
-  // are pinned by e2e (exact-match on .dg, since a substring check would pass
-  // for either label). isMulti drives both the visible label AND the
-  // aria-label below — a single source so the two can't drift out of sync.
+  // drop "all" there — nothing is being combined. Long Vowels was the first
+  // single-deck category to ship (v1.7) and took this branch live; v1.8's
+  // vowel-team decks made it multi-deck again, so the plain branch is dormant
+  // and only the "all" form is pinned by e2e (exact-match on .dg, since a
+  // substring check would pass for either label). isMulti drives both the
+  // visible label AND the aria-label below — a single source so the two
+  // can't drift out of sync.
   const isMulti = group.decks.length > 1;
   const label = isMulti ? 'shuffle all' : 'shuffle';
   const btn = el('button', 'row shuffle');

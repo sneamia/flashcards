@@ -366,12 +366,12 @@ describe('buildShuffledDeck()', () => {
 });
 
 describe('buildShuffledDeck() — single-deck category', () => {
-  // The Long Vowels category (id 'magic-e') IS single-deck in production as
-  // of v1.7 — it holds exactly the one 'magic-e' deck. This synthetic
-  // fixture still pins the one-deck pooling path directly (rather than
-  // depending on that production category's exact contents staying
-  // single-deck forever): the pool is just that deck's cards, under the
-  // reserved shuffle id.
+  // No shipped category is single-deck any more: Long Vowels (id 'magic-e')
+  // was, in v1.7, until the v1.8 vowel-team decks joined it. This synthetic
+  // fixture is therefore the ONLY coverage of the one-deck pooling path (and
+  // the plain "shuffle" label branch in shuffleRowEl has no live data path at
+  // all — see TODOS.md's parked note): the pool is just that deck's cards,
+  // under the reserved shuffle id.
   const group = {
     id: 'cvc',
     title: 'CVC',
