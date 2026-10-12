@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- A balloon whisk: handle, collar, five fanned wire loops. -->
+  <rect x="45" y="6" width="10" height="36" rx="5" fill="#8a6a4a" stroke="#3d3833" stroke-width="2.5"/>
+  <ellipse cx="50" cy="43" rx="8" ry="4" fill="#a6785a" stroke="#3d3833" stroke-width="2.5"/>
+  <g fill="none" stroke="#3d3833" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path fill="none" d="M48 46 Q30 70 50 92 Q70 70 52 46"/>
+    <path fill="none" d="M48 46 Q30 70 50 92 Q70 70 52 46" transform="rotate(-26 50 46)"/>
+    <path fill="none" d="M48 46 Q30 70 50 92 Q70 70 52 46" transform="rotate(-13 50 46)"/>
+    <path fill="none" d="M48 46 Q30 70 50 92 Q70 70 52 46" transform="rotate(13 50 46)"/>
+    <path fill="none" d="M48 46 Q30 70 50 92 Q70 70 52 46" transform="rotate(26 50 46)"/>
+  </g>
+</svg>

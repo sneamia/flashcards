@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- A gong hanging in its stand, with a mallet. -->
+  <rect x="12" y="22" width="8" height="68" rx="2" fill="#8a6a4a" stroke="#3d3833" stroke-width="2.5"/>
+  <rect x="80" y="22" width="8" height="68" rx="2" fill="#8a6a4a" stroke="#3d3833" stroke-width="2.5"/>
+  <rect x="8" y="16" width="84" height="8" rx="2" fill="#a6785a" stroke="#3d3833" stroke-width="2.5"/>
+  <path d="M36 24 L40 32" fill="none" stroke="#3d3833" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M64 24 L60 32" fill="none" stroke="#3d3833" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="50" cy="58" r="26" fill="#a6785a" stroke="#3d3833" stroke-width="3"/>
+  <circle cx="50" cy="58" r="17" fill="none" stroke="#3d3833" stroke-width="1.5"/>
+  <circle cx="50" cy="58" r="8" fill="#c9b48f" stroke="#3d3833" stroke-width="2.5"/>
+  <path d="M70 92 L92 72" fill="none" stroke="#3d3833" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="91" cy="70" r="6" fill="#c9b48f" stroke="#3d3833" stroke-width="2.5"/>
+  <path d="M4 94 H96" fill="none" stroke="#3d3833" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

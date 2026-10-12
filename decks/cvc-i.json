@@ -12,7 +12,7 @@
     { "type": "word", "text": "kid", "graphemes": ["k", "i", "d"], "img": "art/kid.svg" },
     { "type": "word", "text": "zip", "graphemes": ["z", "i", "p"], "img": "art/zip.svg" },
     { "type": "word", "text": "sit", "graphemes": ["s", "i", "t"], "img": "art/sit.svg" },
-    { "type": "word", "text": "hit", "graphemes": ["h", "i", "t"] },
+    { "type": "word", "text": "hit", "graphemes": ["h", "i", "t"], "img": "art/hit.svg" },
     { "type": "word", "text": "rib", "graphemes": ["r", "i", "b"], "img": "art/rib.svg" },
     { "type": "word", "text": "bin", "graphemes": ["b", "i", "n"], "img": "art/bin.svg" }
   ]

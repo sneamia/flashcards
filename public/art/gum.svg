@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Bubble gum: a face blowing a bubble. -->
+  <circle cx="70" cy="62" r="20" fill="#a6785a" stroke="#3d3833" stroke-width="2.5"/>
+  <path d="M58 50 Q62 44 70 44" fill="none" stroke="#e0cba8" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="36" cy="46" r="24" fill="#e0cba8" stroke="#3d3833" stroke-width="2.5"/>
+  <circle cx="28" cy="40" r="2.6" fill="#3d3833"/>
+  <circle cx="42" cy="40" r="2.6" fill="#3d3833"/>
+  <path d="M36 44 L34 50" fill="none" stroke="#3d3833" stroke-width="2" stroke-linecap="round"/>
+  <ellipse cx="57" cy="57" rx="5" ry="4" fill="#8a6a4a" stroke="#3d3833" stroke-width="2"/>
+</svg>

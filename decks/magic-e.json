@@ -15,7 +15,7 @@
     { "type": "word", "text": "wave", "img": "art/wave.svg" },
     { "type": "word", "text": "cape" },
     { "type": "word", "text": "tape", "img": "art/tape.svg" },
-    { "type": "word", "text": "gate" },
+    { "type": "word", "text": "gate", "img": "art/gate.svg" },
     { "type": "word", "text": "kite", "img": "art/kite.svg" },
     { "type": "word", "text": "bike", "img": "art/bike.svg" },
     { "type": "word", "text": "five", "img": "art/five.svg" },
@@ -32,6 +32,6 @@
     { "type": "word", "text": "flute", "img": "art/flute.svg" },
     { "type": "word", "text": "cube" },
     { "type": "word", "text": "mule" },
-    { "type": "word", "text": "tube" }
+    { "type": "word", "text": "tube", "img": "art/tube.svg" }
   ]
 }

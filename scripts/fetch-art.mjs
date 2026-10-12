@@ -54,7 +54,7 @@ const MAP = {
   // whisk: no OpenMoji glyph exists for a whisk (checked the base set and
   // extras-openmoji.csv at the pinned ref) and no figurative substitute
   // (spoon, swirl, spiral shell) reliably reads as "whisk" for a
-  // preschooler. Left unmapped — card stays image-free.
+  // preschooler. Hand-drawn instead (see the placeholders note below).
 
   // --- Digraphs: NG (ng) ---
   ring: '1F48D',      // ring
@@ -67,7 +67,7 @@ const MAP = {
   // preschooler (long is an adjective; no hanger/gong glyph; tooth 1F9B7 is a
   // molar, not a fang). Mulberry has no better: its `long` is a ruler
   // diagram, `hang` a figure on a pull-up bar, `fangs` a roaring mouth, and
-  // there is no gong at all. Left unmapped — cards stay image-free.
+  // there is no gong at all. long, hang and fang stay image-free; gong is hand-drawn (see below).
 
   // --- Digraphs: CK (ck) ---
   duck: '1F986',      // duck
@@ -168,7 +168,7 @@ const MAP = {
   // drawing is used instead (see MULBERRY below). peg: safety pin 1F9F7 reads
   // as a pin, and Mulberry's only candidate is a clothes peg, which a North
   // American child names "clothespin" (the app is American English, see
-  // README). Left unmapped — image-free.
+  // README). peg is hand-drawn as a pegboard instead (see below).
 
   // --- CVC: Short U (cvc-u) ---
   tub: '1F6C1',       // bathtub (~ tub)
@@ -182,8 +182,8 @@ const MAP = {
   // preschooler (mud/gum have no glyph; yarn 1F9F6 is not a rug). Mulberry
   // was checked too (2026-10-12): no mud; its rug is a 350-path pattern
   // (105 KB after SVGO, against a ~6 KB norm here); its chewing gum reads
-  // as a chocolate bar once the palette remap strips the colour. Left
-  // unmapped — cards stay image-free.
+  // as a chocolate bar once the palette remap strips the colour. mud stays image-free; rug and gum are
+  // hand-drawn (see the placeholders note below).
 
   // --- CVC: Short I (cvc-i) ---
   wig: '1F9B1',       // curly hair component (~ wig; floating hairpiece)
@@ -197,7 +197,7 @@ const MAP = {
   // bib: no OpenMoji glyph — Mulberry's baby bib is used instead (see
   // MULBERRY below). hit: no OpenMoji glyph reliably reads for a
   // preschooler, and Mulberry's candidates are a hammer and a punch (read
-  // "hammer" / "angry"). Left unmapped — image-free.
+  // "hammer" / "angry"). hit is hand-drawn instead (see below).
 
   // --- CVC: Short O (cvc-o) ---
   pot: '1F372',       // pot of food (~ pot)
@@ -208,8 +208,8 @@ const MAP = {
   hot: '1F975',       // hot face
   cop: '1F46E',       // police officer (~ cop)
   bot: '1F916',       // robot
-  // top: no OpenMoji glyph reliably reads for a preschooler — left unmapped
-  // (image-free card).
+  // top: no OpenMoji glyph reliably reads for a preschooler — hand-drawn as a
+  // spinning top (see the placeholders note below).
   // jog: unlike top, a glyph exists (1F3C3 person running) — but it's the
   // same glyph already mapped to `run` (cvc-u), and run/jog both live in
   // the CVC category, so a single "shuffle all CVC" session could show the
@@ -274,8 +274,8 @@ const MAP = {
   // tape: no OpenMoji glyph — Mulberry's roll of masking tape is used
   // instead (see MULBERRY below). cape: no glyph in either set (1F9B8
   // superhero reads "superhero"). tube: Mulberry offers only a test tube and
-  // two AAC chew toys, none of which reads "tube" to a 4-year-old. cape and
-  // tube stay image-free.
+  // two AAC chew toys, none of which reads "tube" to a 4-year-old. cape stays
+  // image-free; tube and gate are hand-drawn (see below).
   // cube: 1F9CA (ice) renders as a plain tan isometric box once the palette
   // remap strips the translucency — the same object as `block` (blends) and
   // `box` (cvc), both of which a child meets earlier. Same call as `smile`
@@ -288,12 +288,14 @@ const MAP = {
   // Mulberry's only candidate is likewise a donkey.
 
   // --- Hand-drawn placeholders (leave UNMAPPED so fetch-art never overwrites) ---
-  // whip, chip, chin, shin, shut, mop, block: no OpenMoji glyph plausibly
+  // whip, chip, chin, shin, shut, mop, block, gate, rug, top, tube, whisk, gong, peg, hit, gum: no OpenMoji (or Mulberry) glyph plausibly
   // reads as these for a preschooler (chin/shin need a figurative arrow to a
   // body part; chip must be a potato chip, not french fries 1F35F, for
   // American English). See public/art/*.svg — hand-authored in the warm
   // palette. Leaving them out of MAP keeps `npm run fetch-art` from clobbering
   // them.
+  // The 2026-10-12 set: rug (two shaded ovals), top (spinning top), tube (hollow roll), whisk, gong (in its stand),
+  // peg (pegboard — the North American sense), hit (bat striking a ball), gum (face blowing a bubble), gate (garden gate).
   // whiz: tried 1F4A8 "dashing away" (speed-lines cloud) — dropped on
   // render-check. Alone (no running figure) it reads as smoke/wind, and
   // it's colloquially read as a fart-cloud emoji — not a reliable "whiz"
